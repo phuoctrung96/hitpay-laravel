@@ -1,0 +1,23 @@
+// Fonts
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400,700');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@200%3B400%3B500%3B600%3B700"); // 3B = ;
+
+// Variables
+@import 'variables';
+// Common styles
+@import 'common';
+// Bootstrap
+@import '~bootstrap/scss/bootstrap';
+// Font Awesome
+@import '~@fortawesome/fontawesome-free/scss/fontawesome';
+@import '~@fortawesome/fontawesome-free/scss/solid';
+@import '~@fortawesome/fontawesome-free/scss/regular';
+@import '~@fortawesome/fontawesome-free/scss/brands';
+// flag-icons
+@import '~flag-icon-css/sass/flag-icon';
+// HitPay Theme
+@import "theme";
+
+//invoices
+@import "./pages/invoices";

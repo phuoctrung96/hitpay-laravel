@@ -1,0 +1,30 @@
+.customer-id-invalid-feedback {
+    display: inline-block !important;
+    width: auto !important;
+}
+
+.create-customer {
+    padding: 0.1rem 0.3rem !important;
+    font-size: 0.7rem !important;
+    vertical-align: baseline;
+}
+
+.edit {
+    .dropdown-toggle {
+        cursor: pointer;
+    }
+
+    .dropdown-menu {
+        .red {
+            color: #C30016;
+        }
+    }
+}
+
+.copied-message {
+    display: none;
+}
+
+.vertical-align-middle {
+    vertical-align: middle;
+}

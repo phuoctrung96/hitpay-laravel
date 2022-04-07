@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="38px" height="24px" viewBox="0 0 38 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 47.1 (45422) - http://www.bohemiancoding.com/sketch -->
+    <title>card_reader</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="card_reader" fill-rule="nonzero">
+            <g id="paynow">
+                <path d="M35,0 L3,0 C1.3,0 0,1.3 0,3 L0,21 C0,22.7 1.4,24 3,24 L35,24 C36.7,24 38,22.7 38,21 L38,3 C38,1.3 36.6,0 35,0 Z" id="Shape" fill="#000000" opacity="0.07"></path>
+                <path d="M35,1 C36.1,1 37,1.9 37,3 L37,21 C37,22.1 36.1,23 35,23 L3,23 C1.9,23 1,22.1 1,21 L1,3 C1,1.9 1.9,1 3,1 L35,1" id="Shape" fill="#FFFFFF"></path>
+            </g>
+            <g id="icon-pos" transform="translate(19.000000, 12.000000) rotate(90.000000) translate(-19.000000, -12.000000) translate(11.000000, -1.000000)">
+                <path d="M14.7485714,4.12571429 L13.1685714,4.12571429 L13.1685714,4.79714286 L2.82857143,4.79714286 L2.82857143,4.12571429 L1.25142857,4.12571429 C0.936902076,4.11414013 0.630678709,4.22809207 0.400230709,4.4424623 C0.169782709,4.65683253 0.0340203804,4.95403008 0.0228571429,5.26857143 L0.0228571429,13.4 L1.25142857,24.5714286 C1.26259181,24.8859699 1.39835414,25.1831675 1.62880214,25.3975377 C1.85925014,25.6119079 2.1654735,25.7258599 2.48,25.7142857 L13.52,25.7142857 C13.8345265,25.7258599 14.1407499,25.6119079 14.3711979,25.3975377 C14.6016459,25.1831675 14.7374082,24.8859699 14.7485714,24.5714286 L15.9771429,13.3971429 L15.9771429,5.26285714 C15.950827,4.61007551 15.401437,4.10157038 14.7485714,4.12571429 L14.7485714,4.12571429 Z" id="Shape" fill="#6F6E84"></path>
+                <rect id="Rectangle-path" fill="#C4E5D5" x="2.53142857" y="7.33428571" width="10.9371429" height="5.10571429"></rect>
+                <rect id="Rectangle-path" fill="#FFFFFF" x="2.53142857" y="14.5" width="2.98571429" height="1.50285714" rx="0.751428571"></rect>
+                <rect id="Rectangle-path" fill="#FFFFFF" x="6.50857143" y="14.5" width="2.98571429" height="1.50285714" rx="0.751428571"></rect>
+                <rect id="Rectangle-path" fill="#FFFFFF" x="10.4857143" y="14.5" width="2.98571429" height="1.50285714" rx="0.751428571"></rect>
+                <rect id="Rectangle-path" fill="#FFFFFF" x="2.53428571" y="17.58" width="2.98571429" height="1.50285714" rx="0.751428571"></rect>
+                <rect id="Rectangle-path" fill="#FFFFFF" x="6.51142857" y="17.58" width="2.98571429" height="1.50285714" rx="0.751428571"></rect>
+                <rect id="Rectangle-path" fill="#FFFFFF" x="10.4885714" y="17.58" width="2.98571429" height="1.50285714" rx="0.751428571"></rect>
+                <rect id="Rectangle-path" fill="#E46748" x="2.53428571" y="20.5657143" width="2.98571429" height="2.31428571" rx="1.15714286"></rect>
+                <rect id="Rectangle-path" fill="#F1A738" x="6.51142857" y="20.5657143" width="2.98571429" height="2.31428571" rx="1.15714286"></rect>
+                <rect id="Rectangle-path" fill="#71C59F" x="10.4885714" y="20.5657143" width="2.98571429" height="2.31428571" rx="1.15714286"></rect>
+                <path d="M4.18285714,0 L11.8171429,0 C12.2558147,2.68609061e-17 12.6114286,0.355613827 12.6114286,0.794285714 L12.6114286,4.79428571 L3.38857143,4.79428571 L3.38857143,0.794285714 C3.38857143,0.355613827 3.74418526,8.05827183e-17 4.18285714,0 Z" id="Shape" fill="#E8B6AD"></path>
+                <rect id="Rectangle-path" fill="#262B64" x="5.42571429" y="0" width="1.62857143" height="4.79714286"></rect>
+            </g>
+        </g>
+    </g>
+</svg>

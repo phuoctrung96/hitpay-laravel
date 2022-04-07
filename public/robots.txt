@@ -1,0 +1,8 @@
+User-agent: Yandex
+Disallow: / 
+
+User-agent: Uptimebot
+Disallow: /
+
+User-agent: *
+Disallow:

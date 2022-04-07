@@ -1,0 +1,25 @@
+//$primary: #002884;
+$primary: #000036;
+$link-hover-decoration: none;
+$badge-font-weight: 400;
+
+
+$grid-breakpoints: (
+    xs: 0,
+    phone: 360px,
+    sm: 576px,
+    md: 768px,
+    lg: 992px,
+    xl: 1200px
+);
+
+$font-family-sans-serif: Inter, sans-serif;
+
+$box-shadow-sm: 0 .125rem .25rem rgba(#000, .1);
+
+$breadcrumb-padding-x: 0;
+$breadcrumb-bg: transparent;
+$breadcrumb-margin-bottom: 0;
+$breadcrumb-divider: quote('>');
+
+$card-border-width: 0;

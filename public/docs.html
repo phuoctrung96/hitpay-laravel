@@ -1,0 +1,1042 @@
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Hitpay Payment Request API</title>
+
+    <style media="screen">
+      .highlight table td { padding: 5px; }
+.highlight table pre { margin: 0; }
+.highlight .gh {
+  color: #999999;
+}
+.highlight .sr {
+  color: #f6aa11;
+}
+.highlight .go {
+  color: #888888;
+}
+.highlight .gp {
+  color: #555555;
+}
+.highlight .gs {
+}
+.highlight .gu {
+  color: #aaaaaa;
+}
+.highlight .nb {
+  color: #f6aa11;
+}
+.highlight .cm {
+  color: #75715e;
+}
+.highlight .cp {
+  color: #75715e;
+}
+.highlight .c1 {
+  color: #75715e;
+}
+.highlight .cs {
+  color: #75715e;
+}
+.highlight .c, .highlight .ch, .highlight .cd, .highlight .cpf {
+  color: #75715e;
+}
+.highlight .err {
+  color: #960050;
+}
+.highlight .gr {
+  color: #960050;
+}
+.highlight .gt {
+  color: #960050;
+}
+.highlight .gd {
+  color: #49483e;
+}
+.highlight .gi {
+  color: #49483e;
+}
+.highlight .ge {
+  color: #49483e;
+}
+.highlight .kc {
+  color: #66d9ef;
+}
+.highlight .kd {
+  color: #66d9ef;
+}
+.highlight .kr {
+  color: #66d9ef;
+}
+.highlight .no {
+  color: #66d9ef;
+}
+.highlight .kt {
+  color: #66d9ef;
+}
+.highlight .mf {
+  color: #ae81ff;
+}
+.highlight .mh {
+  color: #ae81ff;
+}
+.highlight .il {
+  color: #ae81ff;
+}
+.highlight .mi {
+  color: #ae81ff;
+}
+.highlight .mo {
+  color: #ae81ff;
+}
+.highlight .m, .highlight .mb, .highlight .mx {
+  color: #ae81ff;
+}
+.highlight .sc {
+  color: #ae81ff;
+}
+.highlight .se {
+  color: #ae81ff;
+}
+.highlight .ss {
+  color: #ae81ff;
+}
+.highlight .sd {
+  color: #e6db74;
+}
+.highlight .s2 {
+  color: #e6db74;
+}
+.highlight .sb {
+  color: #e6db74;
+}
+.highlight .sh {
+  color: #e6db74;
+}
+.highlight .si {
+  color: #e6db74;
+}
+.highlight .sx {
+  color: #e6db74;
+}
+.highlight .s1 {
+  color: #e6db74;
+}
+.highlight .s, .highlight .sa, .highlight .dl {
+  color: #e6db74;
+}
+.highlight .na {
+  color: #a6e22e;
+}
+.highlight .nc {
+  color: #a6e22e;
+}
+.highlight .nd {
+  color: #a6e22e;
+}
+.highlight .ne {
+  color: #a6e22e;
+}
+.highlight .nf, .highlight .fm {
+  color: #a6e22e;
+}
+.highlight .vc {
+  color: #ffffff;
+}
+.highlight .nn {
+  color: #ffffff;
+}
+.highlight .ni {
+  color: #ffffff;
+}
+.highlight .bp {
+  color: #ffffff;
+}
+.highlight .vg {
+  color: #ffffff;
+}
+.highlight .vi {
+  color: #ffffff;
+}
+.highlight .nv, .highlight .vm {
+  color: #ffffff;
+}
+.highlight .w {
+  color: #ffffff;
+}
+.highlight {
+  color: #ffffff;
+}
+.highlight .n, .highlight .py, .highlight .nx {
+  color: #ffffff;
+}
+.highlight .nl {
+  color: #f92672;
+}
+.highlight .ow {
+  color: #f92672;
+}
+.highlight .nt {
+  color: #f92672;
+}
+.highlight .k, .highlight .kv {
+  color: #f92672;
+}
+.highlight .kn {
+  color: #f92672;
+}
+.highlight .kp {
+  color: #f92672;
+}
+.highlight .o {
+  color: #f92672;
+}
+    </style>
+    <style media="print">
+      * {
+        -webkit-transition:none!important;
+        transition:none!important;
+      }
+      .highlight table td { padding: 5px; }
+.highlight table pre { margin: 0; }
+.highlight, .highlight .w {
+  color: #586e75;
+}
+.highlight .err {
+  color: #002b36;
+  background-color: #dc322f;
+}
+.highlight .c, .highlight .ch, .highlight .cd, .highlight .cm, .highlight .cpf, .highlight .c1, .highlight .cs {
+  color: #657b83;
+}
+.highlight .cp {
+  color: #b58900;
+}
+.highlight .nt {
+  color: #b58900;
+}
+.highlight .o, .highlight .ow {
+  color: #93a1a1;
+}
+.highlight .p, .highlight .pi {
+  color: #93a1a1;
+}
+.highlight .gi {
+  color: #859900;
+}
+.highlight .gd {
+  color: #dc322f;
+}
+.highlight .gh {
+  color: #268bd2;
+  background-color: #002b36;
+  font-weight: bold;
+}
+.highlight .k, .highlight .kn, .highlight .kp, .highlight .kr, .highlight .kv {
+  color: #6c71c4;
+}
+.highlight .kc {
+  color: #cb4b16;
+}
+.highlight .kt {
+  color: #cb4b16;
+}
+.highlight .kd {
+  color: #cb4b16;
+}
+.highlight .s, .highlight .sa, .highlight .sb, .highlight .sc, .highlight .dl, .highlight .sd, .highlight .s2, .highlight .sh, .highlight .sx, .highlight .s1 {
+  color: #859900;
+}
+.highlight .sr {
+  color: #2aa198;
+}
+.highlight .si {
+  color: #d33682;
+}
+.highlight .se {
+  color: #d33682;
+}
+.highlight .nn {
+  color: #b58900;
+}
+.highlight .nc {
+  color: #b58900;
+}
+.highlight .no {
+  color: #b58900;
+}
+.highlight .na {
+  color: #268bd2;
+}
+.highlight .m, .highlight .mb, .highlight .mf, .highlight .mh, .highlight .mi, .highlight .il, .highlight .mo, .highlight .mx {
+  color: #859900;
+}
+.highlight .ss {
+  color: #859900;
+}
+    </style>
+    <link href="css/screen.css" rel="stylesheet" media="screen" />
+    <link href="css/print.css" rel="stylesheet" media="print" />
+      <script src="js/all.js"></script>
+
+    <script>
+      $(function() { setupCodeCopy(); });
+    </script>
+  </head>
+
+  <body class="index" data-languages="[&quot;shell&quot;,&quot;php&quot;]">
+    <a href="#" id="nav-button">
+      <span>
+        NAV
+        <img src="images/navbar-cad8cdcb.png" alt="" />
+      </span>
+    </a>
+    <div class="toc-wrapper">
+      <img src="images/logo-63b76f5f.png" class="logo" alt="" />
+        <div class="lang-selector">
+              <a href="#" data-language-name="shell">shell</a>
+              <a href="#" data-language-name="php">php</a>
+        </div>
+        <div class="search">
+          <input type="text" class="search" id="input-search" placeholder="Search">
+        </div>
+        <ul class="search-results"></ul>
+      <ul id="toc" class="toc-list-h1">
+          <li>
+            <a href="#paynow-apis-and-payment-request-apis" class="toc-h1 toc-link" data-title="PayNow APIs and Payment Request APIs">PayNow APIs and Payment Request APIs</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#setup" class="toc-h2 toc-link" data-title="Setup">Setup</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
+            <a href="#integration-steps" class="toc-h1 toc-link" data-title="Integration Steps">Integration Steps</a>
+          </li>
+          <li>
+            <a href="#authentication" class="toc-h1 toc-link" data-title="Authentication">Authentication</a>
+          </li>
+          <li>
+            <a href="#payment-requests" class="toc-h1 toc-link" data-title="Payment Requests">Payment Requests</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#create-payment-request" class="toc-h2 toc-link" data-title="Create Payment Request">Create Payment Request</a>
+                  </li>
+                  <li>
+                    <a href="#delete-payment-request" class="toc-h2 toc-link" data-title="Delete Payment request">Delete Payment request</a>
+                  </li>
+                  <li>
+                    <a href="#get-payment-status" class="toc-h2 toc-link" data-title="Get Payment Status">Get Payment Status</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
+            <a href="#presenting-the-checkout-ui" class="toc-h1 toc-link" data-title="Presenting the Checkout UI">Presenting the Checkout UI</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#option-1-redirect-to-hitpay-checkout" class="toc-h2 toc-link" data-title="Option 1: Redirect to HitPay checkout">Option 1: Redirect to HitPay checkout</a>
+                  </li>
+                  <li>
+                    <a href="#option-2-present-the-drop-in" class="toc-h2 toc-link" data-title="Option 2: Present the Drop-In:">Option 2: Present the Drop-In:</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
+            <a href="#webhook" class="toc-h1 toc-link" data-title="Webhook">Webhook</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#webhook-fields" class="toc-h2 toc-link" data-title="Webhook fields">Webhook fields</a>
+                  </li>
+                  <li>
+                    <a href="#validate-webhook" class="toc-h2 toc-link" data-title="Validate Webhook">Validate Webhook</a>
+                  </li>
+                  <li>
+                    <a href="#signature-mismatch" class="toc-h2 toc-link" data-title="Signature Mismatch?">Signature Mismatch?</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
+            <a href="#refund" class="toc-h1 toc-link" data-title="Refund">Refund</a>
+          </li>
+          <li>
+            <a href="#production-checklist" class="toc-h1 toc-link" data-title="Production Checklist">Production Checklist</a>
+          </li>
+          <li>
+            <a href="#platform-apis" class="toc-h1 toc-link" data-title="Platform APIs">Platform APIs</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#overview" class="toc-h2 toc-link" data-title="Overview">Overview</a>
+                  </li>
+                  <li>
+                    <a href="#integrations-flow" class="toc-h2 toc-link" data-title="Integrations Flow">Integrations Flow</a>
+                  </li>
+                  <li>
+                    <a href="#platform-authentication" class="toc-h2 toc-link" data-title="Platform Authentication">Platform Authentication</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
+            <a href="#errors" class="toc-h1 toc-link" data-title="Errors">Errors</a>
+          </li>
+      </ul>
+        <ul class="toc-footer">
+            <li><a href='https://dashboard.sandbox.hit-pay.com/'>Sign Up for a Developer Key</a></li>
+            <li><a href='https://dashboard.hit-pay.com/'>Sign Up for a Production Key</a></li>
+            <li><a href='https://chat.whatsapp.com/D40dZAQ9Hu02JDBI2ySnck'>Join the developer WhatsApp group </a></li>
+        </ul>
+    </div>
+    <div class="page-wrapper">
+      <div class="dark-box"></div>
+      <div class="content">
+        <h1 id='paynow-apis-and-payment-request-apis'>PayNow APIs and Payment Request APIs</h1>
+<p>HitPay provides a seamless payment experience for your customers and an easy integration process for the developers.
+<br />
+<br />
+With Hitpay&#39;s API integration you can start accepting multiple payment methods including <strong>PayNow (Singapore), Visa, Master, GrabPay, Apple Pay, Google Pay, American Express, AliPay, and WeChat Pay</strong> on a single checkout page hosted on hitpay. 
+<br />
+<br />
+HitPay&#39;s PayNow integrations allow you to fully automate PayNow acceptance in Singapore with instant feedback and webhook.</p>
+
+<p><img src="images/mock.png" alt="PayNow API" /></p>
+
+<ol>
+<li>Create payment request URLs, each request has a unique Request Id.</li>
+<li>Your customer using the URL makes the payment with their choice of payment method.</li>
+<li>You receive the payment confirmation with a unique Payment ID.</li>
+</ol>
+
+<p>Hitpay also provides plugins for all popular e-commerce platforms without any need for API integrations:
+<br/>
+<a href="https://hitpay.zendesk.com/hc/en-us/articles/900000685746-Add-PayNow-to-your-Shopify-E-Commerce-Store">Shopify</a>, <a href="https://hitpay.zendesk.com/hc/en-us/articles/900000771503-Add-HitPay-to-your-WooCommerce-Store">WooCommerce</a>, <a href="https://hitpay.zendesk.com/hc/en-us/articles/900001943683-HitPay-Wix-Payment-Gateway-Singapore-Wix-PayNow-QR-Payment-Gateway-How-to-add-HitPay-to-my-Wix-Site">Wix</a>, <a href="https://hitpay.zendesk.com/hc/en-us/articles/900002303026-Add-HitPay-to-Magento-Online-Stores">Magento</a>, <a href="https://hitpay.zendesk.com/hc/en-us/articles/900001912306-Add-HitPay-to-Prestashop-Online-Stores">Prestashop</a>, <a href="https://hitpay.zendesk.com/hc/en-us/articles/900004982143-HitPay-EasyStore-Payment-Gateway-Singapore-Add-HitPay-to-EasyStore-PayNow-QR-EasyStore-Singapore">EasyStore</a>, <a href="https://hitpay.zendesk.com/hc/en-us/articles/900003748706-HitPay-OpenCart-Payment-Gateway-Singapore-Add-HitPay-to-OpenCart">OpenCart</a>, <a href="https://hitpay.zendesk.com/hc/en-us/articles/900006056083-HitPay-Ecwid-Payment-Gateway-Singapore-Add-HitPay-to-Ecwid-Online-Stores">Ecwid</a> and <a href="https://hitpay.zendesk.com/hc/en-us/articles/900003418126-Setting-up-the-Xero-Integration-with-HitPay">Xero</a> </p>
+<h2 id='setup'>Setup</h2>
+<ol>
+<li>Create a Hitpay account <a href="https://dashboard.sandbox.hit-pay.com">https://dashboard.sandbox.hit-pay.com</a></li>
+<li>Setup PayNow (Singapore Only)  in the HitPay Dashboard under Settings &gt; Payment Methods &gt; PayNow</li>
+<li>Connect Stripe account (to accepts card payments) under Settings &gt; Payment Methods &gt; Credit Cards</li>
+<li>Generate API keys under Settings &gt; Payment Gateway &gt; API Keys.  These keys will give you access to create payment requests.</li>
+</ol>
+<h3 id='note'>Note:</h3>
+<p>You can test all our API endpoints in our Sandbox Platform. By signing up on our Sandbox account, you can mock transactions to do end-to-end testing of your Integration flow.</p>
+
+<p>The base URL for production environment will be <code>https://api.hit-pay.com/v1/</code></p>
+
+<p>The base URL for Sandbox environment will be <code>https://api.sandbox.hit-pay.com/v1/</code>
+<aside class="notice">
+You can test PayNow transactions on our sandbox by scanning the dummy PayNow QR using any QR code reader. 
+</aside></p>
+<h1 id='integration-steps'>Integration Steps</h1>
+<p><a href="#payment-requests">Step 1</a> Create a payment request <br />
+<a href="#presenting-the-checkout-ui">Step 2</a> Presenting the Checkout UI <br />
+<a href="#webhook">Step 3</a> Handle payment status using webhooks<br /></p>
+<h1 id='authentication'>Authentication</h1>
+<blockquote>
+<p>To authorize, use this code:</p>
+</blockquote>
+<div class="highlight"><pre class="highlight shell tab-shell"><code><span class="c"># With shell, you can just pass the correct header with each request</span>
+curl <span class="s2">"api_endpoint_here"</span>
+  <span class="nt">-H</span> <span class="s2">"X-BUSINESS-API-KEY: meowmeowmeow"</span>
+  <span class="nt">-H</span> <span class="s2">"X-Requested-With: XMLHttpRequest"</span>
+</code></pre></div><div class="highlight"><pre class="highlight php tab-php"><code><span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setHeaders</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
+  <span class="s1">'X-BUSINESS-API-KEY'</span> <span class="o">=&gt;</span> <span class="s1">'meowmeowmeow'</span><span class="p">,</span>
+  <span class="s1">'Content-Type'</span> <span class="o">=&gt;</span> <span class="s1">'application/x-www-form-urlencoded'</span><span class="p">,</span>
+  <span class="s1">'X-Requested-With'</span> <span class="o">=&gt;</span> <span class="s1">'XMLHttpRequest'</span>
+<span class="p">));</span>
+</code></pre></div>
+<blockquote>
+<p>Make sure to replace <code>meowmeowmeow</code> with your API key.</p>
+</blockquote>
+
+<p>Hitpay uses API keys to allow access to the API. You can register a new API key at our <a href="https://dashboard.sandbox.hit-pay.com/">developer portal</a>.</p>
+
+<p>Hitpay expects for the API key to be included in all API requests to the server in a header that looks like the following:</p>
+
+<p><code>X-BUSINESS-API-KEY: meowmeowmeow</code></p>
+
+<aside class="notice">
+You must replace <code>meowmeowmeow</code> with your personal API key.
+</aside>
+
+<aside class="warning">
+API keys should be kept confidential and only stored on your servers. Do not store it on your mobile or web client. 
+</aside>
+<h1 id='payment-requests'>Payment Requests</h1><h2 id='create-payment-request'>Create Payment Request</h2><div class="highlight"><pre class="highlight shell tab-shell"><code>curl POST <span class="s2">"https://api.sandbox.hit-pay.com/v1/payment-requests"</span>
+  <span class="nt">-H</span> <span class="s2">"X-BUSINESS-API-KEY: meowmeowmeow"</span>
+  <span class="nt">-H</span> <span class="s2">"X-Requested-With: XMLHttpRequest"</span>
+  <span class="nt">-H</span> <span class="s2">"Content-Type: application/x-www-form-urlencoded"</span>
+  <span class="nt">-data-urlencode</span> <span class="s2">"email=tom@test.com"</span>
+  <span class="nt">-data-urlencode</span> <span class="s2">"redirect_url=https://test.com/success"</span>
+  <span class="nt">-data-urlencode</span> <span class="s2">"webhook=https://test.com/webhook"</span>
+  <span class="nt">-data-urlencode</span> <span class="s2">"amount=599"</span>
+  <span class="nt">-data-urlencode</span> <span class="s2">"currency=SGD"</span>
+
+</code></pre></div><div class="highlight"><pre class="highlight php tab-php"><code><span class="nv">$client</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">http\Client</span><span class="p">;</span>
+<span class="nv">$request</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">http\Client\Request</span><span class="p">;</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setRequestUrl</span><span class="p">(</span><span class="s1">'https://api.sandbox.hit-pay.com/v1/payment-requests'</span><span class="p">);</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setRequestMethod</span><span class="p">(</span><span class="s1">'POST'</span><span class="p">);</span>
+<span class="nv">$body</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">http\Message\Body</span><span class="p">;</span>
+<span class="nv">$body</span><span class="o">-&gt;</span><span class="na">append</span><span class="p">(</span><span class="k">new</span> <span class="nx">http\QueryString</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
+  <span class="s1">'email'</span> <span class="o">=&gt;</span> <span class="s1">'tom@test.com'</span><span class="p">,</span>
+  <span class="s1">'redirect_url'</span> <span class="o">=&gt;</span> <span class="s1">'https://test.com/success'</span><span class="p">,</span>
+  <span class="s1">'reference_number'</span> <span class="o">=&gt;</span> <span class="s1">'REF123'</span><span class="p">,</span>
+  <span class="s1">'webhook'</span> <span class="o">=&gt;</span> <span class="s1">'https://test.com/webhook'</span><span class="p">,</span>
+  <span class="s1">'currency'</span> <span class="o">=&gt;</span> <span class="s1">'SGD'</span><span class="p">,</span>
+  <span class="s1">'amount'</span> <span class="o">=&gt;</span> <span class="s1">'599'</span><span class="p">)));</span><span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setBody</span><span class="p">(</span><span class="nv">$body</span><span class="p">);</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setOptions</span><span class="p">(</span><span class="k">array</span><span class="p">());</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setHeaders</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
+  <span class="s1">'X-BUSINESS-API-KEY'</span> <span class="o">=&gt;</span> <span class="s1">'meowmeowmeow'</span><span class="p">,</span>
+  <span class="s1">'Content-Type'</span> <span class="o">=&gt;</span> <span class="s1">'application/x-www-form-urlencoded'</span><span class="p">,</span>
+  <span class="s1">'X-Requested-With'</span> <span class="o">=&gt;</span> <span class="s1">'XMLHttpRequest'</span>
+<span class="p">));</span>
+<span class="nv">$client</span><span class="o">-&gt;</span><span class="na">enqueue</span><span class="p">(</span><span class="nv">$request</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">send</span><span class="p">();</span>
+<span class="nv">$response</span> <span class="o">=</span> <span class="nv">$client</span><span class="o">-&gt;</span><span class="na">getResponse</span><span class="p">();</span>
+<span class="k">echo</span> <span class="nv">$response</span><span class="o">-&gt;</span><span class="na">getBody</span><span class="p">();</span>
+</code></pre></div>
+<blockquote>
+<p>The above command returns JSON structured like this:</p>
+</blockquote>
+<div class="highlight"><pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"90f28b43-2cff-4f86-a29e-15697424b3e7"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tom@test.com"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"phone"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"amount"</span><span class="p">:</span><span class="w"> </span><span class="s2">"599.00"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"currency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SGD"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pending"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"reference_number"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"payment_methods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="s2">"paynow_online"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"card"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"wechat"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"alipay"</span><span class="w">
+    </span><span class="p">],</span><span class="w">
+    </span><span class="nl">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://securecheckout.sandbox.hit-pay.com/payment-request/@amazone-prime-pte-ltd/90f28b43-2cff-4f86-a29e-15697424b3e7/checkout"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"redirect_url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://test.com/success"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"webhook"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://test.com/webhook"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"send_sms"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"send_email"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"sms_status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pending"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"email_status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pending"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"allow_repeated_payments"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"expiry_date"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"created_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2020-07-03T02:18:49"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"updated_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2020-07-03T02:18:49"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div>
+<p>This endpoint creates a new payment request. This is the first step of the payment flow, once you have all the details from the user and ready to collect payment use this API to create a payment request. <br />
+Since this is a server-to-server communication, if you have a mobile or Web client that communicates with your REST API, you must have a new endpoint E.g. /create-order ,or reuse an existing endpoint.  This endpoint will be responsible for making the payment request API call to hitpay. </p>
+<h3 id='http-request'>HTTP Request</h3>
+<p><code>POST https://api.sandbox.hit-pay.com/v1/payment-requests</code></p>
+<h3 id='query-parameters'>Query Parameters</h3>
+<aside class="notice">
+Mandatory fields are <code>amount</code> and <code>currency</code>. Remember to include header <code> Content-Type: application/x-www-form-urlencoded </code> 
+</aside>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>amount</td>
+<td>Amount related to the payment</td>
+<td>2500.00</td>
+</tr>
+<tr>
+<td>payment_methods[]</td>
+<td>Choice of payment methods you want to offer the customer</td>
+<td>paynow_online , card, wechat, alipay, grabpay</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>Currency related to the payment</td>
+<td>SGD</td>
+</tr>
+<tr>
+<td>email</td>
+<td>Buyer’s email</td>
+<td>foo@test.com</td>
+</tr>
+<tr>
+<td>purpose</td>
+<td>Purpose of the Payment request  FIFA 16</td>
+<td></td>
+</tr>
+<tr>
+<td>name</td>
+<td>Buyer’s name</td>
+<td>John Doe</td>
+</tr>
+<tr>
+<td>reference_number</td>
+<td>Arbitrary reference number that you can map to your internal reference number. This value cannot be edited by the customer</td>
+<td>XXXX123</td>
+</tr>
+<tr>
+<td>redirect_url</td>
+<td>URL where we redirect the user after a payment. Query arguments <code>reference</code> (payment request id) and  <code>status</code> are sent along</td>
+<td>https://test.com/callback</td>
+</tr>
+<tr>
+<td>webhook</td>
+<td>URL where our server do POST request after a payment If done</td>
+<td>https://test.com/webhook</td>
+</tr>
+<tr>
+<td>allow_repeated_payments</td>
+<td>If set to true, multiple payments can be paid on a payment request link. Default value is false</td>
+<td>false</td>
+</tr>
+<tr>
+<td>expiry_date</td>
+<td>Time after which the payment link will be expired(time in SGT). Applicable for repeated payments. Default is Null</td>
+<td>2021-02-02 01:01:01</td>
+</tr>
+<tr>
+<td>send_email</td>
+<td>If set to true, an email receipt will be sent to the customer after the payment is completed. Default is false</td>
+<td>true</td>
+</tr>
+</tbody></table>
+<h3 id='response'>Response</h3>
+<p>All the request data included</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>id</td>
+<td>Payment request id</td>
+</tr>
+</tbody></table>
+<h2 id='delete-payment-request'>Delete Payment request</h2><div class="highlight"><pre class="highlight shell tab-shell"><code>curl DELETE <span class="s2">"https://api.sandbox.hit-pay.com/v1/payment-requests/{request_id}"</span>
+  <span class="nt">-H</span> <span class="s2">"X-BUSINESS-API-KEY: meowmeowmeow"</span>
+  <span class="nt">-H</span> <span class="s2">"X-Requested-With: XMLHttpRequest"</span>
+  <span class="nt">-H</span> <span class="s2">"Content-Type: application/x-www-form-urlencoded"</span>
+</code></pre></div><div class="highlight"><pre class="highlight php tab-php"><code>
+</code></pre></div>
+<blockquote>
+<p>The above command returns JSON structured like this:</p>
+</blockquote>
+<div class="highlight"><pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"success"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div>
+<p>This is an optional API call, you may use this to delete a specific payment request.</p>
+<h3 id='http-request-2'>HTTP Request</h3>
+<p><code>DELETE https://api.sandbox.hit-pay.com/v1/payment-requests/&lt;ID&gt;</code></p>
+<h3 id='url-parameters'>URL Parameters</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>ID</td>
+<td>Payment request ID</td>
+</tr>
+</tbody></table>
+<h2 id='get-payment-status'>Get Payment Status</h2><div class="highlight"><pre class="highlight shell tab-shell"><code>curl GET <span class="s2">"https://api.sandbox.hit-pay.com/v1/payment-requests/{request_id}"</span>
+  <span class="nt">-H</span> <span class="s2">"X-BUSINESS-API-KEY: meowmeowmeow"</span>
+  <span class="nt">-H</span> <span class="s2">"X-Requested-With: XMLHttpRequest"</span>
+  <span class="nt">-H</span> <span class="s2">"Content-Type: application/x-www-form-urlencoded"</span>
+</code></pre></div><div class="highlight"><pre class="highlight php tab-php"><code><span class="nv">$client</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">http\Client</span><span class="p">;</span>
+<span class="nv">$request</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">http\Client\Request</span><span class="p">;</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setRequestUrl</span><span class="p">(</span><span class="s1">'https://api.sandbox.hit-pay.com/v1/payment-requests/{request_id}'</span><span class="p">);</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setRequestMethod</span><span class="p">(</span><span class="s1">'GET'</span><span class="p">);</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setOptions</span><span class="p">(</span><span class="k">array</span><span class="p">());</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setHeaders</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
+  <span class="s1">'X-BUSINESS-API-KEY'</span> <span class="o">=&gt;</span> <span class="s1">'meowmeowmeow'</span><span class="p">,</span>
+  <span class="s1">'X-Requested-With'</span> <span class="o">=&gt;</span> <span class="s1">'XMLHttpRequest'</span>
+<span class="p">));</span>
+<span class="nv">$client</span><span class="o">-&gt;</span><span class="na">enqueue</span><span class="p">(</span><span class="nv">$request</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">send</span><span class="p">();</span>
+<span class="nv">$response</span> <span class="o">=</span> <span class="nv">$client</span><span class="o">-&gt;</span><span class="na">getResponse</span><span class="p">();</span>
+<span class="k">echo</span> <span class="nv">$response</span><span class="o">-&gt;</span><span class="na">getBody</span><span class="p">();</span>
+</code></pre></div>
+<blockquote>
+<p>The above command returns JSON structured like this:</p>
+</blockquote>
+<div class="highlight"><pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"90f34585-537f-4cce-8607-629f53c23827"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tom@test.com"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"phone"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"amount"</span><span class="p">:</span><span class="w"> </span><span class="s2">"599.00"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"currency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SGD"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"completed"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"purpose"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"reference_number"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"payment_methods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="s2">"paynow_online"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"card"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"wechat"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"alipay"</span><span class="w">
+    </span><span class="p">],</span><span class="w">
+    </span><span class="nl">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://securecheckout.sandbox.hit-pay.com/payment-request/@amazone-prime-pte-ltd/90f34585-537f-4cce-8607-629f53c23827/checkout"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"redirect_url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://test.com/callback"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"webhook"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://test.com/webhook"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"send_sms"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"send_email"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"sms_status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pending"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"email_status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pending"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"allow_repeated_payments"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"expiry_date"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"created_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2020-07-03T10:59:38"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"updated_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2020-07-03T11:00:07"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"payments"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"90f3459d-1f07-4127-8d68-691b0b239207"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"quantity"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"succeeded"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"buyer_name"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"buyer_phone"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"buyer_email"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tom@test.com"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"currency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sgd"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"amount"</span><span class="p">:</span><span class="w"> </span><span class="s2">"599.00"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"payment_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"card"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"fees"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5.36"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"created_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2020-07-03T10:59:53"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"updated_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2020-07-03T11:00:10"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div>
+<p>This is an optional API call, you may use this to get the status of a specific payment request.</p>
+<h3 id='http-request-3'>HTTP Request</h3>
+<p><code>GET https://api.sandbox.hit-pay.com/v1/payment-requests/&lt;ID&gt;</code></p>
+<h3 id='request-parameters'>Request Parameters</h3>
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>ID</td>
+<td>Payment request ID</td>
+</tr>
+</tbody></table>
+<h3 id='response-parameters'>Response Parameters</h3>
+<p>Includes all the data from <code>Create Payment Request</code></p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>ID</td>
+<td>Payment request ID</td>
+</tr>
+<tr>
+<td>status</td>
+<td>completed/expired/pending/failed. pending if pending payment or the if the id is repeating payment</td>
+</tr>
+<tr>
+<td>payments</td>
+<td>array of payments made to this request ID. Will contain more than one if its a repeating payment link</td>
+</tr>
+</tbody></table>
+<h1 id='presenting-the-checkout-ui'>Presenting the Checkout UI</h1><div class="highlight"><pre class="highlight shell tab-shell"><code>// Applicable only <span class="k">for </span>Drop-In mode. Include hitpay.js <span class="k">in </span>your website
+&lt;script <span class="nv">src</span><span class="o">=</span><span class="s2">"https://hit-pay.com/hitpay.js"</span><span class="o">&gt;</span>&lt;/script&gt;
+
+// Initialise 
+// DEFAULT_URL <span class="o">=</span> https://securecheckout.sandbox.hit-pay.com/payment-request/@test/
+
+window.HitPay.init<span class="o">(</span><span class="s1">'DEFAULT_URL'</span>, <span class="o">{</span>
+  // Optional 
+  // closeOnError: <span class="nb">true</span> 
+<span class="o">}</span>,
+  // Optional callbacks
+<span class="o">{</span>
+    onClose: onClose,
+    onSuccess: onSuccess,
+    onError: onError
+<span class="o">})</span>
+
+// Show Drop In UI
+window.HitPay.toggle<span class="o">({</span>
+    paymentRequest: <span class="s1">'93d015df-b0b6-4cbd-8a4b-938eb79e33b2'</span>
+<span class="o">})</span>
+</code></pre></div><div class="highlight"><pre class="highlight php tab-php"><code><span class="c1">// Applicable only for Drop-In mode. Include hitpay.js in your website</span>
+<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">src</span><span class="o">=</span><span class="s2">"https://hit-pay.com/hitpay.js"</span><span class="o">&gt;&lt;/</span><span class="nx">script</span><span class="o">&gt;</span>
+
+<span class="c1">// Initialise </span>
+<span class="c1">// DEFAULT_URL = https://securecheckout.sandbox.hit-pay.com/payment-request/@test/</span>
+
+<span class="nx">window</span><span class="o">.</span><span class="nx">HitPay</span><span class="o">.</span><span class="nx">init</span><span class="p">(</span><span class="s1">'DEFAULT_URL'</span><span class="p">,</span> <span class="p">{</span>
+  <span class="c1">// Optional </span>
+  <span class="c1">// closeOnError: true </span>
+<span class="p">},</span>
+  <span class="c1">// Optional callbacks</span>
+<span class="p">{</span>
+    <span class="nx">onClose</span><span class="o">:</span> <span class="nx">onClose</span><span class="p">,</span>
+    <span class="nx">onSuccess</span><span class="o">:</span> <span class="nx">onSuccess</span><span class="p">,</span>
+    <span class="nx">onError</span><span class="o">:</span> <span class="nx">onError</span>
+<span class="p">})</span>
+
+<span class="c1">// Show Drop In UI</span>
+<span class="nx">window</span><span class="o">.</span><span class="nx">HitPay</span><span class="o">.</span><span class="nx">toggle</span><span class="p">({</span>
+    <span class="nx">paymentRequest</span><span class="o">:</span> <span class="s1">'93d015df-b0b6-4cbd-8a4b-938eb79e33b2'</span>
+<span class="p">})</span>
+</code></pre></div>
+<p>After the payment request is completed, your server must return the <code>payment_request_id</code> and <code>url</code> values to the client. There are 2 ways to present the checkout UI &quot;Redirect to HitPay checkout&quot; or &quot;Present Drop-In UI&quot;</p>
+<h3 id='option-1-redirect-to-hitpay-checkout'>Option 1: Redirect to HitPay checkout</h3>
+<p>Navigate your user to the <code>url</code>, hitpay will take care of the rest of the flow. Once the payment is completed the user will be navigated back to the &quot;redirect_url&quot; that was configured during the payment request step, along with the status</p>
+
+<p><br />
+<img src="images/mock.png" alt="PayNow API" />
+<br /></p>
+<h3 id='option-2-present-the-drop-in'>Option 2: Present the Drop-In:</h3>
+<p>Unlike the redirect checkout page, the drop-in is embedded into your webpage so your customer will never have to leave your site. To present this you will need 2 values &quot;default_link&quot; and &quot;payment_request_id&quot;. Default link value can be found in your Dashboard &gt; Payment Links &gt; Default link and this value is fixed for all your payment.
+<br /><br />
+Sample code for Drop-In UI can be found <a href="https://github.com/hit-pay/hitpay-js-example/blob/master/index.html">here</a><br />
+<img src="images/dropin_mock.png" alt="PayNow Drop-In UI" />
+<br />
+<aside class="notice">
+NOTE: Do not use  <code>status</code> or <code>onSuccess</code> to mark your order as completed. Please refer to webhook section for more details.
+</aside></p>
+<h1 id='webhook'>Webhook</h1><div class="highlight"><pre class="highlight shell tab-shell"><code></code></pre></div><div class="highlight"><pre class="highlight php tab-php"><code>    <span class="k">public</span> <span class="k">function</span> <span class="nf">generateSignatureArray</span><span class="p">(</span><span class="nv">$secret</span><span class="p">,</span> <span class="k">array</span> <span class="nv">$args</span><span class="p">)</span> 
+    <span class="p">{</span>   
+        <span class="nv">$hmacSource</span> <span class="o">=</span> <span class="p">[];</span>        
+
+        <span class="k">foreach</span> <span class="p">(</span><span class="nv">$args</span> <span class="k">as</span> <span class="nv">$key</span> <span class="o">=&gt;</span> <span class="nv">$val</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$hmacSource</span><span class="p">[</span><span class="nv">$key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"</span><span class="si">{</span><span class="nv">$key</span><span class="si">}{</span><span class="nv">$val</span><span class="si">}</span><span class="s2">"</span><span class="p">;</span>
+        <span class="p">}</span>    
+
+        <span class="nb">ksort</span><span class="p">(</span><span class="nv">$hmacSource</span><span class="p">);</span>
+
+        <span class="nv">$sig</span>            <span class="o">=</span> <span class="nb">implode</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="nb">array_values</span><span class="p">(</span><span class="nv">$hmacSource</span><span class="p">));</span>
+        <span class="nv">$calculatedHmac</span> <span class="o">=</span> <span class="nb">hash_hmac</span><span class="p">(</span><span class="s1">'sha256'</span><span class="p">,</span> <span class="nv">$sig</span><span class="p">,</span> <span class="nv">$secret</span><span class="p">);</span> 
+
+        <span class="k">return</span> <span class="nv">$calculatedHmac</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div>
+<blockquote>
+<p>Sample webhook payload data:</p>
+</blockquote>
+<div class="highlight"><pre class="highlight plaintext"><code>payment_id=92965a2d-ece3-4ace-1245-494050c9a3c1&amp;payment_request_id=92965a20-dae5-4d89-a452-5fdfa382dbe1&amp;reference_number=ABC123&amp;phone=&amp;amount=599.00&amp;currency=SGD&amp;status=completed&amp;hmac=330c34a6a8fb9ddb75833620dedb94bf4d4c2e51399d346cbc2b08c381a1399c
+</code></pre></div>
+<p>Webhook is a POST request send from HitPay&#39;s server to your server about the payment confirmation. If you are using hitpay APIs to integrate into your e-commerce checkout you must mark your order as paid ONLY after the webhook is received and validated.</p>
+
+<ol>
+<li>Create an endpoint (E.g. /payment-confirmation/webhook) in your server that accepts POST requests. This request is <code>application/x-www-form-urlencoded</code>.</li>
+<li>Validate the webhook data using your salt value </li>
+<li>Return HTTP status code 200 to Hitpay </li>
+<li>Mark your order as paid</li>
+</ol>
+<h3 id='webhook-fields'>Webhook fields</h3>
+<p>Following fields are sent with the webhook request:</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>payment_id</td>
+<td>Payment ID</td>
+</tr>
+<tr>
+<td>payment_request_id</td>
+<td>Payment request ID</td>
+</tr>
+<tr>
+<td>phone</td>
+<td>Buyer’s phone number</td>
+</tr>
+<tr>
+<td>amount</td>
+<td>Amount related to the payment</td>
+</tr>
+<tr>
+<td>currency</td>
+<td>Currency related to the payment</td>
+</tr>
+<tr>
+<td>status</td>
+<td>Payment status (completed / failed)</td>
+</tr>
+<tr>
+<td>reference_number</td>
+<td>Arbitrary reference number that you have mapped during payment request creation</td>
+</tr>
+<tr>
+<td>hmac</td>
+<td>Message Authentication code of this webhook request</td>
+</tr>
+</tbody></table>
+<h3 id='validate-webhook'>Validate Webhook</h3>
+<p>Hitpay creates a list of all values from the key-value pairs that we send in the POST request and sort them in the order of their keys alphabetically. We then concatenate all these values together. We then use the HMAC-SHA256 algorithm to generate the signature. The HMAC key for the signature generation is the secret <code>salt</code> from your dashboard under <code>Settings &gt; Payment Gateway &gt; API Keys</code>.</p>
+
+<p>Hitpay PHP API Wrapper:
+<a href="https://github.com/hit-pay/php-sdk">https://github.com/hit-pay/php-sdk</a></p>
+<h3 id='signature-mismatch'>Signature Mismatch?</h3>
+<p>Possible reasons for wrong hmac value generated<br /></p>
+
+<ul>
+<li>Ensure that you are using the correct salt value from the correct environment (Sandbox or Production)</li>
+<li>Make sure not to include the <code>hamc</code> value when calculating the hmac</li>
+<li>Make sure all the values stated above are included in the payload including reference_number. Use empty string if the value does not exist</li>
+</ul>
+<h1 id='refund'>Refund</h1><div class="highlight"><pre class="highlight shell tab-shell"><code>curl POST <span class="s2">"https://api.hit-pay.com/v1/refund"</span>
+  <span class="nt">-H</span> <span class="s2">"X-BUSINESS-API-KEY: meowmeowmeow"</span>
+  <span class="nt">-H</span> <span class="s2">"X-Requested-With: XMLHttpRequest"</span>
+  <span class="nt">-H</span> <span class="s2">"Content-Type: application/x-www-form-urlencoded"</span>
+  <span class="nt">-data-urlencode</span> <span class="s2">"amount=25"</span>
+  <span class="nt">-data-urlencode</span> <span class="s2">"payment_id=942E8DD7-93AC-4DA5-A354-GA3410F2890B"</span>
+</code></pre></div><div class="highlight"><pre class="highlight php tab-php"><code><span class="nv">$client</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">http\Client</span><span class="p">;</span>
+<span class="nv">$request</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">http\Client\Request</span><span class="p">;</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setRequestUrl</span><span class="p">(</span><span class="s1">'https://api.hit-pay.com/v1/refund'</span><span class="p">);</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setRequestMethod</span><span class="p">(</span><span class="s1">'POST'</span><span class="p">);</span>
+<span class="nv">$body</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">http\Message\Body</span><span class="p">;</span>
+<span class="nv">$body</span><span class="o">-&gt;</span><span class="na">append</span><span class="p">(</span><span class="k">new</span> <span class="nx">http\QueryString</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
+  <span class="s1">'payment_id'</span> <span class="o">=&gt;</span> <span class="s1">'942E8DD7-93AC-4DA5-A354-GA3410F2890B'</span><span class="p">,</span>
+  <span class="s1">'amount'</span> <span class="o">=&gt;</span> <span class="s1">'25'</span><span class="p">)));</span><span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setBody</span><span class="p">(</span><span class="nv">$body</span><span class="p">);</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setOptions</span><span class="p">(</span><span class="k">array</span><span class="p">());</span>
+<span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setHeaders</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
+  <span class="s1">'X-BUSINESS-API-KEY'</span> <span class="o">=&gt;</span> <span class="s1">'meowmeowmeow'</span><span class="p">,</span>
+  <span class="s1">'Content-Type'</span> <span class="o">=&gt;</span> <span class="s1">'application/x-www-form-urlencoded'</span><span class="p">,</span>
+  <span class="s1">'X-Requested-With'</span> <span class="o">=&gt;</span> <span class="s1">'XMLHttpRequest'</span>
+<span class="p">));</span>
+<span class="nv">$client</span><span class="o">-&gt;</span><span class="na">enqueue</span><span class="p">(</span><span class="nv">$request</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">send</span><span class="p">();</span>
+<span class="nv">$response</span> <span class="o">=</span> <span class="nv">$client</span><span class="o">-&gt;</span><span class="na">getResponse</span><span class="p">();</span>
+<span class="k">echo</span> <span class="nv">$response</span><span class="o">-&gt;</span><span class="na">getBody</span><span class="p">();</span>
+</code></pre></div>
+<blockquote>
+<p>The above command returns JSON structured like this:</p>
+</blockquote>
+<div class="highlight"><pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"94429a3a-c94d-49d8-adb2-341fb8386a8d9"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"payment_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"942E8DD7-93AC-4DA5-A354-GA3410F2890B"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"amount_refunded"</span><span class="p">:</span><span class="w"> </span><span class="mf">25.00</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"total_amount"</span><span class="p">:</span><span class="w"> </span><span class="mf">599.00</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"currency"</span><span class="p">:</span><span class="w"> </span><span class="s2">"sgd"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"payment_method"</span><span class="p">:</span><span class="w"> </span><span class="s2">"card"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"created_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2021-08-28T16:02:42"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div>
+<p>This is an optional API call, you may use this to refund of a specific payment.
+<aside class="notice">
+Use &quot;Payment ID&quot; but not &quot;Payment Request ID&quot;. Only one refund is allowed per one successful payment (PayNow or Card). 
+</aside></p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>amount</td>
+<td>Amount to refund</td>
+<td>25</td>
+</tr>
+<tr>
+<td>payment_id</td>
+<td>Payment ID for the successful payment request</td>
+<td>42e8bb7-93ac-4da5-a354-f49610f2890b</td>
+</tr>
+</tbody></table>
+<h1 id='production-checklist'>Production Checklist</h1>
+<p>Ensure the following before moving to production<br /></p>
+
+<ol>
+<li>Change the base URL for all API calls to <code>https://api.hit-pay.com/v1/</code></li>
+<li>Finish paynow and other payment methods set up in <a href="https://dashboard.hit-pay.com/">production</a></li>
+<li>Update API keys and Salt values from the production <a href="https://dashboard.hit-pay.com/">dashboard</a></li>
+<li>If you are using Drop-In UI, update the default link to the production URL</li>
+</ol>
+<h1 id='platform-apis'>Platform APIs</h1><h2 id='overview'>Overview</h2>
+<p>Hitpay Platform APIs are an extension of the above Payment Request APIs are used by e-commerce platforms or aggregators who host other merchants. Platforms will have the ability to create payment requests on behalf of the merchants that are on their platform. </p>
+
+<p>Platforms will also have the ability to set a commission for the transactions that happen through their platform.</p>
+<h2 id='integrations-flow'>Integrations Flow</h2>
+<ol>
+<li>Contact to Hitpay to signup for a Platform Account </li>
+<li>Individual merchant creates a Hitpay account https://dashboard.sandbox.hit-pay.com </li>
+<li>Individual merchant will setup PayNow (Singapore Only) in the HitPay Dashboard under Settings &gt; Payment Methods &gt; PayNow </li>
+<li>Individual merchant will generate API keys under Settings &gt; Payment Gateway &gt; API Keys. (Merchant API keys)</li>
+<li>These keys will give you access to create payment requests. </li>
+</ol>
+
+<blockquote>
+<p>To authorize, use this code:</p>
+</blockquote>
+<div class="highlight"><pre class="highlight shell tab-shell"><code><span class="c"># With shell, you can just pass the correct header with each request</span>
+curl <span class="s2">"api_endpoint_here"</span>
+  <span class="nt">-H</span> <span class="s2">"X-BUSINESS-API-KEY: meowmeowmeow"</span>
+  <span class="nt">-H</span> <span class="s2">"X-PLATFORM-KEY: bowbowbow"</span>
+  <span class="nt">-H</span> <span class="s2">"X-Requested-With: XMLHttpRequest"</span>
+</code></pre></div><div class="highlight"><pre class="highlight php tab-php"><code><span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setHeaders</span><span class="p">(</span><span class="k">array</span><span class="p">(</span>
+  <span class="s1">'X-BUSINESS-API-KEY'</span> <span class="o">=&gt;</span> <span class="s1">'meowmeowmeow'</span><span class="p">,</span>
+  <span class="s1">'X-PLATFORM-KEY'</span> <span class="o">=&gt;</span> <span class="s1">'bowbowbow'</span><span class="p">,</span>
+  <span class="s1">'Content-Type'</span> <span class="o">=&gt;</span> <span class="s1">'application/x-www-form-urlencoded'</span><span class="p">,</span>
+  <span class="s1">'X-Requested-With'</span> <span class="o">=&gt;</span> <span class="s1">'XMLHttpRequest'</span>
+<span class="p">));</span>
+
+</code></pre></div>
+<blockquote>
+<p>Make sure to replace <code>meowmeowmeow</code> with your Merchant API key and <code>bowbowbow</code> with your Platform API key.</p>
+</blockquote>
+<h2 id='platform-authentication'>Platform Authentication</h2>
+<p>Hitpay uses API keys to allow access to the API. Once your account is converted to “Platform Account” you can you can access your <a href="https://dashboard.sandbox.hit-pay.com">“Platform API Key”</a>  (Settings &gt; Payment Gateway &gt; Platform).
+This Platform API Key along with Merchant API key is expected to be included in all API requests to the server in a header that looks like the following:</p>
+
+<p><code>X-BUSINESS-API-KEY: meowmeowmeow</code>
+<code>X-PLATFORM-KEY: bowbowbow</code></p>
+
+<aside class="notice">
+You must replace <code>meowmeowmeow</code> with your Merchant API key & <code>bowbowbow</code> with your Platform API key
+</aside>
+<h1 id='errors'>Errors</h1>
+<p>Hitpay API uses the following error codes:</p>
+
+<table><thead>
+<tr>
+<th>Error Code</th>
+<th>Meaning</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>400</td>
+<td>Bad Request -- Your request is invalid.</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized -- Your API key is wrong.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Not Found -- The payment request could not be found.</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Internal Server Error -- We had a problem with our server. Try again later.</td>
+</tr>
+</tbody></table>
+
+      </div>
+      <div class="dark-box">
+          <div class="lang-selector">
+                <a href="#" data-language-name="shell">shell</a>
+                <a href="#" data-language-name="php">php</a>
+          </div>
+      </div>
+    </div>
+  </body>
+</html>

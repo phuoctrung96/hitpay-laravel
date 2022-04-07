@@ -1,0 +1,10 @@
+<?php
+
+namespace DummyNamespace;
+
+use App\Enumerations\Enumeration;
+
+class DummyClass extends Enumeration
+{
+    //
+}
