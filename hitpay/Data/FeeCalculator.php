@@ -130,11 +130,11 @@ class FeeCalculator
 
         $homeCurrencyBreakdown = new Fee\Breakdown(
             $homeCurrencyFixedFeeAmount,
-            (int) bcdiv($settlementCurrencyDiscountFeeAmount, $exchangeRate),
+            (int) bcmul($settlementCurrencyDiscountFeeAmount, $exchangeRate),
         );
 
         $settlementCurrencyBreakdown = new Fee\Breakdown(
-            (int) bcmul($homeCurrencyFixedFeeAmount, $exchangeRate),
+            (int) bcdiv($homeCurrencyFixedFeeAmount, $exchangeRate),
             $settlementCurrencyDiscountFeeAmount,
         );
 

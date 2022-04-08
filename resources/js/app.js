@@ -152,7 +152,6 @@ Vue.component('business-charge', require('./components/Business/Charge').default
 Vue.component('business-paynow-refund', require('./components/Business/PayNowRefund').default);
 Vue.component('business-refund', require('./components/Business/Refund').default);
 Vue.component('business-charge-export', require('./components/Business/ExportCharge').default);
-Vue.component('business-product-export', require('./components/Business/ExportProduct').default);
 Vue.component('business-platform-charge-export', require('./components/Business/ExportPlatformCharge').default);
 Vue.component('business-create', require('./components/Business/CreateComponent').default);
 Vue.component('business-customer', require('./components/Business/Customer').default);
@@ -203,7 +202,6 @@ Vue.component('shop-settings', require('./components/Business/ShopState').defaul
 Vue.component('tax-invoices', require('./components/Business/TaxInvoice').default);
 Vue.component('partners', require('./components/Business/Partners').default);
 Vue.component('verification', require('./components/Business/Verification').default);
-Vue.component('manual-verification', require('./components/Business/Verification/Manual').default);
 
 Vue.component('passport-clients', require('./components/Passport/Clients.vue').default);
 Vue.component('passport-authorized-clients', require('./components/Passport/AuthorizedClients.vue').default);
@@ -221,7 +219,6 @@ Vue.component('balance-withdrawal', require('./components/Business/Wallets/Withd
 Vue.component('balance-top-up', require('./components/Business/Wallets/TopUp').default);
 Vue.component('main-dashboard', require('./components/Dashboard/MainDashboard.vue').default);
 Vue.component('business-users', require('./components/Business/Users/BusinessUsers.vue').default);
-Vue.component('business-role-restrictions', require('./components/Business/RoleRestrictions.vue').default);
 Vue.component('getting-started', require('./components/Dashboard/GettingStarted.vue').default);
 
 Vue.component('paynow-settings', require('./components/Business/PaymentMethods/PayNowSettings.vue').default);

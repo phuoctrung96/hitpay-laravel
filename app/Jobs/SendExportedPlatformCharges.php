@@ -249,8 +249,7 @@ class SendExportedPlatformCharges implements ShouldQueue
                     ? getReadableAmountByCurrency($charge->home_currency, $charge->getTotalFee()) : '',
                 'All Inclusive Fee' => ($charge->payment_provider_transfer_type === 'destination'
                     || $charge->payment_provider_transfer_type === 'manual'
-                    || $charge->payment_provider_transfer_type === 'wallet'
-                    || $charge->payment_provider_transfer_type === 'application_fee')
+                    || $charge->payment_provider_transfer_type === 'wallet')
                 && $charge->home_currency
                     ? getReadableAmountByCurrency($charge->home_currency, $charge->getTotalFee()) : '',
                 'Net Amount' => $charge->home_currency ? getReadableAmountByCurrency($charge->home_currency,

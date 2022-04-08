@@ -149,12 +149,8 @@ class GrabPayController extends Controller
                     DB::commit();
                     
                     // success
-                    if ($charge->paymentRequest->redirect_url) {
-                      return redirect()->away($charge->paymentRequest->redirect_url . '?reference=' . $charge->paymentRequest->id . '&status=completed');    
-                    } else {
-                      return redirect()->route('securecheckout.payment.request.completed', ['p_charge' => $charge->getKey()]);    
-                    }
-                    
+                    return redirect()->route('securecheckout.payment.request.completed', ['p_charge' => $charge->getKey()]);    
+
                   case 'failed':
                     $charge->status = ChargeStatus::FAILED;
 
@@ -163,11 +159,7 @@ class GrabPayController extends Controller
 
                     Log::critical('[GrabPay] Order confirmation failed, charge: ' . $charge->id);
 
-                    if ($charge->paymentRequest->redirect_url) {
-                      return redirect()->away($charge->paymentRequest->redirect_url . '?reference=' . $charge->paymentRequest->id . '&status=failed');
-                    } else {
-                      return Response::view('shop.checkout.simpleerror', ['message' => 'Payment failed']);                    
-                    }
+                    return Response::view('shop.checkout.simpleerror', ['message' => 'Payment failed']);                    
 
                   default:
                     break;

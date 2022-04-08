@@ -3,111 +3,70 @@
 namespace App\Http\Controllers\Dashboard\Business;
 
 use App\Business;
-use App\Enumerations\PaymentProvider as PaymentProviderEnum;
 use App\Http\Controllers\Controller;
-use HitPay\Data\PaymentProviders;
-use HitPay\Stripe\CustomAccount\Sync;
-use Illuminate\Http;
-use Illuminate\Support\Facades;
+use App\Manager\BusinessManagerInterface;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Http\Request;
+use App\Enumerations\PaymentProvider as PaymentProviderEnum;
 
 class PaymentProviderController extends Controller
 {
     /**
-     * PaymentProviderController Constructor
+     * PayNowController constructor.
      */
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    /**
-     * Show the homepage of payment providers.
-     *
-     * @param  \App\Business  $business
-     *
-     * @return \Illuminate\Http\Response
-     * @throws \Illuminate\Auth\Access\AuthorizationException
-     */
-    public function showHomePage(Business $business) : Http\Response
+    public function home(
+        Request $request,
+        Business $business,
+        $tab = 'paynow',
+        BusinessManagerInterface $businessManager
+    )
     {
-        Facades\Gate::inspect('view', $business)->authorize();
+        Gate::inspect('view', $business)->authorize();
 
-        $availablePaymentProviders = $business->paymentProvidersAvailable()->pluck('data.code');
-        $paymentProvidersDisabled = [];
+        $basicPaymentProvider = $businessManager->getBasicAvailablePaymentProviderWithoutCheck($business);
 
-        foreach ([
-            PaymentProviderEnum::GRABPAY,
-            PaymentProviderEnum::ZIP,
-        ] as $paymentProviderCode) {
-            if (!$business->allowProvider($paymentProviderCode)) {
-                $paymentProvidersDisabled[] = $paymentProviderCode;
+        $requestProviders = $basicPaymentProvider->pluck('data.code')->toArray();
 
-                $availablePaymentProviders = $availablePaymentProviders->filter(
-                    function (string $paymentProvider) use ($paymentProviderCode) {
-                        return $paymentProvider !== $paymentProviderCode;
-                    }
-                );
-            }
+        $disabled_providers = [];
+
+        if ($business->allowGrabPay()) {
+          $requestProviders[] = PaymentProviderEnum::GRABPAY;
+        } else {
+          $disabled_providers[] = PaymentProviderEnum::GRABPAY;
         }
 
-        if (!$business->allowShopee()) {
-            $paymentProvidersDisabled[] = PaymentProviderEnum::SHOPEE_PAY;
-
-            $availablePaymentProviders = $availablePaymentProviders->filter(function (string $paymentProvider) {
-                return $paymentProvider !== PaymentProviderEnum::SHOPEE_PAY;
-            });
+        if ($business->allowZip()) {
+          $requestProviders[] = PaymentProviderEnum::ZIP;
+        } else {
+          $disabled_providers[] = PaymentProviderEnum::ZIP;
         }
 
-        $availablePaymentProviderCodes = $availablePaymentProviders->toArray();
-        $paymentProvidersEnabled = $business->paymentProviders()
-            ->whereNotNull('payment_provider_account_id')
-            ->whereIn('payment_provider', $availablePaymentProviderCodes)
-            ->get();
-
-        $stripeCodes = PaymentProviders::all()->where('official_code', 'stripe')->pluck('code')->toArray();
-        $stripePaymentProviders = $paymentProvidersEnabled->whereIn('payment_provider', $stripeCodes);
-        $stripePaymentProvidersCount = $stripePaymentProviders->count();
-
-        if ($stripePaymentProvidersCount > 0) {
-            /** @var \App\Business\PaymentProvider $stripePaymentProvider */
-            $stripePaymentProvider = $stripePaymentProviders->sortByDesc('created_at')->first();
-
-            if ($stripePaymentProvider->payment_provider_account_type === 'custom') {
-                $cacheKey = "__refreshed:stripe_account:{$stripePaymentProvider->payment_provider_account_id}";
-
-                if (Facades\App::isLocal()) {
-                    Facades\Cache::forget($cacheKey);
-                }
-
-                /** @var \App\Business\PaymentProvider $stripePaymentProvider */
-                $stripePaymentProvider = Facades\Cache::remember($cacheKey, 1800, function () use ($business) {
-                    return Sync::new($business->payment_provider)->setBusiness($business)->handle(null, false);
-                });
-
-                // A dirty hack to replace the payment provider in the collection.
-                //
-                $paymentProvidersEnabled->map(function (
-                    Business\PaymentProvider $paymentProvider
-                ) use ($stripePaymentProvider) {
-                    return $paymentProvider->payment_provider === $stripePaymentProvider->payment_provider
-                        ? $stripePaymentProvider
-                        : $paymentProvider;
-                });
-            }
-
-            if ($stripePaymentProvidersCount > 1) {
-                Facades\Log::critical(
-                    "The business '{$business->getKey()}' has more than 1 Stripe related payment providers (Codes: '{$stripePaymentProviders->join('\', \'', 'payment_provider')}')."
-                );
-            }
+        if ($business->allowShopee()) {
+          $requestProviders[] = PaymentProviderEnum::SHOPEE_PAY;
+        } else {
+          $disabled_providers[] = PaymentProviderEnum::SHOPEE_PAY;
         }
 
-        return Facades\Response::view('dashboard.business.payment-providers.index', [
-            'business' => $business,
-            'providers' => $paymentProvidersEnabled,
-            'disabled_providers' => $paymentProvidersDisabled,
-            'bankList' => $business->banksAvailable(), // KIV, this might not in used anymore
-            'business_verified' => $business->businessVerified(),
-        ]);
+        // Do not include "deleted" payment providers like Stripe or Shopee
+        // in this case time added to payment_provider field
+        $providers = $business->paymentProviders()
+          ->whereNotNull('payment_provider_account_id')
+          ->whereIn('payment_provider', $requestProviders)->get();
+
+        $bankList = $businessManager->getAvailableBanks($business);
+
+        if ($tab !== 'paynow' && $tab !== 'stripe') {
+          $tab = 'paynow';
+        }
+
+        $business_verified = $business->businessVerified();
+
+        return Response::view('dashboard.business.payment-providers.index', compact('business', 'providers', 'disabled_providers', 'bankList', 'tab', 'business_verified'));
     }
 }

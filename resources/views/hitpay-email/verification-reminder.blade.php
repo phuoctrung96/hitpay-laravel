@@ -25,7 +25,7 @@
             <a href="https://hitpay.zendesk.com/hc/en-us/articles/900006274443-How-to-verify-my-account-using-MyInfo-">Click</a>
         </p>
         <p>
-            If you have any questions, you can send us an email or reach out to us on WhatsApp at +65 89518262.
+            If you have any questions, you can send us an email or reach out to us on WhatsApp at +65 98644718.
         </p>
         <p>Thank You,</p>
         <p>Team HitPay</p>

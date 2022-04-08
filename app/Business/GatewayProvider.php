@@ -18,6 +18,10 @@ class GatewayProvider extends Model implements OwnableContract
      */
     protected $table = 'business_gateway_providers';
 
+    protected $casts = [
+        'methods' => 'array'
+    ];
+
     public function getArrayMethodsAttribute()
     {
         if (empty($this->methods)) {

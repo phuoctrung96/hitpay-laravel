@@ -8,7 +8,7 @@ use HitPay\MyInfoSG\Exceptions\InvalidDataOrSignatureForPersonDataException;
 use HitPay\MyInfoSG\Exceptions\MyInfoPersonDataNotFoundException;
 use HitPay\MyInfoSG\Exceptions\SubNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Laravel\Passport\Exceptions\OAuthServerException;
+use League\OAuth2\Server\Exception\OAuthServerException;
 
 class Handler extends ExceptionHandler
 {

@@ -3,7 +3,6 @@
 namespace App\Actions\User\Register;
 
 use App\Business\BusinessCategory;
-use App\Enumerations\CountryCode;
 use Illuminate\Support\Collection;
 
 class BusinessForm extends Action
@@ -13,7 +12,7 @@ class BusinessForm extends Action
      */
     public function process(): array
     {
-        $selectedCountry = $this->request->session()->get('country', CountryCode::SINGAPORE);
+        $selectedCountry = $this->request->session()->get('country', 'sg');
 
         return [
             'countries' => $this->getCountries($selectedCountry),
@@ -30,12 +29,12 @@ class BusinessForm extends Action
     {
         $countries = Collection::make([
             [
-                'id' => CountryCode::SINGAPORE,
+                'id' => 'sg',
                 'name' => 'Singapore',
                 'active' => false,
             ],
             [
-                'id' => CountryCode::MALAYSIA,
+                'id' => 'my',
                 'name' => 'Malaysia',
                 'active' => false,
             ]

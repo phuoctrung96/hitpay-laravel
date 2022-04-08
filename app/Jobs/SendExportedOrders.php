@@ -87,16 +87,13 @@ class SendExportedOrders implements ShouldQueue
         /** @var \App\Business\Order $order */
         foreach ($orders as $order) {
             $orderedProducts = Collection::make();
-            $orderedProductVariant = Collection::make();
 
             foreach ($order->products as $product) {
                 $name = $product->name;
 
                 $name .= ' (Quantity: ' . $product->quantity . ')';
-                $orderedProducts->add($name);
 
-                $variant = $product->description;
-                $orderedProductVariant->add($variant);
+                $orderedProducts->add($name);
             }
 
             if ($order->status === 'requires_business_action') {
@@ -133,7 +130,6 @@ class SendExportedOrders implements ShouldQueue
                 getFormattedAmount($order->currency, $order->additional_discount_amount),
                 $orderStatus,
                 $orderedProducts->implode(', '),
-                $orderedProductVariant->implode(', '),
                 $order->remark ?? "",
                 $order->created_at->toDateTimeString(),
                 $order->closed_at ? $order->closed_at->toDateTimeString() : null,
@@ -160,7 +156,6 @@ class SendExportedOrders implements ShouldQueue
                 'Discount Amount',
                 'Status',
                 'Products',
-                'Variant',
                 'Buyer remarks',
                 'Ordered Date',
                 'Completed Date',

@@ -23,7 +23,7 @@
             <tr v-for="(month,index) in months">
                 <th scope="row">{{(index+1)}}</th>
                 <td>Fee Invoice for {{ month.name }} {{month.year}}</td>
-                <td><button class="btn btn-light btn-sm" v-if="!business.isCashier" @click="downloadInvoice(month.value, month.year)">Export</button></td>
+                <td><button class="btn btn-light btn-sm" @click="downloadInvoice(month.value, month.year)">Export</button></td>
             </tr>
             </tbody>
         </table>

@@ -50,11 +50,11 @@ class Create extends CustomAccount
             'type' => 'custom',
             'country' => strtoupper($this->business->country),
             'capabilities' => $this->generateDesiredCapabilities(),
-            'business_type' => $this->business->getStripeAccountBusinessType(),
+            'business_type' => $this->business->business_type,
             'metadata' => [
                 'platform' => Facades\Config::get('app.name'),
                 'version' => ConfigurationRepository::get('platform_version'),
-                'environment' => Facades\Config::get('app.env'),
+                'environment' => Facades\Config::get('env'),
                 'business_id' => $this->business->getKey(),
             ],
             'tos_acceptance' => [

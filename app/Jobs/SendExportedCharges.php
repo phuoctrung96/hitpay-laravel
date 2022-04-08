@@ -47,7 +47,6 @@ class SendExportedCharges implements ShouldQueue
         'Product(s)',
         'Payment Details',
         'Store URL',
-        'Terminal ID',
     ];
 
     /**
@@ -161,7 +160,6 @@ class SendExportedCharges implements ShouldQueue
             'Payment Details',
             'Completed Date',
             'Store URL',
-            'Terminal ID',
         ])->filter(function ($field) {
             return !in_array($field, $this->fieldsToBeIgnored);
         })->toArray());
@@ -205,8 +203,7 @@ class SendExportedCharges implements ShouldQueue
             if ($charge->balance !== null) {
                 $refundedAmount = $charge->amount - $charge->balance;
             } else {
-                // When customer performs a full refund balance will be null
-                $refundedAmount = $charge->status === ChargeStatus::REFUNDED ? $charge->amount : 0;
+                $refundedAmount = 0;
             }
 
             if ($charge->refunds->where('is_cashback',1)->count()){
@@ -222,9 +219,6 @@ class SendExportedCharges implements ShouldQueue
             }
 
             $cashback_amount = $charge->refunds->where('is_cashback',1)->first()->amount ?? 0;
-
-            $paymentIntents = $charge->paymentIntents()->get();
-            $terminal = $paymentIntents->where('status', 'succeeded');
 
             $singleData = collect([
                 '#' => $i++,
@@ -255,8 +249,7 @@ class SendExportedCharges implements ShouldQueue
                     ? getReadableAmountByCurrency($charge->home_currency, $charge->getTotalFee()) : '',
                 'All Inclusive Fee' => ($charge->payment_provider_transfer_type === 'destination'
                     || $charge->payment_provider_transfer_type === 'manual'
-                    || $charge->payment_provider_transfer_type === 'wallet'
-                    || $charge->payment_provider_transfer_type === 'application_fee')
+                    || $charge->payment_provider_transfer_type === 'wallet')
                 && $charge->home_currency
                     ? getReadableAmountByCurrency($charge->home_currency, $charge->getTotalFee()) : '',
                 'Net Amount' => $charge->home_currency ? getReadableAmountByCurrency($charge->home_currency,
@@ -264,7 +257,6 @@ class SendExportedCharges implements ShouldQueue
                 'Payment Details' => $charge->getChargeDetails(),
                 'Completed Date' => $charge->closed_at->toDateTimeString(),
                 'Store URL' => $charge->getStoreURL(),
-                'Terminal ID' => !is_null($terminal->hitpay) ? $terminal->hitpay->terminal->serial_number ?? null : null
             ])->filter(function ($field, $index) {
                 return !in_array($index, $this->fieldsToBeIgnored);
             })->toArray();

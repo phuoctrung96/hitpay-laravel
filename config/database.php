@@ -37,10 +37,36 @@ return [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
             'read' => [
+                'host' => explode('|', env('DB_HOST', '127.0.0.1')),
+            ],
+            'write' => [
+                'host' => explode('|', env('DB_HOST', '127.0.0.1')),
+            ],
+            'sticky' => true,
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'hitpay'),
+            'username' => env('DB_USERNAME', 'hitpay'),
+            'password' => env('DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        'mysql_read' => [
+            'driver' => 'mysql',
+            'url' => env('DATABASE_URL'),
+            'read' => [
                 'host' => explode('|', env('DB_HOST_READ', env('DB_HOST', '127.0.0.1'))),
             ],
             'write' => [
-                'host' => explode('|', env('DB_HOST_WRITE', env('DB_HOST', '127.0.0.1'))),
+                'host' => explode('|', env('DB_HOST', '127.0.0.1')),
             ],
             'sticky' => true,
             'port' => env('DB_PORT', '3306'),

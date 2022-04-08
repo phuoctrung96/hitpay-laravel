@@ -55,7 +55,6 @@ trait BusinessPaymentIntentValidator
                 PaymentMethodType::CARD_PRESENT => Action::PAYMENT_INTENT,
                 PaymentMethodType::GRABPAY => Action::PAYMENT_INTENT,
                 PaymentMethodType::WECHAT => Action::SOURCE,
-                PaymentMethodType::FPX => Action::PAYMENT_INTENT,                
             ],
         ];
 

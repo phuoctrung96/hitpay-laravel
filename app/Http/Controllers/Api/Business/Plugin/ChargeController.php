@@ -112,13 +112,7 @@ class ChargeController extends Controller
 
           $chargeManager->assignCustomer($charge, $customer);
 
-          try {
-              return $stripePaymentIntentManager->create($charge, $business);
-          } catch (BadRequest $exception) {
-              return Response::json([
-                  'error_message' => $exception->getMessage(),
-              ], 400);
-          }
+          return $stripePaymentIntentManager->create($charge, $business);
         }
     }
 
@@ -217,6 +211,17 @@ class ChargeController extends Controller
         } catch (Exception $e) {
             throw $e;
         }
+    }
+
+    /**
+     * @param Business $business
+     * @param Charge $charge
+     */
+    public function showAlipayStatus(Business $business, Charge $charge)
+    {
+        return Response::json([
+            'success' => true,
+        ]);
     }
 
     /**

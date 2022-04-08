@@ -38,6 +38,3 @@ Route::post('ecwid/hitpay', 'EcwidController@hitpay');
 //Route::domain(Config::get('/ecwid/payment',[EcwidController::class, 'payment']));
 Route::get('close', 'CloseController')->name('close');
 Route::get('callback', 'Dashboard\Business\VerificationController@callbackSandbox')->name('callback');
-
-Route::get('shopify/checkout/redirect', 'ShopifyCheckoutRedirectController')
-    ->name('web.shopify.checkout.redirect');

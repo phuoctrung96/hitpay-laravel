@@ -6,7 +6,6 @@ use App\Actions\Business\BasicDetails\UpdateStripeAccount;
 use App\Business;
 use App\Business\BusinessReferral;
 use App\Enumerations\Business\PaymentMethodType;
-use App\Enumerations\Business\Type;
 use App\Enumerations\CountryCode;
 use App\Enumerations\PaymentProvider;
 use App\Enumerations\PaymentProvider as PaymentProviderEnum;
@@ -27,7 +26,6 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class BusinessRepository
@@ -128,45 +126,16 @@ class BusinessRepository
             ],
         ]);
 
-        $website = $data['website'];
-
-        if (!Facades\URL::isValidUrl($website)) {
-            // try to use https
-            $website = "https://{$website}";
-
-            if (!Facades\URL::isValidUrl($website)) {
-                // if still invalid
-                ValidationException::withMessages([
-                    'website' => 'Invalid website',
-                ]);
-            }
-        }
-
-        $data['website'] = $website;
-
         $data['id'] = Str::orderedUuid()->toString();
-        $customer = null; // customer of stripe
+        $data['payment_provider'] = Customer::getStripePlatformByCountry($data['country']);
 
-        if ($user->businessPartner) { // handle partner
-            $data['business_type'] = Type::PARTNER;
-
-            if ($data['country'] === CountryCode::MALAYSIA) {
-                $data['payment_provider'] = Customer::getStripePlatformByCountry($data['country']);
-
-                $customer = Customer::newByCountry($data['country'])->create('business_id:'.$data['id']);
-
-                $data['payment_provider_customer_id'] = $customer->id;
-            } else {
-                // singapore partner should create payment provider of PayNow
-                $data['payment_provider'] = '';
-            }
-        } else {
-            $data['payment_provider'] = Customer::getStripePlatformByCountry($data['country']);
-
-            $customer = Customer::newByCountry($data['country'])->create('business_id:'.$data['id']);
-
-            $data['payment_provider_customer_id'] = $customer->id;
+        if($user->businessPartner) {
+            $data['business_type'] = 'partner';
         }
+
+        $customer = Customer::newByCountry($data['country'])->create('business_id:'.$data['id']);
+
+        $data['payment_provider_customer_id'] = $customer->id;
 
         try {
             /** @var \App\Business $business */
@@ -236,26 +205,23 @@ class BusinessRepository
                     // If the business is Singapore based (soon other licensed countries) we will create a custom account
                     // for the business.
                     //
-
-                    if ($business->shouldHaveStripeCustomAccount()) {
-                        try {
-                            Create::new($business->payment_provider)->setBusiness($business)
-                                ->setClientIp($request->ip())
-                                ->setClientUserAgent($request->userAgent())
-                                ->handle();
-                        } catch (\Exception $exception) {
-                            Facades\Log::info('error when create business custom connect: ' . $exception->getMessage());
-                            throw $exception;
-                        }
+                    try {
+                        Create::new($business->payment_provider)->setBusiness($business)
+                            ->setClientIp($request->ip())
+                            ->setClientUserAgent($request->userAgent())
+                            ->handle();
+                    } catch (\Exception $exception) {
+                        Facades\Log::info('error when create business custom connect: ' . $exception->getMessage());
+                        throw $exception;
                     }
 
                     if ($business->country === CountryCode::MALAYSIA) {
-                        /*try {
+                        try {
                             $createCognitoFlow = new \HitPay\Verification\Cognito\FlowSession\Create();
                             $createCognitoFlow->setBusiness($business)->handle();
                         } catch (\Exception $exception) {
                             // can be skipped, this func for passing kyc (first_name, last name, phone)
-                        }*/
+                        }
                     }
                 }
 
@@ -267,9 +233,7 @@ class BusinessRepository
                 $user->businessPartner->save();
             }
         } catch (Exception|Throwable $exception) {
-            if ($customer !== null) {
-                $customer->delete();
-            }
+            $customer->delete();
 
             throw $exception;
         }

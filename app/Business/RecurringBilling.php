@@ -237,7 +237,7 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
             'metadata' => [
                 'platform' => Config::get('app.name'),
                 'version' => ConfigurationRepository::get('platform_version'),
-                'environment' => Config::get('app.env'),
+                'environment' => Config::get('env'),
                 'business_id' => $this->business->getKey(),
                 'charge_id' => $charge->getKey(),
                 'recurring_plan_id' => $this->getKey(),

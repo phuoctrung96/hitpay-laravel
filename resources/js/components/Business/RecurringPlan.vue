@@ -96,7 +96,7 @@
                        :disabled="is_processing">
             </div>
             <button class="btn btn-primary" @click.prevent="saveMethod" :disabled="is_processing">
-                <i class="fas fa-plus mr-3"></i> Save Recurring Plan
+                <i class="fas fa-plus mr-3"></i> Create Recurring Plan
                 <i v-if="is_processing" class="fas fa-spinner fa-spin"></i>
             </button>
         </div>
@@ -111,14 +111,13 @@ export default {
     },
     data() {
         return {
-            customer: {},
+            customer: null,
             customers_result: [],
             cycle_list: [],
             display_currency: 'SGD',
             errors: {},
             is_processing: false,
             recurring_plan: {
-                id: null,
                 customer_id: null,
                 name: '',
                 description: '',
@@ -143,23 +142,6 @@ export default {
             this.recurring_plan.description = Template.description;
             this.recurring_plan.cycle = Template.cycle;
             this.recurring_plan.price = Template.readable_price;
-        }
-
-        if (RecurringPlan){
-            this.recurring_plan.id = RecurringPlan.id;
-            this.recurring_plan.customer_id = RecurringPlan.business_customer_id ?? null;
-            this.recurring_plan.name = RecurringPlan.name ?? '';
-            this.recurring_plan.description = RecurringPlan.description ?? '';
-            this.recurring_plan.cycle = RecurringPlan.cycle ?? '';
-            this.recurring_plan.price = RecurringPlan.price ? (RecurringPlan.price / 100).toFixed(2) : 0;
-            this.recurring_plan.send_email = RecurringPlan.send_email;
-            this.recurring_plan.times_to_be_charged = RecurringPlan.times_charged;
-            this.customer.address = RecurringPlan.customer_street ?? null;
-            this.customer.email = RecurringPlan.customer_email ?? null;
-            this.customer.id = RecurringPlan.business_customer_id ?? null;
-            this.customer.name = RecurringPlan.customer_name ?? null;
-            this.customer.phone_number = RecurringPlan.customer_phone_number ?? null;
-
         }
     },
 
@@ -188,37 +170,21 @@ export default {
                 this.recurring_plan.starts_at = date + '/' + month + '/' + this.recurring_plan.starts_at_picker.getFullYear();
 
             }
-            if (this.recurring_plan.id !== null) {
-                axios.put(this.getDomain('business/' + Business.id + '/recurring-plan/' + this.recurring_plan.id, 'dashboard'), this.recurring_plan).then(({data}) => {
-                    window.location.href = data.redirect_url;
-                }).catch(({response}) => {
-                    this.recurring_plan.starts_at = '';
 
-                    if (response.status === 422) {
-                        _.forEach(response.data.errors, (value, key) => {
-                            this.errors[key] = _.first(value);
-                        });
+            axios.post(this.getDomain('business/' + Business.id + '/recurring-plan', 'dashboard'), this.recurring_plan).then(({data}) => {
+                window.location.href = data.redirect_url;
+            }).catch(({response}) => {
+                this.recurring_plan.starts_at = '';
 
-                        this.showError(_.first(Object.keys(this.errors)));
-                    }
-                });
-            } else {
-                axios.post(this.getDomain('business/' + Business.id + '/recurring-plan', 'dashboard'), this.recurring_plan).then(({data}) => {
-                    window.location.href = data.redirect_url;
-                }).catch(({response}) => {
-                    this.recurring_plan.starts_at = '';
+                if (response.status === 422) {
+                    _.forEach(response.data.errors, (value, key) => {
+                        this.errors[key] = _.first(value);
+                    });
 
-                    if (response.status === 422) {
-                        _.forEach(response.data.errors, (value, key) => {
-                            this.errors[key] = _.first(value);
-                        });
-
-                        this.showError(_.first(Object.keys(this.errors)));
-                    }
-                });
-            }
+                    this.showError(_.first(Object.keys(this.errors)));
+                }
+            });
         },
-
 
         showError(firstErrorKey) {
             if (firstErrorKey !== undefined) {

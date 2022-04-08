@@ -98,13 +98,10 @@ class NotifyAdminAboutNonIdentifiableChargeSource extends Notification implement
                     .'Channel : '.$this->charge->channel."\n"
                     .'Payment Method : '.$this->charge->payment_provider_charge_method."\n";
 
-                if (in_array($this->charge->payment_provider, [
-                    \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA,
-                    \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE
-                ])){
+                if ($this->charge->payment_provider === PaymentProvider::STRIPE_SINGAPORE) {
                     $paymentSource = $this->issuerName;
 
-                    if ($adminName == null or $adminEmail == null) {
+                    if ($adminEmail == null or $adminEmail == null) {
                         $content .= 'Issuer Name : '. $paymentSource."\n"
                             .'Amount : '.$amount."\n";
                     } else {

@@ -20,25 +20,10 @@
     </div>
 
     <div class="main-content d-flex flex-column justify-content-center align-items-center flex-grow-1 p-2 p-md-5">
-      <div class="account-verification">
-        <div class="inner">
-          <template v-if="title == 'Create Account' || title == 'Create Business' || title == 'Bank Setup' || title == 'Account Verification'">
-            <div class="process-create">
-              <div class="register-progress">
-                <div class="progress enable">
-                </div>
-                <div class="progress" :class="(title == 'Create Business' || title == 'Bank Setup' || title == 'Account Verification')? 'enable': 'disable'">
-                </div>
-                <div class="progress" :class="(title == 'Bank Setup' || title == 'Account Verification')? 'enable': 'disable'">
-                </div>
-                <div class="progress" :class="(title == 'Account Verification')? 'enable': 'disable'">
-                </div>
-              </div>
-            </div>
-          </template>
-          <div class="header">{{ title }}</div>
-          <slot/>
-        </div>
+      <div class="inner">
+        <div class="header">{{ title }}</div>
+
+        <slot/>
       </div>
     </div>
   </div>
@@ -113,36 +98,14 @@ $topPanelHeight: 60px;
         width: 364px;
       }
 
-      .process-create {
-        width: 100%;
-        padding: 0px 0 40px 0;
-      }
-
-      .progress {
-        width: 22%;
-        height: 5px;
-        float: left;
-        border-radius: 15px; 
-        margin-right: 5px;
-      }
-
-      .enable {
-        background-color: #0058FC;
-      }
-
-      .disable {
-        background-color: rgba(0, 88, 252, 0.3);
-      }
-
       .header {
         font-size: 25px;
-        margin: 0px 0px 30px;
+        margin-bottom: 50px;
       }
 
       .bottom-link {
         font-size: 16px;
-        color: #03102f;
-        font-weight: 500;
+        color: #4A4A4A;
       }
     }
   }

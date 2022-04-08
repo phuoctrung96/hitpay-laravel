@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Shop\Controller;
 use App\Services\Shopify\ShopifyRefund;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -21,8 +20,7 @@ class ShopifyRefundController extends Controller
      */
     public function store(Request $request, ShopifyRefund $shopifyRefund)
     {
-        if (!App::environment('production')) {
-            Log::info('refund request:');
+        if (App::environment('local') || App::environment('staging')) {
             Log::info(print_r($request->post(),true));
         }
 

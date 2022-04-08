@@ -12,17 +12,17 @@
                 <div id="group_bank_swift_code" class="form-group">
                     <label class="col-form-label">Select Bank:</label>
                     <div class="input-group">
-                        <select v-model="bank_account.bank_id" :class="getSelectClasses('bank_id')" :disabled="is_creating">
+                        <select v-model="bank_account.bank_swift_code" :class="getSelectClasses('bank_swift_code')" :disabled="is_creating">
                             <option value="" disabled>Please select a bank</option>
-                            <option v-for="bank in banks" :value="bank.id">{{ bank.name_code }}</option>
+                            <option v-for="bank in banks" :value="bank.swift_code">{{ bank.name }}</option>
                         </select>
                     </div>
-                    <span class="text-danger small" role="alert" v-if="errors.bank_id">{{ errors.bank_id }}</span>
+                    <span class="text-danger small" role="alert" v-if="errors.bank_swift_code">{{ errors.bank_swift_code }}</span>
                 </div>
                 <div id="group_branch" class="form-group">
                     <label class="col-form-label">Select Branch:</label>
                     <div class="input-group">
-                        <select v-model="bank_account.branch_code" :class="getSelectClasses('branch_code')" :disabled="is_creating || !bank_account.bank_id || branches.length <= 0">
+                        <select v-model="bank_account.branch_code" :class="getSelectClasses('branch_code')" :disabled="is_creating || !bank_account.bank_swift_code || branches.length <= 0">
                             <option value="" disabled>Please select a branch</option>
                             <option v-for="branch in branches" :value="branch.code">[{{ branch.code }}] {{ branch.name }}</option>
                         </select>
@@ -95,12 +95,14 @@ export default {
     watch : {
         bank_account : {
             handler(value) {
-                if (value.bank_id) {
-                    let bank = _.first(_.filter(this.banks, ({ id }) => {
-                        return id === value.bank_id;
+                if (value.bank_swift_code) {
+                    let bank = _.first(_.filter(this.banks, ({ swift_code }) => {
+                        return swift_code === value.bank_swift_code;
                     }));
 
                     this.branches = bank.branches;
+                } else {
+                    this.branches = [];
                 }
             },
             deep : true,
@@ -111,7 +113,7 @@ export default {
         return {
             bank_account : {
                 currency : this.business.currency,
-                bank_id : "",
+                bank_swift_code : "",
                 branch_code : "",
                 number : "",
                 holder_name : "",
@@ -138,14 +140,9 @@ export default {
     },
 
     mounted() {
-        if (this.business.business_type === 'partner' && this.business.country === 'sg') {
+        if (this.bank_accounts_count === 0) {
             this.bank_account.use_in_hitpay = true;
-            this.bank_account.use_in_stripe = false;
-        } else {
-            if (this.bank_accounts_count === 0) {
-                this.bank_account.use_in_hitpay = true;
-                this.bank_account.use_in_stripe = true;
-            }
+            this.bank_account.use_in_stripe = true;
         }
     },
 
@@ -186,8 +183,8 @@ export default {
             this.is_creating = true;
             this.errors = {};
 
-            if (!this.bank_account.bank_id) {
-                this.errors.bank_id = "Please select a bank.";
+            if (!this.bank_account.bank_swift_code) {
+                this.errors.bank_swift_code = "Please select a bank.";
             } else if (this.branches.length > 0 && !this.bank_account.branch_code) {
                 this.errors.branch_code = "Please select the branch of the bank.";
             }

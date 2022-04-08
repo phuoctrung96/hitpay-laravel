@@ -12,7 +12,6 @@ use App\Events\Business\RecurrentChargeSucceeded;
 use App\Events\Business\SuccessCharge;
 use App\Events\ChargeSucceeded;
 use App\Jobs\CheckChargeForCashback;
-use App\Jobs\SubmitChargeForMonitoring;
 use App\Jobs\Wallet\Receive as ReceiveFromCharge;
 use App\Notifications\NotifyAdminAboutNewCharge;
 use App\Notifications\NotifySuccessfulPayment;
@@ -201,7 +200,6 @@ class Charge extends Model implements HasCustomerContract, OwnableContract
                         }
                     }
                 }
-                SubmitChargeForMonitoring::dispatch($model, $model->business);
             }
         });
     }
@@ -740,7 +738,7 @@ class Charge extends Model implements HasCustomerContract, OwnableContract
      *
      * @return array|null
      */
-    public function getDataStripeCard() : ?array
+    protected function getDataStripeCard() : ?array
     {
         $isPaymentProviderStripe = in_array($this->payment_provider, [
             PaymentProviderEnum::STRIPE_MALAYSIA,

@@ -6,7 +6,6 @@
             label="Partner Name"
             :marginBottom="30"
             autocomplete="name"
-            id="dispay_name"
             :error="errors.display_name"
             :disabled="is_processing"/>
 
@@ -15,7 +14,6 @@
             label="Website Address"
             :marginBottom="30"
             autocomplete="name"
-            id="website"
             :error="errors.website"
             :disabled="is_processing"/>
 
@@ -50,7 +48,6 @@
             label="Short description of services provided ( It would be preferred if you focus on your top 2-3 services )"
             :marginBottom="30"
             autocomplete="email"
-            id="short_description"
             :error="errors.short_description"
             :disabled="is_processing"/>
 
@@ -59,14 +56,13 @@
             label="Special sign up offer to HitPay Merchants (If any)"
             :marginBottom="30"
             autocomplete="email"
-            id="special_offer"
             :error="errors.special_offer"
             :disabled="is_processing"/>
 
 
         <div class="login-input" style="margin-bottom: 60px;">
             <span>Upload Company Logo</span>
-            <input id="logo" type="file" @change="selectLogo">
+            <input type="file" @change="selectLogo">
             <div class="invalid-feedback error d-block" v-if="errors.logo && errors.logo != false">
                 {{ errors.logo }}
             </div>
@@ -77,14 +73,12 @@
             label="Email"
             :marginBottom="30"
             autocomplete="email"
-            id="email"
             :error="errors.email"
             :disabled="is_processing"/>
 
         <LoginInput
             v-model="form.password"
             label="Password"
-            id="password"
             :marginBottom="35"
             type="password"
             :error="errors.password"
@@ -93,7 +87,6 @@
         <LoginInput
             v-model="form.password_confirmation"
             label="Confirm Password"
-            id="password_confirmation"
             :marginBottom="35"
             type="password"
             :error="errors.password_confirmation"
@@ -111,24 +104,6 @@
             :search="true"
         />
 
-        <div class="mb-3">
-            <label for="country">Country</label>
-            <select id="country"
-                    class="custom-select bg-light"
-                    v-model="form.country"
-                    :class="{'is-invalid' : errors.country}"
-                    :disabled="is_processing">
-                <option
-                    v-for="country in countries"
-                    :value="country.id"
-                    :selected="country.active"
-                >
-                    {{ country.name }}
-                </option>
-            </select>
-            <span class="invalid-feedback" role="alert">{{ errors.country }}</span>
-        </div>
-
         <LoginSelect
             class="mt-5"
             id="referred_channel"
@@ -139,7 +114,7 @@
             :disabled="is_processing"
         />
 
-        <div class="mt-5" v-if="form.country === '' || form.country === 'sg'">
+        <div class="mt-5">
             <label for="agree_with_partner_terms">
                 <input :disabled="is_processing" type="checkbox" v-model="agree_with_partner_terms" value="1" class=""
                        @click="agree_with_partner_terms_error = agree_with_partner_terms != 1 ? 0 : 1"
@@ -148,30 +123,11 @@
             </label>
         </div>
 
-        <div class="mt-5" v-if="form.country === 'my'">
-            <label for="agree_with_partner_terms">
-                <input :disabled="is_processing" type="checkbox" v-model="agree_with_partner_terms" value="1" class=""
-                       @click="agree_with_partner_terms_error = agree_with_partner_terms != 1 ? 0 : 1"
-                       id="agree_with_partner_terms">
-                <span :class="{'error': agree_with_partner_terms_error}">I agree to the partner program <a href="https://drive.google.com/file/d/1WxqGcmN5TvBJYyYC1eTEd22Hi-nkEHLx/view" target="_blank" style="text-decoration: underline">terms and conditions</a></span>
-            </label>
-        </div>
-
-        <div class="notice text-center mb-4 mt-5" v-if="form.country === '' || form.country === 'sg'">
-            By clicking "Register", you agree to our <a
+        <div class="notice text-center mb-4 mt-5">By clicking "Register", you agree to our <a
             href="https://www.hitpayapp.com/termsofservice" target="_blank">Terms of Service</a>, <a
             href="https://www.hitpayapp.com/privacypolicy" target="_blank">Privacy Policy</a> and <a
             href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a>. You may
             receive email from us and can opt out at any time.
-        </div>
-
-        <div class="notice text-center mb-4 mt-5" v-if="form.country === 'my'">
-            By clicking "Register", you agree to our <a
-            href="https://hitpayapp.com/en-my/termsofservice" target="_blank">Terms of Service</a>, <a
-            href="https://hitpayapp.com/en-my/privacypolicy" target="_blank">Privacy Policy</a>, <a
-            href="https://hitpayapp.com/en-my/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> and the
-            <a href="https://stripe.com/connect-account/legal">Stripe Connected Account Agreement.</a>
-            You may receive email from us and can opt out at any time.
         </div>
 
         <CheckoutButton
@@ -196,7 +152,6 @@ import LoginRegisterLayout from './LoginRegisterLayout'
 import CheckoutButton from '../Shop/CheckoutButton'
 import LoginInput from './LoginInput'
 import LoginSelect from "./LoginSelect";
-import WebsiteHelper from "../../mixins/WebsiteHelper";
 
 export default {
     components: {
@@ -208,11 +163,7 @@ export default {
     props: [
         'name',
         'email',
-        'categories',
-        'countries',
-    ],
-    mixins: [
-        WebsiteHelper
+        'categories'
     ],
     data() {
         return {
@@ -238,8 +189,7 @@ export default {
                 referred_channel: '',
                 other_referred_channel: '',
                 merchant_category: '',
-                business_type: 'individual',
-                country: this.country,
+                business_type: 'individual'
             },
             is_processing: false,
             services: [
@@ -305,10 +255,6 @@ export default {
                 this.errors.services = 'The services field is required';
             }
 
-            if (!this.form.country) {
-                this.errors.country = 'The country field is required';
-            }
-
             if (!this.form.email) {
                 this.errors.email = 'The email field is required';
             } else if (!this.validateEmail(this.form.email)) {
@@ -361,7 +307,7 @@ export default {
                     formData.append('other_referred_channel', this.form.other_referred_channel);
                     formData.append('merchant_category', this.form.merchant_category);
                     formData.append('business_type', this.form.business_type);
-                    formData.append('country', this.form.country);
+                    formData.append('country', 'sg');
                     formData.append('name', this.form.display_name);
 
                     const res = await axios.post(this.getDomain('register-partner', 'dashboard'), formData)
@@ -401,16 +347,6 @@ export default {
                 '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
             return !!pattern.test(str);
         }
-    },
-
-    mounted() {
-        var that = this;
-
-        this.countries.forEach(function(item, _) {
-            if (item.active === true) {
-                that.form.country = item.id;
-            }
-        });
     },
 }
 </script>

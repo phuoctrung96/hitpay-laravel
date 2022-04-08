@@ -128,7 +128,6 @@
                     'Product(s)': true,
                     'Payment Details': true,
                     'Store URL': true,
-                    'Terminal ID': false
                 },
                 form: {
                     channels: [

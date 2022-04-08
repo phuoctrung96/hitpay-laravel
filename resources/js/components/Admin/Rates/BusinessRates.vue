@@ -42,30 +42,9 @@
         <p><img src="/icons/payment-methods/grabpay2.png" height="24"></p>
 
         <p>
-          Company UEN: <span class="text-muted">{{ p.data['company_uen'] || '-' }}</span><br/>
-          Merchant category: <span class="text-muted">{{ p.data['merchant_category_code'] || '-' }}</span>
-        </p>
-      </template>
-
-      <!-- Shopee Pay -->
-      <template v-if="p.payment_provider === 'shopee_pay'">
-        <p><img src="/icons/payment-methods/shopee.png" height="24"></p>
-
-        <p>
-          Company UEN: <span class="text-muted">{{ p.data['company_uen'] || '-' }}</span><br/>
-          Store name: <span class="text-muted">{{ p.data['store_name'] || '-' }}</span><br/>
-          Merchant category: <span class="text-muted">{{ p.data['mcc'] || '-' }}</span>
-        </p>
-      </template>
-
-      <!-- Zip -->
-      <template v-if="p.payment_provider === 'zip'">
-        <p><img src="/icons/payment-methods/zip.png" height="24"></p>
-
-        <p>
-          Company UEN: <span class="text-muted">{{ p.data['company_uen'] || '-' }}</span><br/>
-          Store name: <span class="text-muted">{{ p.data['store_name'] || '-' }}</span><br/>
-          Merchant category: <span class="text-muted">{{ p.data['mcc'] || '-' }}</span><br/>
+          Company UEN: <span
+          class="text-muted">{{ p.data['company_uen'] || '-' }}</span><br/>
+          Merchant category: <span class="text-muted">{{ p.data['merchant_category_code'] || '-' }}</span><br/>
           Onboarding status: <span class="text-muted">{{ replaceDashes(p.onboarding_status) }}</span>
         </p>
       </template>
@@ -123,9 +102,7 @@ export default {
         'stripe_sg',
         'stripe_my',
         'dbs_sg',
-        'grabpay',
-        'zip',
-        'shopee_pay'
+        'grabpay'
       ],
       allowRemoveProviders: [
         'stripe_sg',
@@ -135,13 +112,10 @@ export default {
         'stripe_sg': 'stripe',
         'stripe_my': 'stripe',
         'dbs_sg': 'paynow',
-        'grabpay': 'grabpay',
-        'zip': 'zip',
-        'shopee_pay': 'shopee_pay'
+        'grabpay': 'grabpay'
       },
       hasOnboarding: [
-        'grabpay',
-        'shopee_pay'
+        'grabpay'
       ]
     }
   },
@@ -149,7 +123,6 @@ export default {
     providersList () {
       return this.providers
         .filter(p => this.supportedProviders.includes(p.payment_provider))
-        .filter(p => !this.hasOnboarding.includes(p.payment_provider) || p.onboarding_status === 'success')
         .map(p => ({
           ...p
         }))

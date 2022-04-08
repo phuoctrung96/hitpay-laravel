@@ -19,19 +19,9 @@
                     ]))
                         @php($route = 'stripe')
                         <div><i class="fab fa-stripe fa-4x"></i></div>
-
                     @elseif ($paymentProvider->payment_provider === \App\Enumerations\PaymentProvider::GRABPAY)
                         @php($route = 'grabpay')
-                        <p><img src="/icons/payment-methods/grabpay2.png" height="24"></p>
-
-                    @elseif ($paymentProvider->payment_provider === \App\Enumerations\PaymentProvider::SHOPEE_PAY)
-                        @php($route = 'shopee_pay')
-                        <p><img src="/icons/payment-methods/shopee.png" height="24"></p>
-
-                    @elseif ($paymentProvider->payment_provider === \App\Enumerations\PaymentProvider::ZIP)
-                        @php($route = 'zip')
-                        <p><img src="/icons/payment-methods/zip.png" height="24"></p>
-
+                        <p><img src="{{ asset('/icons/payment-methods/grabpay2.png') }}" height="24"></p>
                     @else
                         @php($route = 'paynow')
                         <p><img src="{{ asset('paynow.jpg') }}" height="48"></p>
@@ -87,17 +77,6 @@
                                 <option value="grabpay_direct" selected>
                                     GrabPay
                                 </option>
-
-                              @elseif ($paymentProvider->payment_provider === \App\Enumerations\PaymentProvider::SHOPEE_PAY)
-                                <option value="shopee_pay" selected>
-                                    Shopee
-                                </option>
-
-                              @elseif ($paymentProvider->payment_provider === \App\Enumerations\PaymentProvider::ZIP)
-                                <option value="zip" selected>
-                                    Zip
-                                </option>
-
                               @else
                                 <option value="paynow_online" selected>
                                     PayNow Online

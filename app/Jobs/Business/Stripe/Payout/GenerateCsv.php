@@ -42,8 +42,7 @@ class GenerateCsv implements ShouldQueue
             ->process();
 
         try {
-            (new Payouts\SendEmailForSuccessfulPayout)
-                ->business($this->businessTransfer->business)
+            Payouts\SendEmailForSuccessfulPayout::withBusiness($this->businessTransfer->business)
                 ->businessTransfer($this->businessTransfer)
                 ->process();
         } catch (Exception $exception) {

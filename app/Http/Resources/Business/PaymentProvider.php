@@ -22,6 +22,16 @@ class PaymentProvider extends JsonResource
     {
         $data['id'] = $this->id;
         $data['payment_provider'] = $this->payment_provider;
+        $data['payment_provider_status'] = $this->getProviderStatus();
+        $data['payment_provider_methods'] = $this->getPaymentMethodCodes();
+        $data['payment_provider_integrations'] = $this->getProviderIntegrations();
+
+        /* @var \App\Business\PaymentProvider $this */
+        $data['fee'] = $this->getRateFor(
+            $this->business->country,
+            $this->business->currency,
+            $this->business->currency
+        );
 
         if (in_array($data['payment_provider'], collect(Core::$countries)->pluck('payment_provider')->toArray())) {
             $accountData = $this->data;
@@ -50,6 +60,15 @@ class PaymentProvider extends JsonResource
                 'currency' => $accountData['default_currency'] ?? null,
                 'charges_enabled' => $accountData['charges_enabled'] ?? null,
                 'payouts_enabled' => $accountData['payouts_enabled'] ?? null,
+            ];
+        }
+
+        if ($data['payment_provider'] === 'dbs_sg') {
+            $accountData = $this->data;
+
+            $data['data'] = [
+                'account' => $accountData['account'],
+                'company' => $accountData['company']
             ];
         }
 

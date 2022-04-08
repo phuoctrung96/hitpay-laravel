@@ -93,7 +93,10 @@ class Store extends Action
 
         $this->updateBusinessAddressFromVerification($verification);
 
-        $this->addPersonToStripeIfRequired();
+        // set queue job on process
+        $this->updateStripeInit();
+
+        \App\Jobs\Business\Stripe\Person\CreatePersonFromVerificationJob::dispatch($verification, $data);
 
         if (!Facades\App::environment('production')) {
             try {

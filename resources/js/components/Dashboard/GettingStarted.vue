@@ -53,7 +53,7 @@
             </div>
           </div>
         </div>
-        <div class="item clearfix" v-if="is_setup_payment_method == true && is_finish_account_verification == false && verification_status == 'pending'">
+        <div class="item clearfix" v-if="is_setup_payment_method == true && is_finish_account_verification == false">
           <div class="icon-number-circle">2</div>
           <div class="getting-content">
             <div class="getting-top">
@@ -70,18 +70,6 @@
             </div>
           </div>
         </div>
-          <div class="item clearfix" v-if="is_setup_payment_method == true && verification_status == 'submitted'">
-              <div class="icon-check-circle">
-                  <img src="\images\ico-checked.svg" class="icon-check">
-              </div>
-              <div class="getting-content">
-                  <div class="getting-top">
-                      <div class="item-title">
-                          <p>Account verification submitted</p>
-                      </div>
-                  </div>
-              </div>
-          </div>
         <div class="item clearfix active" v-if="is_setup_payment_method == true && is_finish_account_verification == true">
           <div class="icon-check-circle">
             <img src="\images\ico-checked.svg" class="icon-check">
@@ -96,12 +84,22 @@
         </div>
       </div>
       <div class="item-step">
-        <div class="item clearfix" v-if="is_setup_payment_method == true && (is_finish_account_verification == true || verification_status == 'submitted') && is_start_accept_payment == false">
+        <div class="item clearfix" v-if="is_finish_account_verification == false || is_setup_payment_method == false">
           <div class="icon-number-circle">3</div>
           <div class="getting-content">
             <div class="getting-top">
               <div class="item-title">
-                <p>Start accepting payments. How are you looking to accept payments?</p>
+                <p>Start accepting payments</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="item clearfix" v-if="is_setup_payment_method == true && is_finish_account_verification == true && is_start_accept_payment == false">
+          <div class="icon-number-circle">3</div>
+          <div class="getting-content">
+            <div class="getting-top">
+              <div class="item-title">
+                <p>How are you looking to accept payments?</p>
               </div>
               <div class="sub-item">
                 <div class="all-items">
@@ -175,7 +173,6 @@ export default {
     payment_count: Boolean,
     is_show_modal_verification: Boolean,
     is_verification_verified: Boolean,
-    verification_status: String,
   },
   watch: {
     'plugins_type': {

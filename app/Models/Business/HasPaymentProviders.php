@@ -51,22 +51,6 @@ trait HasPaymentProviders
     }
 
     /**
-     * Determine if the business should have a Stripe Custom Account.
-     *
-     * @return bool
-     */
-    public function shouldHaveStripeCustomAccount() : bool
-    {
-        if ($this->isPartner()) {
-            if ($this->country === Enumerations\CountryCode::SINGAPORE) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * Indicate if the business is using standard account for Stripe.
      *
      * @return bool
@@ -142,16 +126,5 @@ trait HasPaymentProviders
     {
         return $this->hasManyThrough(PaymentProviderRate::class, PaymentProvider::class,
             'business_id', 'business_payment_provider_id', 'id', 'id');
-    }
-
-    public function getStripeAccountBusinessType() : string
-    {
-        $typeMap = [
-            'business' => 'company',
-            'personal' => 'individual',
-            'partner' => 'company',
-        ];
-
-        return $typeMap[$this->business_type] ?? $this->business_type;
     }
 }

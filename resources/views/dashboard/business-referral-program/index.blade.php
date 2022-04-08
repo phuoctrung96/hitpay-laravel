@@ -88,13 +88,13 @@
                     <div class="pl-4 pr-4 pb-0">
                         <div class="pt-3 pb-3 mb-3">
                             <p>You have earned</p>
-                            <h1>{{strtoupper($business->currency)}}{{$amount}}</h1>
+                            <h1>${{$amount}}</h1>
                         </div>
                         <div class="pb-3 mb-5">
                             <p>Businesses Referred</p>
                             <h1>{{$business->businessReferral->referredBusinesses()->count()}}</h1>
                         </div>
-                        <a href="{{route('dashboard.business.balance.wallet', [$business, $business->currency, 'available', 'event' => 'business_referral_commission'])}}" class="btn btn-primary btn-lg btn-block">View Details</a>
+                        <a href="{{route('dashboard.business.balance.wallet', [$business, 'sgd', 'available', 'event' => 'business_referral_commission'])}}" class="btn btn-primary btn-lg btn-block">View Details</a>
                     </div>
                 </div>
             </div>

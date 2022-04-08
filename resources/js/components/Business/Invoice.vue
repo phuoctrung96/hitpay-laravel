@@ -323,7 +323,7 @@
                                         <label class="title">Discount</label>
                                         <input v-model.number="added_products[key].discount" title="Discount"
                                                class="form-control"
-                                               @change="checkDecimal" @keypress="isNumber($event);" @keyup="checkDiscount(added_products[key])">
+                                               @change="checkDecimal" @keypress="isNumber($event);" @keyup="checkDiscount(added_products[key].variation.price,added_products[key].discount)">
                                     </div>
                                     <div class="field total align-items-center justify-content-between">
                                         <label class="title mb-0">Total</label>
@@ -453,8 +453,8 @@
                 <span class="invalid-feedback" role="alert">{{ errors.memo }}</span>
             </div>
             <div class="form-group mt-3">
-                <template v-if="invoice.file_path">
-                    <span>{{ invoice.file_path }}</span>
+                <template v-if="invoice.attached_file">
+                    <span>{{ invoice.attached_file }}</span>
                     <a href="#" @click="removeFile($event)" class="btn-delete">
                         <img src="/images/delete_icon.svg" alt="delete">
                     </a>
@@ -694,7 +694,7 @@ export default {
                 status: '',
                 partial_payments: null,
                 allow_partial_payments: false,
-                file_path: null,
+                attached_file: null,
             },
             search_products_key: [],
             search_product: {
@@ -739,8 +739,8 @@ export default {
     },
     computed: {
         disableDates() {
-            let date = this.invoice.invoice_date;
-            // date.setDate(date.getDate() - 1);
+            var date = new Date();
+            date.setDate(date.getDate() - 1);
             return {
                 to: date
             }
@@ -766,7 +766,7 @@ export default {
                 tax_setting: window.Invoice.tax_settings_id ?? "",
                 memo: window.Invoice.memo ?? "",
                 status: window.Invoice.status,
-                file_path: window.Invoice.attached_file ?? ""
+                attached_file: window.Invoice.attached_file ?? ""
             };
             this.invoice.invoice_number = window.Invoice.invoice_number;
 
@@ -785,7 +785,6 @@ export default {
             this.invoice.invoice_date = new Date();
             this.search_products_key[0] = "";
             this.invoice.invoice_number = "INV-";
-            this.invoice.currency = this.business.currency;
         }
         if (window.Invoice && window.Invoice.products) {
             this.added_products = window.Invoice.products;
@@ -917,7 +916,7 @@ export default {
         removeFile(event) {
             event.preventDefault();
             this.attached_file = null;
-            this.invoice.file_path = null;
+            this.invoice.attached_file = null;
         },
         getTime(time) {
             if (typeof time != 'string') {
@@ -1186,23 +1185,18 @@ export default {
                 return true;
             }
         },
-        checkDiscount(item) {
-            let total = item.variation.price * item.quantity;
-            let discount = item.discount;
-
+        checkDiscount(price , discount) {
             this.errors.product_discount =  null;
-            if(discount > total) {
-                this.errors.product_discount = "The discount can be lower than the total";
+            if(discount > price) {
+                this.errors.product_discount = "The discount amount is greater than price of product";
             }
         },
         validateDiscount() {
             this.added_products.forEach((item) => {
                 let discount = item.discount ?? 0;
                 let price = item.variation ? item.variation.price : 0;
-                let quantity = item.quantity ?? 0;
-                let total = price * quantity;
-                if(parseInt(discount) > parseInt(total)) {
-                    this.errors.product_discount = "The discount can be lower than the total";
+                if(parseInt(discount) > parseInt(price)) {
+                    this.errors.product_discount = "The discount amount is greater than price of product";
                 }
             });
         },
@@ -1299,7 +1293,7 @@ export default {
                this.tax_list.push(data[0]);
 
                $('#createTaxModal').modal('hide');
-
+                
             }).catch(({response}) => {
                 if (response.status === 422) {
                     _.forEach(response.data.errors, (value, key) => {

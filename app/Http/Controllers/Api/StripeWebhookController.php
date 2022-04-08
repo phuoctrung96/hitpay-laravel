@@ -130,7 +130,7 @@ class StripeWebhookController extends Controller
                 ->where('payment_provider_object_type', $event->data->object->object)
                 ->where('payment_provider_object_id', $event->data->object->id)
                 ->first();
- 
+
             if ($businessPaymentIntent instanceof PaymentIntent) {
                 $businessPaymentIntent->status = $event->data->object->status;
 
@@ -161,8 +161,7 @@ class StripeWebhookController extends Controller
                 Log::info(
                     "The Stripe payment intent (ID : {$event->data->object->id}) isn't found, it might not come from this server."
                 );
-            } elseif ($businessPaymentIntent->payment_provider_method === PaymentMethodType::GRABPAY ||
-                      $businessPaymentIntent->payment_provider_method === PaymentMethodType::FPX) {
+            } elseif ($businessPaymentIntent->payment_provider_method === PaymentMethodType::GRABPAY) {
                 SyncWithSucceededPaymentIntent::withBusinessPaymentIntent($businessPaymentIntent)->process();
             } else {
                 Log::info(

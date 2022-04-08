@@ -3,7 +3,6 @@
 namespace App\Actions\User\Register;
 
 use App\Actions\User\UserInfoByIp;
-use App\Enumerations\CountryCode;
 use Illuminate\Support\Collection;
 
 class RegisterForm extends Action
@@ -28,19 +27,19 @@ class RegisterForm extends Action
         $countryCode = $this->getUserInformationByIp('countrycode');
 
         if ($countryCode) {
-            $availableCountryCodes = [CountryCode::SINGAPORE, CountryCode::MALAYSIA];
+            $availableCountryCodes = ['sg', 'my'];
 
             if (in_array($countryCode, $availableCountryCodes)) {
                 return Collection::make([
                     [
-                        'id' => CountryCode::SINGAPORE,
+                        'id' => 'sg',
                         'name' => 'Singapore',
-                        'active' => $countryCode == CountryCode::SINGAPORE,
+                        'active' => $countryCode == 'sg',
                     ],
                     [
-                        'id' => CountryCode::MALAYSIA,
+                        'id' => 'my',
                         'name' => 'Malaysia',
-                        'active' => $countryCode == CountryCode::MALAYSIA,
+                        'active' => $countryCode == 'my',
                     ]
                 ]);
             }
@@ -51,5 +50,21 @@ class RegisterForm extends Action
         else {
             return $this->getDefaultCountries();
         }
+    }
+
+    private function getDefaultCountries()
+    {
+        return Collection::make([
+            [
+                'id' => 'sg',
+                'name' => 'Singapore',
+                'active' => true,
+            ],
+            [
+                'id' => 'my',
+                'name' => 'Malaysia',
+                'active' => false,
+            ]
+        ]);
     }
 }

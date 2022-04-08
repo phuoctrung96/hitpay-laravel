@@ -80,7 +80,7 @@ class RecurringBillingController extends Controller
             return $value;
         })->toArray();
 
-        return Response::view('dashboard.business.recurring-plan.form', compact('business', 'data', 'template'));
+        return Response::view('dashboard.business.recurring-plan.create', compact('business', 'data', 'template'));
     }
 
     public function createWithTemplate(Business $business)
@@ -196,87 +196,12 @@ class RecurringBillingController extends Controller
 
     public function edit(Request $request, Business $business, RecurringBilling $recurringPlan)
     {
-//        dd($recurringPlan);
         Gate::inspect('operate', $business)->authorize();
-
-        $data['cycle'] = RecurringCycle::collection()->map(function ($value) {
-            $value['name'] = ucfirst($value['value']);
-
-            return $value;
-        })->toArray();
-
-        return Response::view('dashboard.business.recurring-plan.form', compact('business', 'recurringPlan', 'data'));
     }
 
     public function update(Request $request, Business $business, RecurringBilling $recurringPlan)
     {
         Gate::inspect('operate', $business)->authorize();
-
-        $data = $this->validate($request, [
-            'customer_id' => [
-                'required',
-                Rule::exists('business_customers', 'id')->where('business_id', $business->id),
-            ],
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'description' => [
-                'nullable',
-                'string',
-                'max:16777215',
-            ],
-            'price' => [
-                'required',
-                'numeric',
-                'decimal:0,2',
-                'min:1',
-                'max:9999999'
-            ],
-            'cycle' => [
-                'required',
-                Rule::in(RecurringCycle::listConstants()),
-            ],
-            'starts_at' => [
-                'required',
-                'date_format:d/m/Y',
-                'after_or_equal:'.now()->toDateString(),
-            ],
-            'times_to_be_charged' => [
-                'nullable',
-                'int',
-                'min:1',
-            ],
-            'send_email' => 'boolean'
-        ]);
-
-        $customer = $business->customers()->find($data['customer_id']);
-
-        $startsAt = Date::createFromFormat('d/m/Y', $data['starts_at']);
-
-        $recurringPlan->name = $data['name'];
-        $recurringPlan->description = $data['description'] ?? null;
-        $recurringPlan->price = getRealAmountForCurrency($recurringPlan->currency, $data['price']);
-        $recurringPlan->cycle = $data['cycle'];
-        $recurringPlan->send_email = $data['send_email'];
-        $recurringPlan->expires_at = $startsAt->endOfDay();
-
-        if (isset($data['times_to_be_charged'])) {
-            $recurringPlan->times_to_be_charged = $data['times_to_be_charged'];
-            $recurringPlan->times_charged = 0;
-        }
-
-        $recurringPlan->setCustomer($customer, true);
-
-        $recurringPlan->save();
-
-        return Response::json([
-            'redirect_url' => URL::route('dashboard.business.recurring-plan.show', [
-                'business_id' => $business->getKey(),
-                'b_recurring_billings' => $recurringPlan->getKey(),
-            ]),
-        ]);
     }
 
     public function cancel(Request $request, Business $business, RecurringBilling $recurringPlan)

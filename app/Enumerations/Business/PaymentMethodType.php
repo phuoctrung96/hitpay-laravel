@@ -57,7 +57,6 @@ class PaymentMethodType
         self::HOOLAH           => 'Hoolah',
         'direct_debit'         => 'Direct Debit',
         self::ZIP              => 'Zip',
-          self::FPX            => 'FPX',
       ];
 
       $icon = 'fas fa-dollar-sign';

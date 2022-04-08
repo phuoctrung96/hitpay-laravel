@@ -40,13 +40,11 @@ class UserController extends Controller
             })
             ->get();
 
-        $restrictions = $business->rolesRestrictions;
-
         if($request->wantsJson()) {
             return Response::json(compact('business', 'roles', 'businessUsers'));
         }
 
-        return Response::view('dashboard.business.users', compact('business', 'roles', 'businessUsers', 'currentBusinessUser', 'restrictions'));
+        return Response::view('dashboard.business.users', compact('business', 'roles', 'businessUsers', 'currentBusinessUser'));
     }
 
     public function invite(Request $request, Business $business)

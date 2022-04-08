@@ -2,7 +2,6 @@
 
 namespace App\Actions\Business\Settings\Verification\Cognito;
 
-use App\Helpers\Country;
 use Exception;
 use Illuminate\Support\Facades;
 
@@ -31,7 +30,7 @@ class Show extends Action
 
         $type = $this->verification->type === 'business' ? 'company' : 'individual';
 
-        if ($type === 'company') {
+        if ($type == 'company') {
             $verification_data = $this->setShareholderData($this->verification, $verification_data);
         }
 
@@ -49,14 +48,6 @@ class Show extends Action
             $businessUserOwner = $businessUser->getUserOwner();
         }
 
-
-        $countries = Country::getCountriesSelected($this->business->country);
-
-        if ($verification_data['nationality'] != '') {
-            $countries = Country::getCountriesSelected($verification_data['nationality']);
-        }
-        $verificationStatusName = $this->verification->getStatusName();
-
         return [
             'business' => $this->business,
             'verificationStatus' => $verificationStatus,
@@ -66,8 +57,6 @@ class Show extends Action
             'isOwner' => $isOwner,
             'businessUserOwner' => $businessUserOwner,
             'verificationStatusTitle' => $verificationStatusTitle,
-            'countries' => $countries,
-            'verificationStatusName' => $verificationStatusName,
         ];
     }
 }

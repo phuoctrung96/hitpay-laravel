@@ -45,7 +45,7 @@ class Charge extends Core
                 'metadata' => ($parameters['metadata'] ?? []) + [
                         'platform' => $appName,
                         'version' => ConfigurationRepository::get('platform_version'),
-                        'environment' => Config::get('app.env'),
+                        'environment' => Config::get('env'),
                     ],
                 'statement_descriptor' => Str::limit(preg_replace("/[^a-zA-Z0-9]+/", '', $statementDescriptor ?? $appName), 22, ''),
             ]);
@@ -101,7 +101,7 @@ class Charge extends Core
             'metadata' => [
                 'platform' => Config::get('app.name'),
                 'version' => ConfigurationRepository::get('platform_version'),
-                'environment' => Config::get('app.env'),
+                'environment' => Config::get('env'),
                 'business_id' => $charge->business_id,
                 'charge_id' => $charge->getKey(),
             ],
@@ -131,7 +131,7 @@ class Charge extends Core
             'metadata' => [
                 'platform' => Config::get('app.name'),
                 'version' => ConfigurationRepository::get('platform_version'),
-                'environment' => Config::get('app.env'),
+                'environment' => Config::get('env'),
                 'business_id' => $businessId,
                 'charge_id' => $businessChargeId,
             ],
@@ -184,7 +184,7 @@ class Charge extends Core
             'metadata' => ($parameters['metadata'] ?? []) + [
                     'platform' => $appName,
                     'version' => ConfigurationRepository::get('platform_version'),
-                    'environment' => Config::get('app.env'),
+                    'environment' => Config::get('env'),
                 ],
             'statement_descriptor' => Str::limit(preg_replace("/[^a-zA-Z0-9]+/", '', $statementDescriptor ?? $appName), 22, ''),
             'on_behalf_of' => $onBehalfOf,

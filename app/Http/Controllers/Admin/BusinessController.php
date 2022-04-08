@@ -217,7 +217,7 @@ class BusinessController extends Controller
         $business->update(['verified_wit_my_info_sg' => 1]);
         $verification = $business->verifications()->latest()->first();
         $verification->update([
-            'status' => VerificationStatus::MANUAL_VERIFIED,
+           'status' => VerificationStatus::MANUAL_VERIFIED,
             'verified_at' => $verification->freshTimestamp()
         ]);
 

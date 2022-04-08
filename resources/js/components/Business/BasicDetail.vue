@@ -210,7 +210,7 @@ export default {
             this.is_processing = true;
             this.errors = {};
 
-            if (! /(^[A-Za-z0-9.\-\&\$ ]+$)+/.test(this.business.name)) {
+            if (! /(^[A-Za-z0-9. ]+$)+/.test(this.business.name)) {
                 this.errors.name = 'Only chars and digits with spaces and dots are allowed in name';
             }
 

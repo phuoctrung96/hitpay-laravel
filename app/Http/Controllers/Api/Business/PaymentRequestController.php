@@ -52,7 +52,7 @@ class PaymentRequestController extends Controller
         $user       = Auth::user();
         $business   = $user->businessesOwned()->first();
 
-        return PaymentRequestResource::collection($business->paymentRequests()->limit(10)->get());
+        return PaymentRequestResource::collection($business->paymentRequests()->get());
     }
 
     /**

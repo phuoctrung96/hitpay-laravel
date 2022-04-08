@@ -32,7 +32,7 @@
         @endforeach
     </ol>
     <br>
-    <p>If you have any questions, please contact us on WhatsApp at +65 89518262</p>
+    <p>If you have any questions, please contact us on WhatsApp at +65 98644718</p>
     <p>Best,</p>
     <p>Team HitPay</p>
 @endsection

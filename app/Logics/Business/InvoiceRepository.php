@@ -69,7 +69,11 @@ class InvoiceRepository
         } elseif ($filterStatus == InvoiceStatus::DRAFT) {
             $paginator->where('status', InvoiceStatus::DRAFT);
         } elseif ($filterStatus == InvoiceStatus::SENT) {
-            $paginator->where('status', InvoiceStatus::SENT);
+            $paginator->where('status', InvoiceStatus::SENT)
+                ->where('due_date', '=', null)
+                ->orWhere('due_date', '!=', null)
+                ->where('due_date', '>', now())
+                ->where('status', InvoiceStatus::SENT);
         } elseif ($filterStatus == InvoiceStatus::PARTIALITY_PAID) {
             $paginator->where('allow_partial_payments', Invoice::ENABLE_PARTIAL_PAYMENT)
                 ->whereHas('invoicePartialPaymentRequests.paymentRequest', function($query) {

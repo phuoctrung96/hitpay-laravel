@@ -36,86 +36,86 @@ class CognitohqWebhookController extends Controller
 
         $eventData = $postData['data'];
 
-//        if ($postData['event'] == 'flow_session.status.updated') {
-//            $flowSessionId = $eventData['id'];
-//            $businessId = $eventData['customer_reference'];
-//
-//            $business = Business::find($businessId);
-//
-//            if ($business == null) {
-//                $this->setError("Business not found from cognito webhook with business ID {$businessId}");
-//            }
-//
-//            if ($eventData['status'] === 'success') {
-//                try {
-//                    $flowSession = new FlowSession\Retrieve();
-//                    $responseDecoded = $flowSession->getFlowSessionById($flowSessionId);
-//                } catch (Exception $exception) {
-//                    $this->setError("Failed when get flow session with id {$flowSessionId} : " );
-//                }
-//
-//                if ($responseDecoded === null) {
-//                    // $responseDecoded skipped because setError always exit the process
-//                    $this->setError("Failed when get flow session with id {$flowSessionId} : " );
-//                }
-//
-//                if ($responseDecoded['status'] == 'success') {
-//                    $verification = $business->verifications()->latest()->first();
-//
-//                    if ($verification) {
-//                        $verification->update([
-//                            'identification' => $responseDecoded['user']['id_number']['value'],
-//                            'name' => $responseDecoded['user']['name']['first'] . ' ' . $responseDecoded['user']['name']['last'],
-//                            'status' => '',
-//                            'cognitohq_data' => $responseDecoded,
-//                            'verification_provider' => VerificationProvider::COGNITO,
-//                            'verification_provider_account_id' => $flowSessionId,
-//                            'verification_provider_status' => $responseDecoded['status'],
-//                        ]);
-//                    } else {
-//                        // create new one
-//                        $business->verifications()->create([
-//                            'type' => $business->business_type == 'company' ? 'business' : 'personal',
-//                            'identification' => $responseDecoded['user']['id_number']['value'],
-//                            'name' => $responseDecoded['user']['name']['first'] . ' ' . $responseDecoded['user']['name']['last'],
-//                            'status' => '',
-//                            'cognitohq_data' => $responseDecoded,
-//                            'verification_provider' => VerificationProvider::COGNITO,
-//                            'verification_provider_account_id' => $flowSessionId,
-//                            'verification_provider_status' => $responseDecoded['status'],
-//                        ]);
-//                    }
-//
-//                    if (
-//                        isset($responseDecoded['user']['name']['first']) &&
-//                        isset($responseDecoded['user']['name']['last'])
-//                    ) {
-//                        // updating first name, last name and display name
-//                        $owner = $business->owner()->first();
-//                        $owner->first_name = $responseDecoded['user']['name']['first'];
-//                        $owner->last_name = $responseDecoded['user']['name']['last'];
-//                        $owner->display_name = $owner->first_name . ' ' . $owner->last_name;
-//                        $owner->save();
-//                    }
-//                }
-//            }
-//
-//            if ($eventData['status'] == 'expired') {
-//                // https://cognitohq.com/docs/reference#get_flow_session-status
-//                // expired - The Flow session was active for more than 48 hours without being completed
-//                // and was automatically marked as expired.
-//                try {
-//                    $flowRetry = new FlowSession\Retry();
-//                    $flowRetry->setBusiness($business)->handle();
-//                } catch (Exception $exception) {
-//                    $this->setError("Failed when trying retry flow session with business id {$businessId} error: " . $exception->getMessage());
-//                }
-//            }
-//        } else {
-//            if (!Facades\App::environment('production')) {
-//                Facades\Log::info('flow_session status '.$postData['event'].' come...');
-//            }
-//        }
+        if ($postData['event'] == 'flow_session.status.updated') {
+            $flowSessionId = $eventData['id'];
+            $businessId = $eventData['customer_reference'];
+
+            $business = Business::find($businessId);
+
+            if ($business == null) {
+                $this->setError("Business not found from cognito webhook with business ID {$businessId}");
+            }
+
+            if ($eventData['status'] === 'success') {
+                try {
+                    $flowSession = new FlowSession\Retrieve();
+                    $responseDecoded = $flowSession->getFlowSessionById($flowSessionId);
+                } catch (Exception $exception) {
+                    $this->setError("Failed when get flow session with id {$flowSessionId} : " );
+                }
+
+                if ($responseDecoded === null) {
+                    // $responseDecoded skipped because setError always exit the process
+                    $this->setError("Failed when get flow session with id {$flowSessionId} : " );
+                }
+
+                if ($responseDecoded['status'] == 'success') {
+                    $verification = $business->verifications()->latest()->first();
+
+                    if ($verification) {
+                        $verification->update([
+                            'identification' => $responseDecoded['user']['id_number']['value'],
+                            'name' => $responseDecoded['user']['name']['first'] . ' ' . $responseDecoded['user']['name']['last'],
+                            'status' => '',
+                            'cognitohq_data' => $responseDecoded,
+                            'verification_provider' => VerificationProvider::COGNITO,
+                            'verification_provider_account_id' => $flowSessionId,
+                            'verification_provider_status' => $responseDecoded['status'],
+                        ]);
+                    } else {
+                        // create new one
+                        $business->verifications()->create([
+                            'type' => $business->business_type == 'company' ? 'business' : 'personal',
+                            'identification' => $responseDecoded['user']['id_number']['value'],
+                            'name' => $responseDecoded['user']['name']['first'] . ' ' . $responseDecoded['user']['name']['last'],
+                            'status' => '',
+                            'cognitohq_data' => $responseDecoded,
+                            'verification_provider' => VerificationProvider::COGNITO,
+                            'verification_provider_account_id' => $flowSessionId,
+                            'verification_provider_status' => $responseDecoded['status'],
+                        ]);
+                    }
+
+                    if (
+                        isset($responseDecoded['user']['name']['first']) &&
+                        isset($responseDecoded['user']['name']['last'])
+                    ) {
+                        // updating first name, last name and display name
+                        $owner = $business->owner()->first();
+                        $owner->first_name = $responseDecoded['user']['name']['first'];
+                        $owner->last_name = $responseDecoded['user']['name']['last'];
+                        $owner->display_name = $owner->first_name . ' ' . $owner->last_name;
+                        $owner->save();
+                    }
+                }
+            }
+
+            if ($eventData['status'] == 'expired') {
+                // https://cognitohq.com/docs/reference#get_flow_session-status
+                // expired - The Flow session was active for more than 48 hours without being completed
+                // and was automatically marked as expired.
+                try {
+                    $flowRetry = new FlowSession\Retry();
+                    $flowRetry->setBusiness($business)->handle();
+                } catch (Exception $exception) {
+                    $this->setError("Failed when trying retry flow session with business id {$businessId} error: " . $exception->getMessage());
+                }
+            }
+        } else {
+            if (!Facades\App::environment('production')) {
+                Facades\Log::info('flow_session status '.$postData['event'].' come...');
+            }
+        }
 
         // Cognito need to return null
         // can't return with Response::json([],200)

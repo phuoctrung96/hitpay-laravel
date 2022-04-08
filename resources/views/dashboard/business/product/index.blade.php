@@ -94,9 +94,6 @@
                 </div>
             @endif
         </div>
-        <div class="col-md-3 col-lg-4">
-            <business-product-export :current_business_user="{{ json_encode($currentBusinessUser) }}"></business-product-export>
-        </div>
     </div>
     <div class="row">
         <div class="col-12 col-sm-12 col-md-12 col-lg-8 mb-4">

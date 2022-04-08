@@ -33,7 +33,7 @@ class OnboardingSuccess extends Mailable
         $integration_link = route('dashboard.business.gateway.index', [$this->provider->business->id]);
 
         return $this
-          ->subject($payment_provider . ' onboarding completed - HitPay')
+          ->subject('GrabPay onboarding completed - HitPay')
           ->view('hitpay-email.onboarding-success', compact('payment_provider', 'integration_link'));
     }
 }

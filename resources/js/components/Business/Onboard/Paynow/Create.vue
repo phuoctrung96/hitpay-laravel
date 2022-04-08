@@ -10,15 +10,6 @@
         </div>
         <div class="mb-3">
             <div class="form-group">
-                <div class="switch-mode form-control mb-2" v-if="!is_staging_env">
-                    <span>You can edit this information anytime</span>
-                </div>
-                <div class="switch-mode form-control" v-if="is_staging_env">
-                    <span>You're currently in test mode</span>
-                    <button @click="fillRandom()"> Fill randomly </button>
-                </div>
-            </div>
-            <div class="form-group">
                 <label for="company_uen">
                     {{ business.country == 'sg' ? form_names.sg.company_identity : form_names.my.company_identity }}
                 </label>
@@ -72,19 +63,19 @@
                 </label>
                 <select
                     id="bank_swift_code"
-                    class="custom-select"
-                    v-model="form.bank_id"
-                    :class="{'is-invalid' : errors.bank_id}"
+                    class="custom-select bg-light"
+                    v-model="form.bank_swift_code"
+                    :class="{'is-invalid' : errors.bank_swift_code}"
                     :disabled="is_processing">
                     <option value="" disabled>Select Bank</option>
                     <option
                         v-for="bank in banks_list"
-                        :value="bank.id">
+                        :value="bank.swift_code">
                         {{ bank.name }}
                     </option>
                 </select>
                 <span class="invalid-feedback" role="alert">
-                    {{ errors.bank_id }}
+                    {{ errors.bank_swift_code }}
                 </span>
             </div>
 
@@ -94,7 +85,7 @@
                     <select
                         v-model="form.bank_branch_code"
                         :class="getSelectClasses('branch_code')"
-                        :disabled="is_processing || !form.bank_id || branches.length <= 0">
+                        :disabled="is_processing || !form.bank_swift_code || branches.length <= 0">
                         <option value="" disabled>Please select a branch</option>
                         <option v-for="branch in branches" :value="branch.code">[{{ branch.code }}] {{ branch.name }}</option>
                     </select>
@@ -157,7 +148,7 @@ export default {
                 company_uen: '',
                 company_name: '',
                 bank_account_name: '',
-                bank_id: '',
+                bank_swift_code: '',
                 bank_branch_code: '',
                 bank_account_no: '',
                 bank_account_no_confirmation: '',
@@ -174,16 +165,10 @@ export default {
                     'company_identity': 'Company Identity',
                     'company_name': 'Company Name',
                 }
-            },
-            is_staging_env: false, 
+            }
         }
     },
-    mounted() {
-        let domain = this.getDomain();
-        if(domain.includes('staging')){
-            this.is_staging_env = true;
-        }
-    },
+
     methods: {
         async save() {
             this.message = ''
@@ -205,8 +190,8 @@ export default {
                     this.errors.bank_account_name = "Please input bank account name.";
                 }
 
-                if (!this.form.bank_id) {
-                    this.errors.bank_id = "Please select a bank.";
+                if (!this.form.bank_swift_code) {
+                    this.errors.bank_swift_code = "Please select a bank.";
                 }
 
                 if (this.branches.length > 0 && !this.form.bank_branch_code) {
@@ -277,33 +262,14 @@ export default {
 
             return classes.join(" ");
         },
-
-        fillRandom() {
-            let result           = '';
-            let characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let charactersLength = characters.length;
-            for ( var i = 0; i < 8; i++ ) {
-                result += characters.charAt(Math.floor(Math.random() * charactersLength));
-            }
-            
-            this.form.company_uen = result;
-            this.form.bank_account_name = this.business.name
-            this.form.bank_id = this.banks_list[Math.floor(Math.random()*this.banks_list.length)].id;
-            this.form.company_name = this.business.display_name
-
-            this.form.bank_account_no = '000123456';
-            if(this.business.country != 'sg'){
-                this.form.bank_account_no = '000123456000';
-            }
-        }
     },
 
     watch : {
-        'form.bank_id' : {
+        'form.bank_swift_code' : {
             handler(value) {
                 if (value) {
-                    let bank = _.first(_.filter(this.banks_list, ({ id }) => {
-                        return id === value;
+                    let bank = _.first(_.filter(this.banks_list, ({ swift_code }) => {
+                        return swift_code === value;
                     }));
 
                     this.branches = bank.branches;

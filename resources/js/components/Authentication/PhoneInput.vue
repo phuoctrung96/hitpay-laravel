@@ -8,9 +8,9 @@
                     <option v-for="country in countryCodes"
                         :value="country.dial_code"
                         :data-display="country.dial_code"
-                        :data-select="country.dial_code"
+                        :data-select="country.dial_code+' '+country.name"
                     >
-                        {{country.dial_code}}
+                        {{country.dial_code+' '+country.name}}
                     </option>
                 </select>
             </div>

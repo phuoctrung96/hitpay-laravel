@@ -39,7 +39,6 @@ class FactoryPaymentIntentManager implements FactoryPaymentIntentManagerInterfac
             case PaymentMethodType::CARD:
             case PaymentMethodType::CARD_PRESENT:
             case PaymentMethodType::GRABPAY: // GrabPay via Stripe
-            case PaymentMethodType::FPX:              
                 return new PaymentIntentManager($method);
             case PaymentMethodType::ALIPAY:
                 return new SourceAlipayManager($method);

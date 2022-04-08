@@ -7,8 +7,6 @@ use App\Business;
 use App\Enumerations\Business\ChargeStatus;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -38,14 +36,7 @@ class TaxInvoiceController extends Controller
     {
         Gate::inspect('view', $business)->authorize();
 
-        $businessUser = $business->businessUsers();
-        $businessUser = $businessUser->where('user_id', Auth::id())->first();
-
-        $business->isCashier = $businessUser->isCashier();
-
         $business_creation_date = Carbon::createFromFormat('Y-m-d H:i:s', $business->created_at);
-
-        $months[] = ['name' => $business_creation_date->format("F"), 'value' => $business_creation_date->format("m"), 'year' => $business_creation_date->format("Y")];
 
         if (($diff = $business_creation_date->diffInMonths(now())) < 12){
             $result = now()->startOfMonth()->subMonths($diff)->monthsUntil(now());
@@ -53,11 +44,9 @@ class TaxInvoiceController extends Controller
             $result = now()->startOfMonth()->subMonths(11)->monthsUntil(now());
         }
 
+        $months = [];
         foreach ($result as $dt) {
-            $exists = $dt->format("F") === $business_creation_date->format("F") && $dt->format("Y") === $business_creation_date->format("Y");
-            if (!$exists) {
-                $months[] = ['name' => $dt->format("F"), 'value' => $dt->format("m"), 'year' => $dt->format("Y")];
-            }
+            $months[] = ['name' => $dt->format("F"), 'value' => $dt->format("m"), 'year' => $dt->format("Y")];
         }
 
         return Response::view('dashboard.business.tax-invoice.index', compact('business', 'months'));

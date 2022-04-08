@@ -3,12 +3,10 @@
 namespace HitPay\Stripe\CustomAccount;
 
 use App\Business\PaymentProvider;
-use App\Business\Verification;
 use App\Enumerations\Business\Type;
 use App\Enumerations\CountryCode;
 use App\Enumerations\OnboardingStatus;
 use App\Helpers\StripeCustomAccountHelper;
-use Exception;
 use HitPay\Stripe\Core;
 use HitPay\Stripe\CustomAccount\Exceptions\AccountNotFoundException;
 use HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException;
@@ -32,7 +30,7 @@ abstract class CustomAccount extends Core
         // TODO - There's an issue with the verification, we can't simply use MyInfo verification for custom account
         //   verification because of the type, our platform allows company to be identified using individual account.
 
-        switch ($this->business->getStripeAccountBusinessType()) {
+        switch ($this->business->business_type) {
             case Type::COMPANY:
                 $additionalData = $this->generateCompanyData();
 
@@ -104,27 +102,63 @@ abstract class CustomAccount extends Core
 
     private function generateCompanyData() : array
     {
-        $companyParams = [
-            'name' => $this->business->name,
-            'address' => [
-                'line1' => $this->business->street,
-                'city' => $this->business->city,
-                'state' => $this->business->state,
-                'postal_code' => $this->business->postal_code,
-            ],
-            'phone' => $this->business->phone_number,
-        ];
+        $companyParams = [];
+
+        $companyParams['name'] = $this->business->name;
 
         $businessVerification = $this->business->verifications()->latest()->first();
 
-        if ($businessVerification instanceof Verification) {
-            // We will still update this everytime. If the charge or payout failed, let the user update it again.
-            //
-            $identification = (string) $businessVerification->identification;
+        if ($businessVerification) {
+            if ($this->isUpdateDataAllowed()) {
+                $companyParams['registration_number'] = $this->validateIdNumber((string)$businessVerification->indentification);
+                $companyParams['tax_id'] = $this->validateTaxId((string)$businessVerification->indentification);
+                $companyParams['vat_id'] = $this->validateIdNumber((string)$businessVerification->indentification);
+            }
 
-            $companyParams['registration_number'] = $this->validateIdNumber($identification);
-            $companyParams['tax_id'] = $this->validateTaxId($identification);
-            $companyParams['vat_id'] = $this->validateIdNumber($identification);
+            $isOwnerProvided = false;
+            $isDirectorProvided = false;
+
+            $businessPersons = $businessVerification->persons()->get();
+
+            foreach ($businessPersons as $businessPerson) {
+                foreach ($businessPerson->relationship as $key => $status) {
+                    if ($key == 'owner' &&  $status == true) {
+                        $isOwnerProvided = true;
+                    }
+
+                    if ($key == 'director' &&  $status == true) {
+                        $isDirectorProvided = true;
+                    }
+                }
+            }
+
+            if ($isOwnerProvided) {
+                $companyParams['owners_provided'] = true;
+            }
+
+            if ($isDirectorProvided) {
+                $companyParams['directors_provided'] = true;
+            }
+
+            if ($this->business->street != "" && $this->isUpdateDataAllowed()) {
+                $companyParams['address']['line1'] = $this->business->street;
+            }
+
+            if ($this->isUpdateDataAllowed()) {
+                $companyParams['address']['city'] = $this->business->city;
+                $companyParams['address']['state'] = $this->business->state;
+                $companyParams['address']['postal_code'] = $this->business->postal_code;
+            }
+
+            $companyParams['phone'] = $this->validatePhoneNumber($this->business->phone_number);
+
+            $taxFileUploaded = $this->businessPaymentProvider->files()
+                ->where('group', 'stripe_file_tax')
+                ->first();
+
+            if ($taxFileUploaded && $this->isUpdateDataAllowed()) {
+                $companyParams['verification']['document']['back'] = $taxFileUploaded->stripe_file_id;
+            }
         }
 
         return [
@@ -134,42 +168,85 @@ abstract class CustomAccount extends Core
 
     private function generateIndividualData() : array
     {
-        $params = [
-            'company' => [
-                'name' => $this->business->name,
-                'address' => [
-                    'line1' => $this->business->street,
-                    'city' => $this->business->city,
-                    'state' => $this->business->state,
-                    'postal_code' => $this->business->postal_code,
-                ],
-                'phone' => $this->business->phone_number,
-            ],
-        ];
+        $params = [];
 
-        $businessVerification = $this->business->verifications()->latest()->first();
+        $individualParams = [];
 
-        if ($businessVerification instanceof Verification) {
-            // The data for individual type is a bit different with the business type. The person for individual is
-            // in the custom account itself. Anyway, we will update the ID everytime. If the charge or payout failed,
-            // let the user update it again using account link.
-            //
-            $individualParams = [
-                'id_number' => $this->validateIdNumber($businessVerification->identification),
-            ];
+        if ($this->businessPaymentProvider) {
+            $persons = $this->businessPaymentProvider->persons()->get();
 
-            if ($this->businessPaymentProvider->stripe_init === 0) {
-                $person = $businessVerification->getPersonsForStripe()[0] ?? null;
+            if ($persons->count() > 0) {
+                $person = $persons->first();
 
-                if (is_array($person)) {
-                    $individualParams = array_merge($individualParams, $person);
+                if ($this->isUpdateDataAllowed()) {
+                    $individualParams['id_number'] = $this->validateIdNumber($person->id_number);
+                    $individualParams['first_name'] = $person->first_name;
+                    $individualParams['last_name'] = $person->last_name;
                 }
 
-                $this->businessPaymentProvider->stripe_init = 1;
-                $this->businessPaymentProvider->save();
-            }
+                $individualParams['email'] = $person->email;
+                $individualParams['phone'] = $this->validatePhoneNumber($person->phone);
 
-            $params['individual'] = $individualParams;
+                if ($this->isUpdateDataAllowed()) {
+                    $individualParams['dob'] = $this->validateDateOfBirth($person->dob);
+                }
+
+                if ($this->isUpdateDataAllowed()) {
+                    $individualParams['address'] = [
+                        'line1' => $this->validateAddress($person->address),
+                        'postal_code' => $person->postal_code,
+                        'city' => $person->city,
+                        'state' => $person->state,
+                    ];
+                }
+
+                $individualParams['nationality'] = strtoupper($person->country);
+
+                $individualParams['full_name_aliases'] = [$person->alias_name];
+
+                $params['individual'] = $individualParams;
+
+                $companyParams = [];
+
+                if ($this->isUpdateDataAllowed()) {
+                    $companyParams['address'] = [
+                        'line1' => $this->validateAddress($this->business->street),
+                        'city' => $this->business->city,
+                        'state' => $this->business->state,
+                        'postal_code' => $this->business->postal_code,
+                    ];
+                }
+
+                $companyParams['phone'] = $this->validatePhoneNumber($this->business->phone_number);
+
+                if ($this->isUpdateDataAllowed()) {
+                    $companyParams['name'] = $this->business->display_name;
+                }
+
+                $params['company'] = $companyParams;
+            }
+        } else {
+            $businessVerification = $this->business->verifications()->latest()->first();
+
+            if ($businessVerification) {
+                $individualParams['id_number'] = $this->validateIdNumber($businessVerification->indentification);
+
+                $businessVerificationData = $businessVerification->verificationData('submitted');
+
+                $individualParams['first_name'] = $businessVerificationData['name'];
+
+                $individualParams['email'] = $businessVerificationData['email'];
+
+                $individualParams['phone'] = $this->validatePhoneNumber($this->business->phone_number);
+
+                $individualParams['dob'] = $this->validateDateOfBirth($businessVerificationData['dob']);
+
+                $individualParams['address'] = [
+                    'line1' => $this->validateAddress($businessVerificationData['regadd'])
+                ];
+
+                $params['individual'] = $individualParams;
+            }
         }
 
         return $params;
@@ -212,9 +289,12 @@ abstract class CustomAccount extends Core
                 'bancontact_payments',
                 'card_payments',
                 'eps_payments',
+                // The fpx_payments capability is not requestable for Individual or Sole Proprietor accounts. TODO - TEST
+                // 'fpx_payments',
                 'giropay_payments',
                 'grabpay_payments',
                 'ideal_payments',
+                'legacy_payments',
                 'p24_payments',
                 'sepa_debit_payments',
                 'sofort_payments',
@@ -223,13 +303,10 @@ abstract class CustomAccount extends Core
         }
 
         if ($this->business->country == CountryCode::MALAYSIA) {
-            // The `fpx_payments` capability is not requestable for Individual or Sole Proprietor accounts. Not sure
-            // how does it affect us collect the payment on behalf. Have to test.
-            //
             $capabilities = [
                 'card_payments',
-                // 'fpx_payments',
                 'grabpay_payments',
+                'legacy_payments',
                 'transfers'
             ];
         }
@@ -263,7 +340,7 @@ abstract class CustomAccount extends Core
                 $data,
                 [ 'stripe_version' => $this->stripeVersion ]
             );
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             Facades\Log::critical('error on business '.$this->businessId.' with data: ' . json_encode($data));
 
             throw $exception;
@@ -277,17 +354,11 @@ abstract class CustomAccount extends Core
     /**
      * Sync the Stripe custom account data and information to the payment provider instance.
      *
-     * @return \App\Business\PaymentProvider
-     * @throws \HitPay\Stripe\CustomAccount\Exceptions\AccountNotFoundException
-     * @throws \HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException
-     * @throws \Stripe\Exception\ApiErrorException
      * @throws \Throwable
      */
-    protected function syncAccount() : PaymentProvider
+    protected function syncAccount() : void
     {
         $customAccount = $this->getCustomAccount();
-
-        $businessPaymentProviderIsAlreadyReady = $this->businessPaymentProvider->payment_provider_account_ready;
 
         $this->businessPaymentProvider->payment_provider_account_ready = $this->isCustomAccountVerified();
 
@@ -295,15 +366,36 @@ abstract class CustomAccount extends Core
             // no need update onboarding_status become pending after success if the account is unverified
             // because this onboarding_status will be checked for handle unverified account triggered from webhook too.
             $this->businessPaymentProvider->onboarding_status = OnboardingStatus::SUCCESS;
-        } elseif ($businessPaymentProviderIsAlreadyReady) {
-            // If the status of the Stripe account change from ready to not ready, we log it.
-            //
-            Facades\Log::critical(
-                "The status of the payment provider (Code : {$this->businessPaymentProvider->payment_provider}), for business (ID : {$this->businessId}) has changed from ready to not ready."
-            );
         }
 
         $paymentProviderData = $this->businessPaymentProvider->data;
+
+        /**
+        // this one for mock error because stripe not showing when we input negative test mode.
+
+        $data = $customAccount->toArray();
+        $data['requirements']['errors'] = [
+            [
+                "requirement" => "company.address.line1",
+                "code" => "invalid_street_address",
+                "reason" => "The provided street address cannot be found. Please verify the street name and number are correct in \"10 Downing Street\"",
+            ],
+            [
+                "requirement" => "person_4KKDF3008Fthhcl1.verification.document",
+                "code" => "verification_document_failed_greyscale",
+                "reason" => "Greyscale documents cannot be read. Please upload a color copy of the document.",
+            ],
+        ];
+
+        $data['requirements']['currently_due'] = [
+            'company.name',
+            'company.address.line1',
+            'person_4KKDF3008Fthhcl1.verification.document',
+        ];
+
+        $paymentProviderData['account'] = $data;
+
+        **/
 
         $paymentProviderData['account'] = $customAccount->toArray();
 
@@ -315,8 +407,6 @@ abstract class CustomAccount extends Core
         Facades\DB::transaction(function () {
             $this->businessPaymentProvider->save();
         }, 3);
-
-        return $this->businessPaymentProvider;
     }
 
     /**

@@ -53,20 +53,20 @@
           title="Recent Transactions"
           :link="`/business/${business_id}/charge`">
           <table
-            v-if="daily_data.lastTransactions.length > 0"
+            v-if="lastTransactions.length > 0"
             class="dash-table w-100">
             <tr
-              v-for="(item, index) in daily_data.lastTransactions"
+              v-for="(item, index) in lastTransactions"
               :key="`${index}-${item.id}`">
               <td class="small">{{ item.closed_at | date2 }}</td>
               <td class="small">
-                <span class="text-black">{{ item.customer_email || 'No customer info' }}</span><br/>
+                <span class="text-black">{{ item.customer.email || 'No customer info' }}</span><br/>
                 <span class="text-weight-light">Order ID:</span> {{ item.id }}
               </td>
               <td class="text-center">
-                <img height="24" :src="`/icons/payment-methods-2/${paymentMethodImages[item.payment_provider_charge_method]}`"/>
+                <img height="24" :src="`/icons/payment-methods-2/${paymentMethodImages[item.payment_provider.charge.method]}`"/>
               </td>
-              <td class="amount-big"><span class="amount-small">$</span>{{ item.amount }}</td>
+              <td class="amount-big"><span class="amount-small">$</span>{{ item.amount.toFixed(2) }}</td>
             </tr>
           </table>
           <div v-else class="no-data h-100 p-4 d-flex align-items-center justify-content-center">
@@ -154,6 +154,21 @@ export default {
     daily_data: Object,
     user: Object
   },
+
+    /**
+    * Prepare the component (Vue 1.x).
+    */
+    ready() {
+        this.prepareComponent();
+    },
+
+    /**
+    * Prepare the component (Vue 2.x).
+    */
+    mounted() {
+        this.prepareComponent();
+    },
+
   data () {
     return {
         partner: this.user.business_partner,
@@ -207,6 +222,7 @@ export default {
         shopee_pay: 'shopee_pay.png',
         zip: 'zip.png'
       },
+      lastTransactions: [],
     }
   },
   computed: {
@@ -227,12 +243,11 @@ export default {
       return this.hasProviders && !this.daily_data.providers.find(p => p === 'stripe_sg')
     },
     todayData () {
-      let businessCurrency = this.business.currency;
       return [
         {
-          title: businessCurrency.toUpperCase() + ' Sales',
+          title: 'SGD Sales',
           dollarSign: true,
-          text: this.daily_data.currencies.find(c => c.currency === businessCurrency).amount
+          text: this.daily_data.currencies.find(c => c.currency === 'sgd').amount
         },
         {
           title: 'USD Sales',
@@ -248,6 +263,9 @@ export default {
     },
   },
   methods: {
+      prepareComponent() {
+          this.getLastTransactions();
+      },
     hasPermission(permission) {
       return this.user.businessUsersList.filter((businessUser) => {
         return businessUser.business_id == this.business_id && businessUser.permissions[permission];
@@ -273,6 +291,16 @@ export default {
         'amount-big': s.length <= 5,
         'amount-small': s.length > 5
       }
+    },
+    getLastTransactions() {
+        axios.get(this.getDomain(`v1/business/${this.business_id}/charge?per_page=5`, 'api'), {
+            withCredentials: true
+        })
+          .then(response => {
+              this.lastTransactions = response.data.data;
+              console.log('last transactions');
+              console.log(this.lastTransactions);
+          });
     }
   },
 }
@@ -344,7 +372,7 @@ export default {
 
       @media screen and (max-width: 576px) {
         padding: 4px;
-      }      
+      }
 
       &.small {
         font-size: 12px;

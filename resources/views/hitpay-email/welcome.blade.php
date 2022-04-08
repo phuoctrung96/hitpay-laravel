@@ -17,7 +17,7 @@
     </ul>
     <p>You can get started by logging on to our web dashboard at <a href="https://dashboard.hit-pay.com">https://dashboard.hit-pay.com</a> or by downloading the HitPay app from the iTunes Store or Google Play Store.</p>
     <p>You can find extensive resources on all our solutions at our online help centre : <a href="https://hitpay.zendesk.com">https://hitpay.zendesk.com</a></p>
-    <p>Contact us on WhatsApp at +65 89518262</p>
+    <p>Contact us on WhatsApp at +65 98644718</p>
     <p>Best,</p>
     <p>Team HitPay</p>
 @endsection

@@ -1,10 +1,135 @@
 <style lang="scss">
-
+    .account-verification{
+        label{
+            color: #03102F;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        textarea{
+            &.form-control{
+                height: 184px;
+            }
+        }
+        .manual-verify{
+            padding: 12px 16px 12px 16px;
+            background: #FFF;
+            border: 1px solid #E4E7ED;
+            border-radius: 4px;
+            span{
+                img{
+                    max-width: 166px;
+                    border-radius: 5px;
+                }
+            }
+        }
+        .alert-info{
+            padding: 14px 15px 8px 15px;
+            margin-left: 12px;
+            margin-right: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            p{
+                margin: 0px 0px 8px;
+            }
+        }
+        .card{
+            padding: 32px 30px 40px;
+            .card-body{
+                padding: 0;
+            }
+        }
+        .btn-delete{
+            cursor: pointer;
+            img{
+                width: 12px;
+                height: auto;
+            }
+        }
+        .form-row{
+            margin: 0px -12px;
+            .form-group{
+                padding-right: 12px;
+                padding-left: 12px;
+            }
+        }
+        .form-control{
+            height: 40px;
+            border-radius: 4px;
+            border: 1px solid #D4D6DD;
+            &:focus{
+                box-shadow: none;
+            }
+        }
+        .text-primary{
+            font-size: 16px;
+            margin: 0px 0px 20px;
+        }
+        .btn{
+            &.btn-outline-primary {
+                border: 1px solid #002771;
+                color: #002771;
+                opacity: 1;
+                font-size: 14px;
+                height: 40px;
+                span {
+                    background: url(/images/ico-plus.svg) no-repeat left 0 center;
+                    background-size: 9px;
+                    padding-left: 21px;
+                }
+                &:hover, &:focus{
+                    background: #FFF;
+                    color: #002771;
+                }
+            }
+        }
+        .is-btn-group{
+            .btn{
+                height: 44px;
+                min-width: 200px;
+                border-radius: 40px;
+                font-size: 18px;
+                font-weight: 500;
+            }
+        }
+        // .btn-upload{
+        //     border: 1px solid rgb(1, 27, 95);
+        //     color: rgb(1, 27, 95);
+        //     background-color: white;
+        //     font-size: 14px;
+        //     input{
+        //         opacity: 0;
+        //         position: absolute;
+        //         z-index: -1;
+        //     }
+        // }
+        @media (min-width: 991px) {
+            .is-btn-group{
+                .btn{
+                    min-width: 373px;
+                }
+            }
+        }
+        @media (min-width: 991px) {
+            .manual-verify{
+                padding: 15px 30px 15px 30px;
+            }
+        }
+        @media (max-width: 480px) {
+            .manual-verify{
+                span{
+                    margin: 5px 0px 0px;
+                    img{
+                        max-width: 156px;
+                    }
+                }
+            }
+        }
+    }
 </style>
 <template>
     <div class="account-verification">
         <template v-if="fill_type == 'manual'">
-            <a class="manual-verify d-flex mb-4 justify-content-between align-items-center" :href="myinfourl">
+            <a class="manual-verify mb-4 d-block d-lg-flex justify-content-between align-items-center" :href="myinfourl">
                 Use MyInfo to fill the form
                 <span>
                     <img src="/images/myinfo.svg" alt="MyInfo">
@@ -104,49 +229,47 @@
                             </div>
                             <div class="col-md-6">
                                 <template v-if="fill_type != 'completed' && (fill_type == 'manual' || type == 'individual')">
-                                    <div class="form-group">
-                                        <label class="form-label" for="supporting_documents">Upload supporting documents for
-                                        proof
-                                        of business operations*</label>
-                                        <span v-if="type == 'company'" class="small text-muted">
-                                            <br>Please upload ACRA Biz File.<br/>
-                                           Please refer to section 6.3 of the <a
-                                            href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> for prohibited list of businesses.</br>
-                                        </span>
-                                        <span v-else="type == 'individual'" class="small text-muted">
-                                            Please upload supporting documents that establishes clear proof that you are using HitPay for payment of goods and services (For example : business license, customer invoices).                                    <br>
-                                            Please refer to section 6.3 of the <a
-                                            href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> for prohibited list of businesses.</br>
-                                        </span>
-                                        <input type="file"
-                                               class="form-control-file mt-3" id="supporting_documents"
-                                               ref="supporting_documents" multiple="multiple"
-                                               :class="{'is-invalid' : errors.supporting_documents}"/>
-                                        <span class="invalid-feedback" role="alert">
-                                            {{ errors.supporting_documents }}
-                                        </span>
-                                    </div>
-                                    <template v-if="fill_type != 'myinfo'">
-                                    <div class="form-group mt-2">
-                                        <label class="form-label" for="identity_front">Please upload your NRIC (Front Side)</label>
-                                        <input type="file" class="form-control-file mt-3" id="identity_front"
-                                               placeholder="Please upload your NRIC copy front"
-                                               ref="identity_front" :class="{
-                                                'is-invalid' : errors.identity_front}"/>
-                                        <span class="invalid-feedback" role="alert">
-                                        {{ errors.identity_front }}</span>
-                                    </div>
-                                    <div class="form-group mt-2">
-                                        <label class="form-label" for="identity_back">Please upload your NRIC (Back Side)</label>
-                                        <input type="file" class="form-control-file mt-3" id="identity_back"
-                                               placeholder="Please upload your NRIC copy back"
-                                               ref="identity_back" :class="{
-                                                'is-invalid' : errors.identity_back}"/>
-                                        <span class="invalid-feedback" role="alert">
-                                        {{ errors.identity_back }}</span>
-                                    </div>
-                                    </template>
-                                </template>
+                            <div class="form-group">
+                                <label class="form-label" for="supporting_documents">Upload supporting documents for
+                                    proof
+                                    of business operations*</label>
+                                    <span v-if="type == 'company'" class="small text-muted">
+                                        <br>Please upload ACRA Biz File.<br/>
+                                       Please refer to section 6.3 of the <a
+                                        href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> for prohibited list of businesses.</br>
+                                    </span>
+                                    <span v-else="type == 'individual'" class="small text-muted">
+                                        Please upload supporting documents that establishes clear proof that you are using HitPay for payment of goods and services (For example : business license, customer invoices).                                    <br>
+                                        Please refer to section 6.3 of the <a
+                                        href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> for prohibited list of businesses.</br>
+                                    </span>
+                                    <input type="file"
+                                           class="form-control-file mt-3" id="supporting_documents"
+                                           ref="supporting_documents" multiple="multiple"
+                                           :class="{'is-invalid' : errors.supporting_documents}"/>
+                                    <span class="invalid-feedback" role="alert">
+                                        {{ errors.supporting_documents }}
+                                    </span>
+                                </div>
+                                <div class="form-group mt-2">
+                                    <label class="form-label" for="identity_front">Please upload your NRIC (Front Side)</label>
+                                    <input type="file" class="form-control-file mt-3" id="identity_front"
+                                           placeholder="Please upload your NRIC copy front"
+                                           ref="identity_front" :class="{
+                                            'is-invalid' : errors.identity_front}"/>
+                                    <span class="invalid-feedback" role="alert">
+                                    {{ errors.identity_front }}</span>
+                                </div>
+                                <div class="form-group mt-2">
+                                    <label class="form-label" for="identity_back">Please upload your NRIC (Back Side)</label>
+                                    <input type="file" class="form-control-file mt-3" id="identity_back"
+                                           placeholder="Please upload your NRIC copy back"
+                                           ref="identity_back" :class="{
+                                            'is-invalid' : errors.identity_back}"/>
+                                    <span class="invalid-feedback" role="alert">
+                                    {{ errors.identity_back }}</span>
+                                </div>
+                            </template>
                             </div>
                         </div>
                     </div>
@@ -157,8 +280,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label>UEN</label>
-                                <input id="uen" class="form-control" v-model="verification.uen"
-                                       :disabled="fill_type!='manual'"
+                                <input id="uen" class="form-control" v-model="verification.uen" :disabled="fill_type!='manual'"
                                        :class="{'is-invalid' : errors.uen}">
                                 <span class="invalid-feedback" role="alert">
                                     {{ errors.uen }}
@@ -183,8 +305,7 @@
                                     <option value="Local Company">Local Company</option>
                                     <option value="Foreign Company">Foreign Company</option>
                                     <option value="Unregistered Local Entity">Unregistered Local Entity</option>
-                                    <option value="Limited Liability Partnerships">Limited Liability Partnerships
-                                    </option>
+                                    <option value="Limited Liability Partnerships">Limited Liability Partnerships</option>
                                     <option value="Unregistered Foreign Entity">Unregistered Foreign Entity</option>
                                 </select>
                                 <span class="invalid-feedback" role="alert">
@@ -241,8 +362,8 @@
                         <div class="form-row">
                             <div class="form-group col-md-12">
                                 <button
-                                    v-if="fill_type !== 'myinfo' && fill_type !== 'completed' && verification.shareholders.length < 10"
-                                    :disabled="fill_type !== 'manual'"
+                                    v-if="fill_type != 'completed' && verification.shareholders.length < 10"
+                                    :disabled="fill_type!='manual'"
                                     class="btn btn-outline-primary font-weight-medium mb-2"
                                     @click="addShareholder">
                                     <!-- <i class="fa fa-user-plus"
@@ -254,21 +375,19 @@
                                 </button>
                                 <span id="shareholders_error"></span>
                                 <span v-if="errors.shareholders_error"
-                                      class="mb-2 invalid-feedback d-block" role="alert">
+                                    class="mb-2 invalid-feedback d-block" role="alert">
                                     {{ errors.shareholders_error }}
                                 </span>
 
-                                <form v-if="fill_type !== 'myinfo'">
+                                <form>
                                     <div v-for="(shareholder, key) in verification.shareholders" class="form-group p-4 mt-2 border">
                                         <div class="form-row" :id="`shareholder_${key}`">
                                             <div class="form-group col-md-12">
                                                 <label class="font-weight-medium">
                                                     SHAREHOLDER #{{ key + 1 }}
                                                 </label>
-                                                <span class="btn-delete ml-3"
-                                                      @click="fill_type != 'myinfo' ? deleteShareholder(key) : ''"
-                                                      v-if="fill_type != 'completed'"><img src="/images/delete_icon.svg"
-                                                                                           alt="delete"></span>
+                                                <span class="btn-delete ml-3" @click="fill_type != 'myinfo' ? deleteShareholder(key) : ''"
+                                                   v-if="fill_type != 'completed'"><img src="/images/delete_icon.svg" alt="delete"></span>
                                             </div>
                                             <!-- <div class="form-group col-md-3">
                                                 <i class="fa fa-user-times"
@@ -282,9 +401,7 @@
 
                                         <div class="form-row" v-if="is_more_confirm">
                                             <div class="alert-info mb-3">
-                                                <p>Shareholder name from MyInfo is <b>{{
-                                                        verification.shareholders[key]
-                                                    }}</b>.</p>
+                                                <p>Shareholder name from MyInfo is <b>{{ verification.shareholders[key] }}</b>.</p>
                                                 <p>Please input first name and last name follow with that.</p>
                                             </div>
                                         </div>
@@ -302,8 +419,7 @@
                                                 />
                                             </div>
                                             <div class="form-group col-md-5">
-                                                <span v-if="verification.shareholders_first_name_error[key]"
-                                                      class="mb-2 invalid-feedback d-block" role="alert">
+                                                <span v-if="verification.shareholders_first_name_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
                                                     {{ verification.shareholders_first_name_error[key] }}
                                                 </span>
                                             </div>
@@ -322,8 +438,7 @@
                                                 />
                                             </div>
                                             <div class="form-group col-md-5">
-                                                <span v-if="verification.shareholders_last_name_error[key]"
-                                                      class="mb-2 invalid-feedback d-block" role="alert">
+                                                <span v-if="verification.shareholders_last_name_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
                                                     {{ verification.shareholders_last_name_error[key] }}
                                                 </span>
                                             </div>
@@ -342,8 +457,7 @@
                                                 />
                                             </div>
                                             <div class="form-group col-md-5">
-                                                <span v-if="verification.shareholders_id_number_error[key]"
-                                                      class="mb-2 invalid-feedback d-block" role="alert">
+                                                <span v-if="verification.shareholders_id_number_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
                                                     {{ verification.shareholders_id_number_error[key] }}
                                                 </span>
                                             </div>
@@ -351,7 +465,7 @@
 
                                         <div class="form-row">
                                             <div class="form-group col-md-10">
-                                                <label>Shareholder relationship</label> <br/>
+                                                <label>Shareholder relationship</label> <br />
 
                                                 <input type="checkbox"
                                                        v-model="verification.shareholders_is_director[key]"
@@ -436,8 +550,7 @@
                                                 />
                                             </div>
                                             <div class="form-group col-md-5">
-                                                <span v-if="verification.shareholders_postal_error[key]"
-                                                      class="mb-2 invalid-feedback d-block" role="alert">
+                                                <span v-if="verification.shareholders_postal_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
                                                     {{ verification.shareholders_postal_error[key] }}
                                                 </span>
                                             </div>
@@ -455,8 +568,7 @@
                                                 />
                                             </div>
                                             <div class="form-group col-md-5">
-                                                <span v-if="verification.shareholders_title_error[key]"
-                                                      class="mb-2 invalid-feedback d-block" role="alert">
+                                                <span v-if="verification.shareholders_title_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
                                                     {{ verification.shareholders_title_error[key] }}
                                                 </span>
                                             </div>
@@ -474,8 +586,7 @@
                                                 />
                                             </div>
                                             <div class="form-group col-md-5">
-                                                <span v-if="verification.shareholders_email_error[key]"
-                                                      class="mb-2 invalid-feedback d-block" role="alert">
+                                                <span v-if="verification.shareholders_email_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
                                                     {{ verification.shareholders_email_error[key] }}
                                                 </span>
                                             </div>
@@ -492,8 +603,7 @@
                            :class="{
                     'is-invalid' : errors.checkbox_agree
                 }" :disabled="is_processing ">
-                    <label for="checkbox_agree" class="small text-muted form-check-label">I agree that I will use HitPay
-                        only for payment of goods and services</label>
+                    <label for="checkbox_agree" class="small text-muted form-check-label">I agree that I will use HitPay only for payment of goods and services</label>
                     <span v-if="errors.checkbox_agree" class="invalid-feedback d-block" role="alert">
                                 {{ errors.checkbox_agree }}</span>
                 </div>
@@ -518,11 +628,8 @@
                         :disabled="is_processing"
                         data-toggle="modal"
                         data-target="#confirmDeleteModal">
-                        <template v-if="fill_type =='completed'">Delete <i v-if="is_processing"
-                                                                           class="fas fa-circle-notch fa-spin"></i>
-                        </template>
-                        <template v-else>Cancel <i v-if="is_processing" class="fas fa-circle-notch fa-spin"></i>
-                        </template>
+                        <template v-if="fill_type =='completed'">Delete <i v-if="is_processing" class="fas fa-circle-notch fa-spin"></i></template>
+                        <template v-else>Cancel <i v-if="is_processing" class="fas fa-circle-notch fa-spin"></i></template>
                     </button>
                     <button
                         v-if="is_more_confirm == true"
@@ -530,11 +637,8 @@
                         :disabled="is_processing"
                         data-toggle="modal"
                         data-target="#confirmDeleteModal">
-                        <template v-if="fill_type =='completed'">Delete <i v-if="is_processing"
-                                                                           class="fas fa-circle-notch fa-spin"></i>
-                        </template>
-                        <template v-else>Cancel <i v-if="is_processing" class="fas fa-circle-notch fa-spin"></i>
-                        </template>
+                        <template v-if="fill_type =='completed'">Delete <i v-if="is_processing" class="fas fa-circle-notch fa-spin"></i></template>
+                        <template v-else>Cancel <i v-if="is_processing" class="fas fa-circle-notch fa-spin"></i></template>
                     </button>
                 </div>
 
@@ -567,16 +671,12 @@
 
 <script>
 import Datepicker from 'vuejs-datepicker';
-import UploadValidation from "../../mixins/UploadValidation";
 
 export default {
     name: "Verification",
     components: {
         Datepicker
     },
-    mixins: [
-        UploadValidation
-    ],
     props: {
         fill_type: {
             type: String,
@@ -640,11 +740,6 @@ export default {
                 shareholders_relationship_error: [],
             },
             checkbox_agree: false,
-            hasImage: {
-                identity_front: false,
-                identity_back: false,
-                supporting_documents: false
-            }
         }
     },
     mounted() {
@@ -667,39 +762,29 @@ export default {
         }
     },
     methods: {
-        onUploadFile(id) {
-            this.hasImage[id] = true;
-            this.errors[id] = null;
-        },
-
-        removeFile(type) {
-            this.$refs[type].value = null;
-            this.hasImage[type] = false;
-        },
-
         deleteShareholder(key) {
             if (!confirm('Are you sure want to delete shareholder ' + (key + 1))) {
                 return;
             }
 
-            this.verification.shareholders.splice(key, 1);
-            this.verification.shareholders_first_name.splice(key, 1);
-            this.verification.shareholders_last_name.splice(key, 1);
-            this.verification.shareholders_id_number.splice(key, 1);
-            this.verification.shareholders_is_director.splice(key, 1);
-            this.verification.shareholders_is_executive.splice(key, 1);
-            this.verification.shareholders_is_owner.splice(key, 1);
-            this.verification.shareholders_dob.splice(key, 1);
-            this.verification.shareholders_address.splice(key, 1);
-            this.verification.shareholders_postal.splice(key, 1);
-            this.verification.shareholders_title.splice(key, 1);
-            this.verification.shareholders_email.splice(key, 1);
+            this.verification.shareholders.splice(key,1);
+            this.verification.shareholders_first_name.splice(key,1);
+            this.verification.shareholders_last_name.splice(key,1);
+            this.verification.shareholders_id_number.splice(key,1);
+            this.verification.shareholders_is_director.splice(key,1);
+            this.verification.shareholders_is_executive.splice(key,1);
+            this.verification.shareholders_is_owner.splice(key,1);
+            this.verification.shareholders_dob.splice(key,1);
+            this.verification.shareholders_address.splice(key,1);
+            this.verification.shareholders_postal.splice(key,1);
+            this.verification.shareholders_title.splice(key,1);
+            this.verification.shareholders_email.splice(key,1);
 
             this.verification.shareholders_count--;
         },
 
         resetShareHolderError() {
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 this.verification.shareholders_error[i] = "";
                 this.verification.shareholders_first_name_error[i] = "";
                 this.verification.shareholders_last_name_error[i] = "";
@@ -765,7 +850,7 @@ export default {
             this.verification.shareholders_count++;
 
             var that = this;
-            setTimeout(function () {
+            setTimeout(function() {
                 that.scrollTo('#shareholder_' + (that.verification.shareholders_count - 1));
             }, 1000);
         },
@@ -777,9 +862,9 @@ export default {
             }
 
             // check shareholders name
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 const messageError = "Shareholder name required";
-                if (typeof (this.verification.shareholders[i]) == 'undefined') {
+                if (typeof(this.verification.shareholders[i]) == 'undefined') {
                     this.errors.shareholders_error = messageError;
                 }
                 if (this.verification.shareholders[i] == "") {
@@ -789,10 +874,10 @@ export default {
             }
 
             // check shareholders first name
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 const messageError = "Shareholder first name required";
 
-                if (typeof (this.verification.shareholders_first_name[i]) == 'undefined') {
+                if (typeof(this.verification.shareholders_first_name[i]) == 'undefined') {
                     this.errors.shareholders_error = messageError;
                 }
                 if (this.verification.shareholders_first_name[i] == "") {
@@ -802,10 +887,10 @@ export default {
             }
 
             // check shareholders last name
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 const messageError = "Shareholder last name required";
 
-                if (typeof (this.verification.shareholders_last_name[i]) == 'undefined') {
+                if (typeof(this.verification.shareholders_last_name[i]) == 'undefined') {
                     this.errors.shareholders_error = messageError;
                 }
 
@@ -816,9 +901,9 @@ export default {
             }
 
             // check NRIC
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 const messageError = "Shareholder NRIC / ID Number required";
-                if (typeof (this.verification.shareholders_id_number[i]) == 'undefined') {
+                if (typeof(this.verification.shareholders_id_number[i]) == 'undefined') {
                     this.errors.shareholders_error = messageError;
                 }
                 if (this.verification.shareholders_id_number[i] == "") {
@@ -828,7 +913,7 @@ export default {
             }
 
             // check dob
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 const messageError = "Shareholder date of birth required";
                 if (typeof this.verification.shareholders_dob == "undefined") {
                     this.errors.shareholders_error = messageError;
@@ -840,9 +925,9 @@ export default {
             }
 
             // check address
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 const messageError = "Shareholder address required";
-                if (typeof (this.verification.shareholders_address[i]) == 'undefined') {
+                if (typeof(this.verification.shareholders_address[i]) == 'undefined') {
                     this.errors.shareholders_error = messageError;
                 }
                 if (this.verification.shareholders_address[i] == "") {
@@ -852,9 +937,9 @@ export default {
             }
 
             // check postal
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 const messageError = "Shareholder postal required";
-                if (typeof (this.verification.shareholders_postal[i]) == 'undefined') {
+                if (typeof(this.verification.shareholders_postal[i]) == 'undefined') {
                     this.errors.shareholders_error = messageError;
                 }
                 if (this.verification.shareholders_postal[i] == "") {
@@ -942,7 +1027,7 @@ export default {
                 return;
             }
 
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 let dob = this.verification.shareholders_dob[i];
 
                 if (typeof dob == "undefined") {
@@ -954,7 +1039,7 @@ export default {
         },
 
         mapFullname() {
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 if (this.verification.shareholders_first_name[i] != "") {
                     this.verification.shareholders[i] = this.verification.shareholders_first_name[i] + " " + this.verification.shareholders_last_name[i];
                 } else {
@@ -970,7 +1055,7 @@ export default {
         },
 
         validateMoreInfoFullname() {
-            for (var i = 0; i < this.verification.shareholders_count; i++) {
+            for (var i=0; i<this.verification.shareholders_count; i++) {
                 const fullname = this.verification.shareholders[i];
 
                 let arrFullName = fullname.split(' ');
@@ -996,12 +1081,12 @@ export default {
                 const firstNameArr = firstName.split(' ');
                 const lastNameArr = lastName.split(' ');
 
-                const foundFirstName = arrFullName.some(function (r) {
+                const foundFirstName = arrFullName.some(function(r) {
                     if (typeof r == 'string') {
                         r = r.toLowerCase();
                     }
 
-                    return firstNameArr.map(function (item) {
+                    return firstNameArr.map(function(item) {
                         if (typeof item == 'string') {
                             return item.toLowerCase();
                         }
@@ -1016,12 +1101,12 @@ export default {
                     continue;
                 }
 
-                const foundLastName = arrFullName.some(function (r) {
+                const foundLastName = arrFullName.some(function(r) {
                     if (typeof r == 'string') {
                         r = r.toLowerCase();
                     }
 
-                    return lastNameArr.map(function (item) {
+                    return lastNameArr.map(function(item) {
                         if (typeof item == 'string') {
                             return item.toLowerCase();
                         }
@@ -1074,24 +1159,16 @@ export default {
                 this.errors.supporting_documents = "Maximum 2 files are allowed";
             }
 
-            if (this.$refs.supporting_documents && this.$refs.supporting_documents.files.length === 0) {
+            if (this.$refs.supporting_documents && this.$refs.supporting_documents.files.length == 0) {
                 this.errors.supporting_documents = "Please upload supporting documents";
             }
 
-            if (this.fill_type !== 'myinfo' && this.$refs.identity_front && this.$refs.identity_front.files.length === 0) {
+            if (this.$refs.identity_front && this.$refs.identity_front.files.length == 0) {
                 this.errors.identity_front = "Please upload your NRIC copy front";
             }
 
-            if (this.fill_type !== 'myinfo' && this.$refs.identity_back && this.$refs.identity_back.files.length === 0) {
+            if (this.$refs.identity_back && this.$refs.identity_back.files.length == 0) {
                 this.errors.identity_back = "Please upload your NRIC copy back";
-            }
-
-            if (this.fill_type !== 'myinfo' && !this.isValidFile(this.$refs.identity_front.files[0].name)) {
-                this.errors.identity_front = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
-            }
-
-            if (this.fill_type !== 'myinfo' && !this.isValidFile(this.$refs.identity_back.files[0].name)) {
-                this.errors.identity_back = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
             }
 
             if (this.verification.business_description && this.verification.business_description.length > 1000) {
@@ -1109,10 +1186,6 @@ export default {
                     let file = this.$refs.supporting_documents.files[i];
                     if (file.size > 1024 * 1024 * 2) {
                         this.errors.supporting_documents = "Files should not be greater than 2 MB.";
-                    }
-
-                    if (!this.isValidFile(file.name)) {
-                        this.errors.supporting_documents = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
                     }
                 }
             }
@@ -1159,7 +1232,7 @@ export default {
                 }
             }
 
-            if (this.fill_type === 'manual') {
+            if (this.fill_type === 'manual'){
                 this.verification.dob = this.getEndDate(this.verification.dob);
 
                 if (this.type === 'company') {
@@ -1173,7 +1246,7 @@ export default {
             formData.append('fill_type', this.fill_type);
             formData.append('verification', JSON.stringify(this.verification));
 
-            axios.post(this.getDomain('business/' + this.business.id + '/verification/confirm' + (this.verification_id ? '/' + this.verification_id : ''), 'dashboard'), formData, {
+            axios.post(this.getDomain('business/' + this.business.id + '/verification/confirm' + (this.verification_id ? '/'+this.verification_id : ''), 'dashboard'), formData, {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'multipart/form-data'
@@ -1197,7 +1270,7 @@ export default {
         deleteVerification() {
             this.is_processing = true;
             axios.post(
-                this.getDomain('business/' + this.business.id + '/verification/delete' + (this.verification_id ? '/' + this.verification_id : ''), 'dashboard'))
+                this.getDomain('business/' + this.business.id + '/verification/delete' + (this.verification_id ? '/'+this.verification_id : ''), 'dashboard'))
                 .then(({data}) => {
                     this.is_processing = false;
                     document.location.href = data;
@@ -1209,14 +1282,12 @@ export default {
 
             this.resetError();
 
-            if (this.type === 'company') {
-                if (this.fill_type !== 'myinfo') {
-                    this.checkHaveValidShareholderRelationship();
+            if (this.type == 'company') {
+                this.checkHaveValidShareholderRelationship();
 
-                    this.validateMoreInfoFullname();
+                this.validateMoreInfoFullname();
 
-                    this.setDobShareholder();
-                }
+                this.setDobShareholder();
             } else {
                 this.isOwnerHasEmail = true;
             }
@@ -1240,35 +1311,6 @@ export default {
                 this.errors.checkbox_agree = 'Please confirm that you agree';
             }
 
-            if (this.type === 'individual') {
-                if (this.$refs.supporting_documents) {
-                    for (var i = 0; i < this.$refs.supporting_documents.files.length; i++) {
-                        let file = this.$refs.supporting_documents.files[i];
-                        if (file.size > 1024 * 1024 * 2) {
-                            this.errors.supporting_documents = "Files should not be greater than 2 MB.";
-                        }
-                    }
-                }
-
-                if (this.$refs.identity_front) {
-                    let file = this.$refs.identity_front.files[0];
-                    if (typeof file !== "undefined") {
-                        if (file.size > 1024 * 1024 * 2) {
-                            this.errors.identity_front = "Files should not be greater than 2 MB.";
-                        }
-                    }
-                }
-
-                if (this.$refs.identity_back) {
-                    let file = this.$refs.identity_back.files[0];
-                    if (typeof file !== "undefined") {
-                        if (file.size > 1024 * 1024 * 2) {
-                            this.errors.identity_back = "Files should not be greater than 2 MB.";
-                        }
-                    }
-                }
-            }
-
             if (Object.keys(this.errors).length > 0) {
                 this.showError(_.first(Object.keys(this.errors)));
                 return;
@@ -1276,30 +1318,11 @@ export default {
 
             let formData = new FormData();
 
-            if (this.type === 'individual') {
-                if (this.$refs.identity_front) {
-                    let file = this.$refs.identity_front.files[0];
-                    formData.append('identity_front', file);
-                }
-
-                if (this.$refs.identity_back) {
-                    let file = this.$refs.identity_back.files[0];
-                    formData.append('identity_back', file);
-                }
-
-                if (this.$refs.supporting_documents) {
-                    for (var i = 0; i < this.$refs.supporting_documents.files.length; i++) {
-                        let file = this.$refs.supporting_documents.files[i];
-                        formData.append('supporting_documents[' + i + ']', file);
-                    }
-                }
-            }
-
             formData.append('type', this.type === 'company' ? 'business' : 'personal');
             formData.append('fill_type', this.fill_type);
             formData.append('verification', JSON.stringify(this.verification));
 
-            const path = 'business/' + this.business.id + '/verification/more_confirm' + (this.verification_id ? '/' + this.verification_id : '');
+            const path = 'business/' + this.business.id + '/verification/more_confirm' + (this.verification_id ? '/'+this.verification_id : '');
 
             axios.post(
                 this.getDomain(path, 'dashboard'), formData, {

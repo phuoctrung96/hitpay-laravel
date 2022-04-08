@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Dashboard\Auth;
 
-use App\Actions\User\Partner\RegisterForm;
+use App\Business\BusinessCategory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterPartnerRequest;
 use App\Logics\BusinessRepository;
@@ -11,7 +11,6 @@ use App\Notifications\NewPartnerRegistration;
 use App\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\URL;
@@ -21,53 +20,35 @@ class RegisterPartnerController extends Controller
 {
     public function showRegistrationForm()
     {
-        $actionData = RegisterForm::withData([])->process();
-
-        $business_categories = $actionData['business_categories'] ?? [];
-        $countries = $actionData['countries'] ?? [];
-
-        return Response::view('dashboard.register-partner', compact('business_categories', 'countries'));
+        $business_categories = BusinessCategory::all();
+        return Response::view('dashboard.register-partner', compact('business_categories'));
     }
 
-    /**
-     * @throws \ReflectionException
-     * @throws \Throwable
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function register(RegisterPartnerRequest $request)
     {
-        try {
-            DB::beginTransaction();
-            /** @var User $user */
-            $user = User::create($request->only('display_name', 'email', 'password'));
+        /** @var User $user */
+        $user = User::create($request->only('display_name', 'email', 'password'));
 
-            $user->businessPartner()->create($this->getBusinessPartnerAttributes($request));
+        $user->businessPartner()->create($this->getBusinessPartnerAttributes($request));
 
-            Event::dispatch(new Registered($user));
-            Auth::login($user, true);
+        Event::dispatch(new Registered($user));
+        Auth::login($user, true);
 
-            BusinessRepository::store($request, Auth::user());
+        $business = BusinessRepository::store($request, Auth::user());
 
-            User::superAdmins()->each(function(User $admin) use ($user) {
-                $admin->notify(new NewPartnerRegistration($user));
-            });
+        User::superAdmins()->each(function(User $admin) use ($user) {
+            $admin->notify(new NewPartnerRegistration($user));
+        });
 
-            DB::commit();
+        $route = 'dashboard.home';
 
-            $route = 'dashboard.home';
-
-            if ($request->expectsJson()) {
-                return Response::json([
-                    'redirect_url' => URL::route($route),
-                ]);
-            }
-
-            return Response::redirectToRoute($route);
-        } catch (\Exception $exception) {
-            DB::rollBack();
-
-            throw $exception;
+        if ($request->expectsJson()) {
+            return Response::json([
+                'redirect_url' => URL::route($route),
+            ]);
         }
+
+        return Response::redirectToRoute($route);
     }
 
     private function getBusinessPartnerAttributes(RegisterPartnerRequest $request): array

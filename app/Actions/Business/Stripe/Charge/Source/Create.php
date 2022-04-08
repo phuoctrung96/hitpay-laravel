@@ -58,7 +58,7 @@ class Create extends Action
         $sourceParametersMetadata['charge_id'] = $this->businessChargeId;
         $sourceParametersMetadata['platform'] = Facades\Config::get('app.name');
         $sourceParametersMetadata['version'] = ConfigurationRepository::get('platform_version');
-        $sourceParametersMetadata['environment'] = Facades\Config::get('app.env');
+        $sourceParametersMetadata['environment'] = Facades\Config::get('env');
 
         if (key_exists('remark', $this->data) && is_string($this->data['remark'])) {
             $statementDescriptor = $this->data['remark'];

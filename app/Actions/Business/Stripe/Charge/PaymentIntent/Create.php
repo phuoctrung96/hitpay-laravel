@@ -40,7 +40,6 @@ class Create extends Action
             'card',
             'card_present',
             'grabpay',
-            'fpx',
         ]);
 
         $businessPaymentIntent = new Business\PaymentIntent;
@@ -66,18 +65,10 @@ class Create extends Action
         $sourceParametersMetadata['charge_id'] = $this->businessChargeId;
         $sourceParametersMetadata['platform'] = Facades\Config::get('app.name');
         $sourceParametersMetadata['version'] = ConfigurationRepository::get('platform_version');
-        $sourceParametersMetadata['environment'] = Facades\Config::get('app.env');
+        $sourceParametersMetadata['environment'] = Facades\Config::get('env');
 
         if (key_exists('remark', $this->data) && is_string($this->data['remark'])) {
             $statementDescriptor = $this->data['remark'];
-        }
-
-        if (key_exists('terminal_id', $this->data) && $this->data['terminal_id']) {
-            $hitpayPaymentIntentParameters = [
-                'terminal' => [
-                    'serial_number' => $this->data['terminal_id']
-                ]
-            ];
         }
 
         $stripePaymentIntentParameters = [
@@ -104,19 +95,7 @@ class Create extends Action
             $stripePaymentIntentParameters['confirmation_method'] = 'manual';
         }
 
-        try {
-            $stripePaymentIntent = Stripe\PaymentIntent::create($stripePaymentIntentParameters);
-        } catch (Stripe\Exception\ApiErrorException $exception) {
-            $stripeAccount = Stripe\Account::retrieve($businessPaymentIntent->payment_provider_account_id);
-
-            Facades\Log::critical(
-                "The business (ID : {$this->business->getKey()}, Charge Enabled: `{$stripeAccount->charges_enabled}`, Disabled Reason: `{$stripeAccount->requirements->disabled_reason}`) is having issue when a customer is intending to apy them via Stripe. Got code `{$exception->getStripeCode()}` and message: {$exception->getMessage()}"
-            );
-
-            throw new BadRequest(
-                'Please try again. If this issue is still exists after a few tries, please do not hesitate to contact us.'
-            );
-        }
+        $stripePaymentIntent = Stripe\PaymentIntent::create($stripePaymentIntentParameters);
 
         $businessPaymentIntent->payment_provider_object_type = $stripePaymentIntent->object;
         $businessPaymentIntent->payment_provider_object_id = $stripePaymentIntent->id;
@@ -124,17 +103,13 @@ class Create extends Action
 
         $businessPaymentIntentData['stripe']['payment_intent'] = $stripePaymentIntent->toArray();
 
-        if (isset($hitpayPaymentIntentParameters)) {
-            $businessPaymentIntentData['hitpay'] = $hitpayPaymentIntentParameters;
-        }
-
         $businessPaymentIntent->data = $businessPaymentIntentData;
 
         Facades\DB::transaction(function () use ($businessPaymentIntent) {
             $this->businessCharge->paymentIntents()->save($businessPaymentIntent);
         }, 3);
 
-        if ($method === 'grabpay' || $method === 'fpx') {
+        if ($method === 'grabpay') {
             $applicationFee = FeeCalculator::forBusinessPaymentIntent($businessPaymentIntent)->calculate();
 
             $stripePaymentIntent = Stripe\PaymentIntent::update($stripePaymentIntent->id, [

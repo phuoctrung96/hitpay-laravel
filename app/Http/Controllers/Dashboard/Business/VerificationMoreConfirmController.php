@@ -35,8 +35,8 @@ class VerificationMoreConfirmController extends Controller
         try {
             MoreConfirm::withBusiness($business)
                 ->data($request->all())
-                ->withRequestFile($request)
                 ->setVerification($verification)
+                ->setPaymentProvider()
                 ->process();
         } catch (BadRequest $exception) {
             if ($request->wantsJson()) {
@@ -50,7 +50,7 @@ class VerificationMoreConfirmController extends Controller
             ])->with('error_message', $exception->getMessage());
         }
 
-        Session::flash('success_message_completed', 'Your account verification has been completed. You can start accepting payments.');
+        Session::flash('success_message', 'Your account verification has been completed. You can start accepting payments.');
 
         return route('dashboard.business.verification.home', $business->getKey());
     }

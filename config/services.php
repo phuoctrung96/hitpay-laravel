@@ -60,9 +60,6 @@ return [
         'client_id_v2' => env('SHOPIFY_KEY_V2'),
         'client_secret_v2' => env('SHOPIFY_SECRET_V2'),
         'redirect_v2' => null,
-        'business_id_test_v2' => env('SHOPIFY_BUSINESS_ID_TEST_V2'),
-        'business_test_sandbox_to_staging' => env('SHOPIFY_TEST_SANDBOX_TO_STAGING', false),
-        'is_possible_test_mode' => env('SHOPIFY_IS_POSSIBLE_TEST_MODE', true),
     ],
 
     'dbs' => [
@@ -150,9 +147,6 @@ return [
 
     'comply_advantage' => [
         'key' => env('COMPLY_ADVANTAGE_KEY'),
-        'tm_environment' => env('COMPLY_ADVANTAGE_TM_ENVIRONMENT'),
-        'tm_login' => env('COMPLY_ADVANTAGE_TM_LOGIN'),
-        'tm_password' => env('COMPLY_ADVANTAGE_TM_PASSWORD'),
     ],
 
     'cognito' => [

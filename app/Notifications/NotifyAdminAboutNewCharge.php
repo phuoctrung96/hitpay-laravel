@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Business\Charge;
+use App\Enumerations\Business\PaymentMethodType;
 use Illuminate\Bus\Queueable;
 use App\Enumerations\PaymentProvider;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -74,16 +75,21 @@ class NotifyAdminAboutNewCharge extends Notification implements ShouldQueue
                     .'Channel : '.$this->charge->channel."\n"
                     .'Payment Method : '.$this->charge->payment_provider_charge_method."\n";
 
-                if (in_array($this->charge->payment_provider, [
-                    PaymentProvider::STRIPE_SINGAPORE, PaymentProvider::STRIPE_MALAYSIA
-                ])) {
+                if ($this->charge->payment_provider === PaymentProvider::STRIPE_SINGAPORE) {
                     $issuerName = '';
 
-                    $card = $this->charge->card();
+                    if ($this->charge->payment_provider_charge_method == PaymentMethodType::CARD) {
+                        if (isset($this->charge->data['source']['card']['issuer'])) {
+                            $issuerName = $this->charge->data['source']['card']['issuer'];
+                        } else if (isset($this->charge->data['payment_method_details']['card']['issuer'])) {
+                            $issuerName = $this->charge->data['payment_method_details']['card']['issuer'];
+                        }
+                    }
 
-                    if ($card instanceof \HitPay\Data\Objects\PaymentMethods\Card) {
-                        $card = $card->toArray();
-                        $issuerName = $card['issuer'];
+                    if ($this->charge->payment_provider_charge_method == PaymentMethodType::CARD_PRESENT) {
+                        if (isset($this->charge->data['payment_method_details']['card_present']['issuer'])) {
+                            $issuerName = $this->charge->data['payment_method_details']['card_present']['issuer'];
+                        }
                     }
 
                     $paymentSource = $issuerName;

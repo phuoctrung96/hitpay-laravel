@@ -109,6 +109,7 @@ class SendDailyEmailToAdmin extends Command
                 'Stripe Support Phone Number',
                 'Business Created Date',
                 'MyInfo Verified Date',
+                'MyInfo Data',
                 'Business Deleted',
             ]);
 
@@ -145,6 +146,20 @@ class SendDailyEmailToAdmin extends Command
 
                     if ($business->verifiedData instanceof Business\Verification) {
                         $verifiedDate = $business->verifiedData->verified_at;
+
+                        $data = $business->verifiedData->submitted_data;
+
+                        if (is_array($data)) {
+                            $data = Arr::dot($data);
+
+                            $verificationData = implode('; ', array_map(function ($value, $key) {
+                                return sprintf("%s = '%s'", $key, is_array($value) ? json_encode($value) : $value);
+                            }, $data, array_keys($data)));
+                        } elseif (is_string($data)) {
+                            $verificationData = $data;
+                        } else {
+                            $verificationData = 'Error, contact developer. Detected data type: '.gettype($data);
+                        }
                     }
 
                     $businessData[$business->id] = [
@@ -172,6 +187,7 @@ class SendDailyEmailToAdmin extends Command
                         $stripePaymentProvider->data['support_phone'] ?? null,
                         $business->created_at->toDateTimeString(),
                         $verifiedDate ?? null,
+                        $verificationData ?? null,
                         $business->deleted_at,
                     ];
                 });

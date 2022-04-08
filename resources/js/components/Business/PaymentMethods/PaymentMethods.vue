@@ -86,17 +86,14 @@ import { merge } from 'lodash'
 export default {
   name: 'PaymentMethods',
   props: {
-    business: Object,
-    banks_list: Array,
-    providers: Array,
-    disabled_providers: Array,
+    business_id: String,
     current_business_user: Object,
-    user: Object,
-    business_verified: Boolean
+    user: Object
   },
   data () {
     return {
-      providersData: Array,
+      providersData: [],
+      //page: this.tab || 'paynow',
       page: '',
       message: '',
       messageClass: '',
@@ -116,29 +113,35 @@ export default {
         zip: { img: '/icons/payment-brands/zip.svg', fullBorder: true },
         shopee: { img: '/icons/payment-brands/shopee.svg', fullBorder: true },
         fpx: { img: '/icons/payment-brands/fpx.png' }
-      }
+      },
+      business: Object,
+      banks_list: [],
+      providers: [],
+      disabled_providers: [],
+      tab: String,
+      business_verified: Boolean
     }
   },
   created () {
-    this.providersData = this.providers
   },
   computed: {
     availableProviders () {
-      return this.supportedPaymentProviders.filter(p => !this.disabled_providers.includes(p.slug))
+      return this.supportedPaymentProviders.filter(p => !this.disabled_providers.includes(p.slug));
     },
     paynow () {
-      const provider = this.providersData.find(p => p.payment_provider === 'dbs_sg')
+      const provider = this.providersData.find(p => p.payment_provider === 'dbs_sg');
 
       if (provider) {
-        // const code = provider.payment_provider_account_id.split('@')
+        // const code = provider.payment_provider_account.id.split('@');
+        const bank = this.banks_list.find(b => b.swift_code === provider.data.account.swift_code);
 
         return {
           company_uen: provider.data.company.uen,
           company_name: provider.data.company.name,
-          // bank_account_name: provider.data.account.name,
-          // bank_name: this.banks_list[code[0]],
-          // bank_swift_code: code[0],
-          // bank_account_no: code[1],
+          bank_account_name: provider.data.account.name,
+          bank_name: bank.name,
+          bank_swift_code: provider.data.account.swift_code,
+          bank_account_no: provider.data.account.number,
         }
       } else {
         return undefined
@@ -152,6 +155,127 @@ export default {
     }
   },
   methods: {
+    prepareComponent() {
+      this.getBusiness();
+      this.getBanksList();
+      this.getPaymentProviders();
+    },
+
+    prepareSupportedPaymentProviders() {
+      // set stripe to each country, better later on backend
+      if (this.business.country === 'sg') {
+        this.supportedPaymentProviders.push(
+          {
+            title: 'PayNow',
+            logo: '/icons/payment-providers/paynow.png',
+            slug: 'dbs_sg',
+            link: 'paynow',
+            color: '#FFFFFF',
+            requireBusinessVerification: false,
+            availableMethods: ['paynow']
+          },
+          {
+            title: 'GrabPay',
+            logo: '/icons/payment-providers/grabpay.svg',
+            slug: 'grabpay',
+            link: 'grabpay',
+            requireBusinessVerification: true,
+            availableMethods: ['grabpay', 'grab_paylater']
+          },
+          {
+            title: 'Shopee Pay',
+            logo: '/icons/payment-providers/shopee.png',
+            slug: 'shopee_pay', link: 'shopee',
+            color: '#EE4D2A',
+            availableMethods: ['shopee']
+          },
+          {
+            title: 'Zip',
+            logo: '/icons/payment-providers/zip.png',
+            slug: 'zip', link: 'zip',
+            color: 'rgb(65, 23, 96)',
+            availableMethods: ['zip']
+          },
+          //{ title: 'Hoolah', logo: '/icons/payment-providers/hoolah.png', slug: 'hoolah', link: 'hoolah', color: '#D62E2E', height: 16 }
+        );
+
+
+        let stripeSg = this.providers.find((item) => item.payment_provider === 'stripe_sg');
+        if (stripeSg && stripeSg.payment_provider_account_type === 'custom') {
+          this.supportedPaymentProviders.push(
+            {
+              title: 'Cards and Alipay',
+              logo: '/icons/payment-providers/credit-cards.png',
+              slug: 'stripe_sg',
+              link: 'stripe',
+              color: '#FFFFFF',
+              height: 50,
+              requireBusinessVerification: false,
+              availableMethods: ['visa', 'master', 'amex', 'alipay', 'apple', 'unionpay', 'googlepay']
+            },
+          )
+        } else  {
+          this.supportedPaymentProviders.push(
+            {
+              title: 'Stripe',
+              logo: '/icons/payment-providers/stripe.png',
+              slug: 'stripe_sg',
+              link: 'stripe',
+              color: '#635BFF',
+              requireBusinessVerification: false,
+              availableMethods: ['visa', 'master', 'amex', 'wechat', 'alipay', 'apple', 'unionpay', 'googlepay']
+            }
+          );
+        }
+      }
+
+      if (this.business.country === 'my') {
+        this.supportedPaymentProviders.push(
+          {
+            title: 'HitPay Payment Gateway',
+            logo: '/icons/payment-providers/hitpay.svg',
+            slug: 'stripe_my',
+            link: 'stripe',
+            color: '#FFFFFF',
+            width: 55,
+            requireBusinessVerification: false,
+            availableMethods: ['visa', 'master', 'googlepay', 'apple', 'unionpay', 'fpx', 'alipay', 'grabpay']
+          },
+        );
+      }
+    },
+
+    getBusiness() {
+      axios.get(this.getDomain(`v1/business/${this.business_id}`, 'api'), {
+        withCredentials: true
+      })
+        .then(response => {
+          this.business = response.data;
+          this.prepareSupportedPaymentProviders();
+        });
+    },
+
+    getBanksList() {
+      axios.get(this.getDomain(`v1/business/${this.business_id}/payment-providers/banks`, 'api'), {
+        withCredentials: true
+      })
+        .then(response => {
+          this.banks_list = response.data.banks;
+        });
+    },
+
+    getPaymentProviders() {
+      axios.get(this.getDomain(`v1/business/${this.business_id}/payment-providers`, 'api'), {
+        withCredentials: true
+      })
+        .then(response => {
+          this.providers = response.data.providers;
+          this.providersData = this.providers;
+          this.disabled_providers = response.data.disabled_providers;
+          this.business_verified = response.data.business_verified;
+        });
+    },
+
     onPaynowSaved (event) {
       const data = {
         payment_provider_account_id: `${event.bank_swift_code}@${event.bank_account_no}`,
@@ -170,7 +294,7 @@ export default {
           window.location.href = this.getDomain('business/' + this.business.id + '/verification', 'dashboard')
       }
 
-      const provider = this.providersData.find(p => p.payment_provider === 'dbs_sg')
+      const provider = this.providersData.find(p => p.payment_provider === 'dbs_sg');
 
       if (provider) {
         merge(provider, data)
@@ -200,11 +324,11 @@ export default {
       this.providersData.filter(provider => provider.payment_provider !== method)
     },
     onStripeRemove () {
-        if (this.business.country == 'sg') {
+        if (this.business.country === 'sg') {
            this.removeMethod('stripe_sg')
         }
 
-        if (this.business.country == 'my') {
+        if (this.business.country === 'my') {
             this.removeMethod('stripe_my')
         }
 
@@ -231,9 +355,9 @@ export default {
 
               if (
                   (
-                    this.paymentMethodConnected(slug).payment_provider == 'stripe_sg' ||
-                    this.paymentMethodConnected(slug).payment_provider == 'stripe_my'
-                  ) && this.paymentMethodConnected(slug).payment_provider_account_type == 'custom') {
+                    this.paymentMethodConnected(slug).payment_provider === 'stripe_sg' ||
+                    this.paymentMethodConnected(slug).payment_provider === 'stripe_my'
+                  ) && this.paymentMethodConnected(slug).payment_provider_account_type === 'custom') {
                   default_label = this.getStripeStatusLabel(this.paymentMethodConnected(slug));
               }
 
@@ -245,9 +369,9 @@ export default {
 
               if (
                   (
-                      this.paymentMethodConnected(slug).payment_provider == 'stripe_sg' ||
-                      this.paymentMethodConnected(slug).payment_provider == 'stripe_my'
-                  ) && this.paymentMethodConnected(slug).payment_provider_account_type == 'custom') {
+                      this.paymentMethodConnected(slug).payment_provider === 'stripe_sg' ||
+                      this.paymentMethodConnected(slug).payment_provider === 'stripe_my'
+                  ) && this.paymentMethodConnected(slug).payment_provider_account_type === 'custom') {
                   default_label = this.getStripeStatusLabel(this.paymentMethodConnected(slug));
               }
 
@@ -294,87 +418,7 @@ export default {
   },
 
   mounted() {
-      // set stripe to each country, better later on backend
-    if (this.business.country === 'sg') {
-        this.supportedPaymentProviders.push(
-            {
-                title: 'PayNow',
-                logo: '/icons/payment-providers/paynow.png',
-                slug: 'dbs_sg',
-                link: 'paynow',
-                color: '#FFFFFF',
-                requireBusinessVerification: false,
-                availableMethods: ['paynow']
-            },
-            {
-                title: 'GrabPay',
-                logo: '/icons/payment-providers/grabpay.svg',
-                slug: 'grabpay',
-                link: 'grabpay',
-                requireBusinessVerification: true,
-                availableMethods: ['grabpay', 'grab_paylater']
-            },
-            {
-                title: 'Shopee Pay',
-                logo: '/icons/payment-providers/shopee.png',
-                slug: 'shopee_pay', link: 'shopee',
-                color: '#EE4D2A',
-                availableMethods: ['shopee']
-            },
-            {
-                title: 'Zip',
-                logo: '/icons/payment-providers/zip.png',
-                slug: 'zip', link: 'zip',
-                color: 'rgb(65, 23, 96)',
-                availableMethods: ['zip']
-            },
-            //{ title: 'Hoolah', logo: '/icons/payment-providers/hoolah.png', slug: 'hoolah', link: 'hoolah', color: '#D62E2E', height: 16 }
-        );
-
-
-        let stripeSg = this.providers.find((item) => item.payment_provider === 'stripe_sg');
-       if (stripeSg && stripeSg.payment_provider_account_type === 'custom') {
-           this.supportedPaymentProviders.push(
-               {
-                   title: 'Cards and Alipay',
-                   logo: '/icons/payment-providers/credit-cards.png',
-                   slug: 'stripe_sg',
-                   link: 'stripe',
-                   color: '#FFFFFF',
-                   height: 50,
-                   requireBusinessVerification: false,
-                   availableMethods: ['visa', 'master', 'amex', 'alipay', 'apple', 'unionpay', 'googlepay']
-               },
-           )
-       } else  {
-           this.supportedPaymentProviders.push(
-               {
-                   title: 'Stripe',
-                   logo: '/icons/payment-providers/stripe.png',
-                   slug: 'stripe_sg',
-                   link: 'stripe',
-                   color: '#635BFF',
-                   requireBusinessVerification: false,
-                   availableMethods: ['visa', 'master', 'amex', 'wechat', 'alipay', 'apple', 'unionpay', 'googlepay']
-               }
-           );
-       }
-    }
-
-    if (this.business.country == 'my') {
-        this.supportedPaymentProviders.push(
-            {
-                title: 'HitPay Payment Gateway',
-                logo: '/icons/payment-providers/hitpay.svg',
-                slug: 'stripe_my',
-                link: 'stripe',
-                color: '#FFFFFF',
-                width: 55,
-                requireBusinessVerification: false,
-                availableMethods: ['visa', 'master', 'googlepay', 'apple', 'unionpay', 'fpx', 'alipay', 'grabpay']
-            },
-        );
-    }
+    this.prepareComponent();
   }
 }
 </script>

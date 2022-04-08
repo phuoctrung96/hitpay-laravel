@@ -54,8 +54,6 @@ Route::namespace('Admin')->group(function () {
 
         Route::get('charge', 'ChargeController@index')->name('charge.index');
         Route::post('charge/export', 'ChargeController@export')->name('charge.export');
-        Route::get('charge/uncaptured', 'ChargeController@showUncapturedPage')->name('charge.uncaptured');
-        Route::post('charge/{charge}/capture', 'ChargeController@capture')->name('charge.capture');
         Route::post('charge/{charge}/notify', 'ChargeController@notifyNonIdentifiableChargeSource')->name('charge.notify.source');
         Route::get('charge/{charge}', 'ChargeController@show')->name('charge.show');
         Route::put('charge/{charge}/refund', 'ChargeController@markAsRefund')->name('charge.refund');

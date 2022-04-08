@@ -15,15 +15,8 @@
                     />
                 </div>
             </div>
-            <business-role-restrictions></business-role-restrictions>
             <business-help-guide :page_type="'user_management'"></business-help-guide>
         </div>
     </div>
-
+    
 @endsection
-@push('body-stack')
-    <script>
-        window.Business = @json($business->toArray());
-        window.Restrictions = @json($restrictions);
-    </script>
-@endpush

@@ -5,12 +5,12 @@ namespace HitPay\Stripe\CustomAccount;
 use App\Business;
 use App\Enumerations\Business\Type as BusinessType;
 use App\Providers\AppServiceProvider;
-use Closure;
 use Exception;
 use HitPay\Stripe\CustomAccount\Exceptions\AccountNotFoundException;
 use HitPay\Stripe\CustomAccount\Exceptions\GeneralException;
 use HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Stripe;
 
 trait Helper
@@ -24,6 +24,8 @@ trait Helper
     protected bool $stripeAccountLoaded = false;
 
     protected ?Business\PaymentProvider $businessPaymentProvider = null;
+
+    protected ?Business\Verification $businessVerification;
 
     protected string $stripeVersion = AppServiceProvider::STRIPE_VERSION;
 
@@ -50,7 +52,7 @@ trait Helper
         // Stripe accepts business types of `individual`, `company`, `non_profit`, and `government_entity` (US only),
         // but HitPay focuses only on the below selected type.
         //
-        if (!in_array($business->getStripeAccountBusinessType(), [ BusinessType::COMPANY, BusinessType::INDIVIDUAL ])) {
+        if (!in_array($business->business_type, [ BusinessType::COMPANY, BusinessType::INDIVIDUAL ])) {
             throw $this->exception('The business type must be a `company` or an `individual` to use custom account.');
         }
 
@@ -117,10 +119,64 @@ trait Helper
     public function getPaymentProvider(bool $strict = true) : ?Business\PaymentProvider
     {
         if ($strict && !( $this->businessPaymentProvider instanceof Business\PaymentProvider )) {
-            throw new InvalidStateException('The "custom connected" payment provider could not be found.');
+            throw new InvalidStateException('"The "custom connected" payment provider could not be found."');
         }
 
         return $this->businessPaymentProvider;
+    }
+
+    /**
+     * Initialize the verification of the business.
+     *
+     * @throws \HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException
+     * @throws \HitPay\Stripe\CustomAccount\Exceptions\GeneralException
+     */
+    private function initializeVerification() : void
+    {
+        /**
+         * We always get the latest verification only.
+         *
+         * @var \App\Business\Verification|null $businessVerification
+         */
+        $businessVerification = $this->business->verifications()->latest()->first();
+
+        // TODO - 20211116 - KEEP IN VIEW by Bankorh
+        //   ----------------------------------------->>>
+        //   I noticed that the verification model has been changed, "soft delete" has been implemented and this
+        //   might affect the verification accuracy.
+        //
+        if (!( $businessVerification instanceof Business\Verification )) {
+            throw $this->exception('The verification could not be found.');
+        }
+
+        // We do a simple mapping here. Currently, in the `business_verification` table, the types are `business` and
+        // `personal`, while in the `businesses` table, the types are `company` and `individual`.
+        //
+        $businessVerificationType =
+            [
+                'business' => 'company',
+                'personal' => 'individual',
+            ][$businessVerification->type] ?? $businessVerification->type;
+
+        if ($this->business->business_type !== $businessVerificationType) {
+            throw $this->invalidStateException('The business type and the business verification type are not match.');
+        }
+
+        if (!$businessVerification->isVerified()) {
+            throw $this->invalidStateException('The verification of the business is incomplete.');
+        }
+
+        $this->businessVerification = $businessVerification;
+    }
+
+    /**
+     * Get the verification of the business.
+     *
+     * @return \App\Business\Verification
+     */
+    public function getVerification() : Business\Verification
+    {
+        return $this->businessVerification;
     }
 
     /**
@@ -165,116 +221,43 @@ trait Helper
      *
      * @param  bool  $refresh
      * @param  bool  $strict
-     * @param  \Closure  $callback
      *
      * @return bool
      * @throws \HitPay\Stripe\CustomAccount\Exceptions\AccountNotFoundException
      * @throws \HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException
      * @throws \Stripe\Exception\ApiErrorException
      */
-    public function isCustomAccountVerified(bool $refresh = false, bool $strict = true, Closure $callback = null) : bool
+    public function isCustomAccountVerified(bool $refresh = false, bool $strict = true) : bool
     {
-        // Below are the statuses of Stripe custom account, and its description. Basically all our connected account
-        // can accept payment event with `charge_enabled === false` because we are charging on behalf of them.
-        //
-        // Complete
-        // --------
-        // This account has provided the required information to fully onboard onto Stripe. They can accept payments
-        // and receive payouts.
-        //
-        // Enabled
-        // -------
-        // This account has provided enough information to process payments and receive payouts. More information
-        // will eventually be required when they process enough volume.
-        //
-        // INFORMATION EVENTUALLY NEEDED
-        //
-        // Restricted soon
-        // ---------------
-        // Provide additional information in order to keep this account in good standing.
-        //
-        // INFORMATION NEEDED - DUE IN 2 MONTHS
-        //
-        // Restricted
-        // ----------
-        // Provide more information in order to enable payouts for this account.
-        //
-        // INFORMATION NEEDED - DUE NOW
-        // INFORMATION NEEDED - DUE IN 2 MONTHS
-        //
-        // Rejected
-        // --------
-        // This account was rejected by HitPay Payment Solutions Pte Ltd.
-        //
+        try {
+            $customAccount = $this->getCustomAccount($refresh, $strict);
+        } catch (AccountNotFoundException $exception) {
+            if ($strict) {
+                throw $exception;
+            }
 
-        $customAccount = $this->getCustomAccount($refresh, $strict);
-
-        // Let's assume "no due === verified", we will check the one in 'requirements' only, ignore the
-        // 'future_requirements' for the time being.
-        //
-
-        $requirements = $customAccount->requirements;
-
-        // This string describes why the account is disabled. Possible values:
-        //
-        // `requirements.past_due`, `requirements.pending_verification`, `listed`, `platform_paused`, `rejected.fraud`,
-        // `rejected.listed`, `rejected.terms_of_service`, `rejected.other`, `under_review`, or `other`.
-        //
-        if ($requirements->disabled_reason !== null) {
             return false;
         }
 
-        if (!$customAccount->tos_acceptance->date === null) {
+        if (array_key_exists('legal_entity', $customAccount->toArray())) {
+            return $customAccount->toArray()['legal_entity']['verification']['status'] === 'verified';
+        } elseif (array_key_exists('verification', $customAccount->toArray())) {
+            return $customAccount->toArray()['verification']['status'] === 'verified';
+        } elseif (
+            array_key_exists('payouts_enabled', $customAccount->toArray()) &&
+            array_key_exists('charges_enabled', $customAccount->toArray())
+        ) {
+            $payoutEnabled = $customAccount->toArray()['payouts_enabled'];
+            $chargesEnabled = $customAccount->toArray()['charges_enabled'];
+
+            if ($payoutEnabled && $chargesEnabled) {
+                return true;
+            }
+
+            return false;
+        } else {
             return false;
         }
-
-        // Fields that was not collected by current_deadline. These fields need to be collected to enable the account.
-        //
-        if (count($requirements->past_due) > 0) {
-            return false;
-        }
-
-        // Fields that need to be collected to keep the account enabled. If not collected by `current_deadline`,
-        // these fields appear in `past_due` as well, and the account is disabled.
-        //
-        if (count($requirements->currently_due) > 0) {
-            // "$requirements->errors" => []
-            //   -  Fields that are `currently_due` and need to be collected again because validation or verification
-            //      failed.
-            //
-            // When we are going to implement the "$callback", we can include the deadline as well.
-            //
-            // "$requirements->current_deadline" => null | timestamp
-            //   -  Date by which the fields in `currently_due` must be collected to keep the account enabled. These
-            //      fields may disable the account sooner if the next threshold is reached before they are collected.
-            //
-            return false;
-        }
-
-        // Fields that need to be collected assuming all volume thresholds are reached. As they become required, they
-        // appear in `currently_due` as well, and `current_deadline` becomes set.
-        //
-        if (count($requirements->eventually_due) > 0) {
-            return false;
-        }
-
-        // Fields that may become required depending on the results of verification or review. Will be an empty array
-        // unless an asynchronous verification is pending. If verification fails, these fields move to
-        // `eventually_due`, `currently_due`, or `past_due`.
-        //
-        if (count($requirements->pending_verification) > 0) {
-            return false;
-        }
-
-        if (!$customAccount->charges_enabled) {
-            return false;
-        }
-
-        if (!$customAccount->payouts_enabled) {
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -316,6 +299,42 @@ trait Helper
     protected function invalidStateException(string $message) : InvalidStateException
     {
         return $this->exception($message, InvalidStateException::class);
+    }
+
+    /**
+     * Check custom account allowed to updating or not
+     * @return bool
+     */
+    protected function isUpdateDataAllowed() : bool
+    {
+        // https://stripe.com/docs/connect/update-verified-information
+        if (!$this->stripeAccount instanceof Stripe\Account) {
+            $this->stripeAccount = $this->getCustomAccount(true);
+        }
+
+        $currentStripeAccount = $this->stripeAccount;
+
+        $tosAcceptance = $currentStripeAccount['tos_acceptance'];
+
+        if ($tosAcceptance['date'] === "") {
+            return true;
+        }
+
+        if ($this->businessPaymentProvider->stripe_init === 0) {
+            return true;
+        }
+
+        $account = $this->businessPaymentProvider->data['account'];
+
+        $charges_enabled = $account['charges_enabled'];
+
+        $payouts_enabled = $account['payouts_enabled'];
+
+        if ($charges_enabled && $payouts_enabled) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /**

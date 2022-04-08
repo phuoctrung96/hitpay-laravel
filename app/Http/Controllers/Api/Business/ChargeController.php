@@ -14,15 +14,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Business\Charge;
 use App\Jobs\SendExportedCharges;
 use App\Logics\Business\ChargeRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\Rule;
+use Cache;
 
 class ChargeController extends Controller
 {
@@ -201,7 +202,7 @@ class ChargeController extends Controller
      */
     public function destroy(BusinessModel $business, ChargeModel $charge)
     {
-        Gate::inspect('canRefundCharges', $business)->authorize();
+        Gate::inspect('operate', $business)->authorize();
 
         $charge = ChargeRepository::refund($charge);
 
@@ -263,16 +264,6 @@ class ChargeController extends Controller
      */
     public function export(Request $request, BusinessModel $business)
     {
-        $businessUser = $business->businessUsers();
-        $businessUser = $businessUser->where('user_id', Auth::id())->first();
-
-        if ($businessUser->isCashier()) {
-            return Response::json([
-                'success' => false,
-                'message' => 'You do not have the permission to export the reports'
-            ]);
-        }
-
         Gate::inspect('view', $business)->authorize();
 
         $data = $this->validate($request, [
@@ -363,10 +354,6 @@ class ChargeController extends Controller
                     'string',
                     'max:255',
                 ],
-                'terminal_id' => [
-                    'nullable',
-                    'string'
-                ],
             ], $messages, $customAttributes);
 
         $paymentProvider = $business->paymentProviders()
@@ -381,5 +368,66 @@ class ChargeController extends Controller
             $data,
             $paymentProvider,
         ];
+    }
+
+    /**
+     * Daily sales report
+     *
+     * @param Request $request
+     * @param BusinessModel $business
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function getDailyReport(Request $request, BusinessModel $business)
+    {
+        $days_num = 7;
+
+        $cache_key = "business_{$business->id}_sales_daily_report_{$days_num}";
+
+        if (Cache::has($cache_key)) {
+            $data = Cache::get($cache_key);
+        } else {
+            // create empty values
+            $data = [];
+
+            $end = new \DateTimeImmutable();
+            $start = $end->modify("-{$days_num} days");
+            $interval = new \DateInterval('P1D');
+            $period = new \DatePeriod($start, $interval, $end);
+            foreach ($period as $date) {
+                /* @var \DateTime $date */
+                $day = $date->format('Y-m-d');
+
+                $data[$day] = [
+                    'date' => $day,
+                    'sum' => number_format(getReadableAmountByCurrency($business->currency, 0), 2)
+                ];
+            }
+
+            // get real values from the DB
+            $results = $business
+                ->setConnection('mysql_read')
+                ->charges()
+                ->selectRaw('DATE_FORMAT(closed_at, \'%Y-%m-%d\') as date, IFNULL(SUM(home_currency_amount), 0) as sum')
+                ->where('status', ChargeStatus::SUCCEEDED)
+                ->whereDate('closed_at', '>=', Carbon::today()->subDays($days_num)->setHour(0)->setMinute(0))
+                ->groupBy('date')
+                ->orderBy('date', 'desc')
+                ->pluck('sum', 'date')
+                ->toArray();
+
+            // merge with empty data
+            foreach ($results as $date => $sum) {
+                $data[$date]['sum'] = number_format(getReadableAmountByCurrency($business->currency, $sum), 2);
+            }
+
+            $expires_at = Carbon::now()->addHours(1);
+
+            Cache::put($cache_key, $data, $expires_at);
+        }
+
+        return Response::json([
+            'data' => array_values($data),
+        ]);
     }
 }

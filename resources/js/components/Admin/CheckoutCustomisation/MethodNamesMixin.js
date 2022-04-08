@@ -13,8 +13,7 @@ export default {
         grabpay_paylater: 'GrabPay PayLater',
         shopee_pay: 'Shopee Pay',
         hoolah: 'Hoolah',
-        zip: 'Zip',
-        fpx: 'FPX'
+        zip: 'Zip'
       }
     }
   }

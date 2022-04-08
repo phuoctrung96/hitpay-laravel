@@ -44,31 +44,19 @@
 
         <div class="mb-3">
             <label for="country">Country</label>
-            <div class="input-group">
-                <div class="input-group-prepend">
-                    <div class="form-control flat-icon" id="flat-icon">
-                      <div class="icon" v-if="form.country == 'sg'">
-                        <img src="" src="../images/vendor/flag-icon-css/flags/4x3/sg.svg" alt="">
-                      </div>
-                      <div class="icon" v-if="form.country == 'my'">
-                        <img src="" src="../images/vendor/flag-icon-css/flags/4x3/my.svg" alt="">
-                      </div>
-                    </div>
-                </div> 
-                <select id="country"
-                    class="form-control"
-                    v-model="form.country"
-                    :class="{'is-invalid' : errors.country}"
-                    :disabled="is_processing">
-                    <option
-                        v-for="country in countries"
-                        :value="country.id"
-                        :selected="country.active"
-                    >
-                        {{ country.name }}
-                    </option>
-                </select>
-            </div>
+            <select id="country"
+                class="custom-select bg-light"
+                v-model="form.country"
+                :class="{'is-invalid' : errors.country}"
+                :disabled="is_processing">
+                <option
+                    v-for="country in countries"
+                    :value="country.id"
+                    :selected="country.active"
+                >
+                    {{ country.name }}
+                </option>
+            </select>
             <span class="invalid-feedback" role="alert">{{ errors.country }}</span>
         </div>
 
@@ -105,7 +93,7 @@
             :disabled="is_processing"
         />
 
-        <div class="mb-4 text-center">
+        <div class="mb-3 text-center">
             <input type="checkbox"
                id="checkbox_agree"
                v-model="form.checkbox_agree"
@@ -141,7 +129,6 @@ import LoginInput from '../Authentication/LoginInput'
 import PhoneInput from '../Authentication/PhoneInput'
 import LoginSelect from '../Authentication/LoginSelect'
 import BusinessModeSwitch from './BusinessModeSwitch'
-import WebsiteHelper from "../../mixins/WebsiteHelper";
 
 export default {
     name: 'BusinessCreate',
@@ -160,9 +147,6 @@ export default {
         countries: Array,
         country: String,
     },
-    mixins: [
-        WebsiteHelper
-    ],
     data() {
         return {
             errors: {
@@ -241,19 +225,19 @@ export default {
             if (this.form.website === '') {
                 this.errors.website = 'The website field is required';
             } else {
-                /*if (!this.isValidHttpUrl(this.form.website)) {
+                if (!this.isValidHttpUrl(this.form.website)) {
                     this.errors.website = 'The website must valid url and with prefix http/https';
-                }*/
+                }
             }
 
             if (this.form.referred_channel === 'Other' && this.form.other_referred_channel === '') {
                 this.errors.other_referred_channel = 'Please specify the other referred channel';
             }
 
-            if (!/(^[A-Za-z0-9.\-\&\$ ]+$)+/.test(this.form.name)) {
+            if (!/(^[A-Za-z0-9. ]+$)+/.test(this.form.name)) {
                 this.errors.name = 'Chars, digits, spaces and dots are allowed in name';
             }
-            
+
             if (!/^\+(?:[\d]*)$/.test(this.form.phone_number)) {
                 this.errors.phone_number = 'Phone number should contain country code (ex. +65)';
             }
@@ -323,6 +307,18 @@ export default {
 
             this.is_processing = false;
         },
+
+        isValidHttpUrl(string) {
+            let url;
+
+            try {
+                url = new URL(string);
+            } catch (_) {
+                return false;
+            }
+
+            return url.protocol === "http:" || url.protocol === "https:";
+        }
     },
 
     mounted() {

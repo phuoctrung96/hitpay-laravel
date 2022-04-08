@@ -12,17 +12,17 @@
                 <div id="group_bank_swift_code" class="form-group">
                     <label class="col-form-label">Select Bank:</label>
                     <div class="input-group">
-                        <select v-model="bank_account.bank_id" :class="getSelectClasses('bank_id')" :disabled="is_updating">
+                        <select v-model="bank_account.bank_swift_code" :class="getSelectClasses('bank_swift_code')" :disabled="is_updating">
                             <option value="" disabled>Please select a bank</option>
-                            <option v-for="bank in banks" :value="bank.id">{{ bank.name_code }}</option>
+                            <option v-for="bank in banks" :value="bank.swift_code">{{ bank.name }}</option>
                         </select>
                     </div>
-                    <span class="text-danger small" role="alert" v-if="errors.bank_id">{{ errors.bank_id }}</span>
+                    <span class="text-danger small" role="alert" v-if="errors.bank_swift_code">{{ errors.bank_swift_code }}</span>
                 </div>
                 <div id="group_branch" class="form-group">
                     <label class="col-form-label">Select Branch:</label>
                     <div class="input-group">
-                        <select v-model="bank_account.branch_code" :class="getSelectClasses('branch_code')" :disabled="is_updating || !bank_account.bank_id || branches.length <= 0">
+                        <select v-model="bank_account.branch_code" :class="getSelectClasses('branch_code')" :disabled="is_updating || !bank_account.bank_swift_code || branches.length <= 0">
                             <option value="" disabled>Please select a branch</option>
                             <option v-for="branch in branches" :value="branch.code">[{{ branch.code }}] {{ branch.name }}</option>
                         </select>
@@ -53,24 +53,11 @@
                     <input id="account_holder_name" v-model="bank_account.holder_name" :class="getInputClasses('holder_name')" :disabled="is_updating">
                     <span class="invalid-feedback" role="alert" v-if="errors.holder_name">{{ errors.holder_name }}</span>
                 </div>
-                <div id="group_password" class="form-group">
-                    <label for="password">Enter Your HitPay Account Password</label>
-                    <input id="password"
-                       type="password"
-                       v-model="bank_account.password"
-                       :class="getInputClasses('password')"
-                       :disabled="is_updating">
-                    <span class="invalid-feedback" role="alert" v-if="errors.password">{{ errors.password }}</span>
-                </div>
                 <div v-if="!bank_account.use_in_hitpay || !bank_account.use_in_stripe" class="form-group">
                     <button v-if="!bank_account.use_in_hitpay" type="button" class="btn btn-sm btn-light" @click="openSetDefaultModal('hitpay')" :disabled="is_updating">
                         Set For HitPay
                     </button>
-                    <button
-                        v-if="!bank_account.use_in_stripe && (business.business_type !== 'partner' && business.country === 'sg')"
-                        type="button" class="btn btn-sm btn-light"
-                        @click="openSetDefaultModal('stripe')"
-                        :disabled="is_updating">
+                    <button v-if="!bank_account.use_in_stripe" type="button" class="btn btn-sm btn-light" @click="openSetDefaultModal('stripe')" :disabled="is_updating">
                         Set For Stripe
                     </button>
                     <div class="modal fade" id="setDefaultModal" tabindex="-1" role="dialog" aria-labelledby="setDefaultModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -170,9 +157,9 @@ export default {
     watch : {
         bank_account : {
             handler(value) {
-                if (value.bank_id) {
-                    let bank = _.first(_.filter(this.banks, ({ id }) => {
-                        return id === value.bank_id;
+                if (value.bank_swift_code) {
+                    let bank = _.first(_.filter(this.banks, ({ swift_code }) => {
+                        return swift_code === value.bank_swift_code;
                     }));
 
                     this.branches = bank.branches;
@@ -188,7 +175,7 @@ export default {
         return {
             bank_account : {
                 currency : this.business.currency,
-                bank_id : "",
+                bank_swift_code : "",
                 branch_code : "",
                 number : "",
                 holder_name : "",
@@ -196,7 +183,6 @@ export default {
                 use_in_hitpay : false,
                 use_in_stripe : false,
                 remark : "",
-                password: "",
             },
             branches : {},
             default_set_message : null,
@@ -267,8 +253,8 @@ export default {
             this.is_updating = true;
             this.errors = {};
 
-            if (!this.bank_account.bank_id) {
-                this.errors.bank_id = "Please select a bank.";
+            if (!this.bank_account.bank_swift_code) {
+                this.errors.bank_swift_code = "Please select a bank.";
             } else if (this.branches.length > 0 && !this.bank_account.branch_code) {
                 this.errors.branch_code = "Please select the branch of the bank.";
             }

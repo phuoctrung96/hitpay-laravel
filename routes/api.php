@@ -36,6 +36,7 @@ Route::namespace('Api')->name('api.')->group(function () {
 
             Route::post('business/{business_id}/charge/send', 'ChargeController@export')->name('charge.export');
             Route::post('business/{business_id}/charge/{b_charge}/send', 'ChargeController@send')->name('charge.send');
+            Route::get('business/{business_id}/charge/report/daily', 'ChargeController@getDailyReport');
 
             Route::namespace('PayNow')->prefix('business/{business_id}')->group(function () {
                 Route::post('charge/paynow/payment-intent', 'ChargeController@createPaymentIntent')->name('charge.paynow.payment-intent');
@@ -95,6 +96,11 @@ Route::namespace('Api')->name('api.')->group(function () {
                 ->parameter('product', 'b_ordered_product')
                 ->only('store', 'update', 'destroy')
                 ->names('order.product');
+
+            Route::get('business/{business_id}/payment-providers',
+                'PaymentProviderController@index')->name('payment-providers.index');
+            Route::get('business/{business_id}/payment-providers/banks',
+                'PaymentProviderController@banks')->name('payment-providers.banks');
 
             Route::resource('business.payment-card', 'PaymentCardController')
                 ->parameter('business', 'business_id')
@@ -174,6 +180,7 @@ Route::namespace('Api')->name('api.')->group(function () {
                 Route::put('/charge/payment-intent/{stripPaymentIntentId}/confirm', 'ChargeController@confirmPaymentIntent')->name('charge.confirm');
                 Route::post('/charge/{b_charge}/create-payment-intent', 'ChargeController@createPaymentIntent')->name('charge.create.payment.intent');
                 Route::post('/charge/{b_charge}/cash', 'ChargeController@createCash')->name('charge.cash');
+                Route::get('/charge/{b_charge}/alipay', 'ChargeController@showAlipayStatus')->name('charge.alipay.callback');
                 Route::post('/charge/{b_charge}/cancel', 'ChargeController@cancelCharge')->name('charge.cancel');
                 Route::get('/charge/{b_charge}/charge-completed', 'ChargeController@chargeCompleted');
                 Route::post('/charge/{b_charge}/update-payment-intent', 'ChargeController@updatePaymentIntent')->name('charge.update.payment.intent');
@@ -275,10 +282,6 @@ Route::namespace('Api')->name('api.')->group(function () {
             Route::post('redact/customer', 'ShopifyController@respondOkay')->name('redact.customer');
             Route::post('redact/shop', 'ShopifyController@redactShop')->name('redact.shop');
             Route::post('request/customer', 'ShopifyController@respondOkay')->name('request.customer');
-
-            Route::post('customer-data-request', 'ShopifyCustomerDataRequestWebhook')->name('customer.data.request');
-            Route::post('customer-redact', 'ShopifyCustomerRedactWebhook')->name('customer.redact');
-            Route::post('shop-redact', 'ShopifyShopRedactWebhook')->name('shop.redact');
         });
 
         Route::post('stripe/{platform}', 'StripeWebhookController')->name('stripe');
@@ -299,6 +302,5 @@ Route::prefix('v1')->name('v1.')->group(function () {
 Route::namespace('Shop')->name('api.')->group(function () {
   Route::prefix('redirect')->name('redirect.')->group(function () {
     Route::get('grabpay', 'GrabPayController@handleRedirect')->name('grabpay');
-    Route::get('alipay', 'AliPayController@handleRedirect')->name('alipay');
   });
 });

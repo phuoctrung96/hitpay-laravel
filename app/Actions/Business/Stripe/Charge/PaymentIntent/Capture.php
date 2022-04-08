@@ -8,10 +8,8 @@ use App\Actions\Business\Stripe\Charge\BusinessPaymentIntentValidator;
 use App\Actions\UseLogViaStorage;
 use App\Business;
 use App\Enumerations;
-use App\Enumerations\Business\PaymentMethodType;
 use App\Logics\ConfigurationRepository;
 use Exception;
-use HitPay\Business\Charge\IdentifiedCardChargeIssuer;
 use HitPay\Data\FeeCalculator;
 use Illuminate\Support\Facades;
 use Stripe;
@@ -55,7 +53,7 @@ class Capture extends Action
         ]);
 
         if ($stripePaymentIntent->status !== 'requires_capture') {
-            throw new Exception("The status of the payment intent (ID : {$this->businessPaymentIntent->getKey()}; Stripe ID : {$stripePaymentIntent->id}) must in 'requires_capture', '{$stripePaymentIntent->status}' detected.");
+            throw new Exception("The status of the payment intent (ID : {$this->businessPaymentIntent->getKey()}; Stripe ID : {$stripePaymentIntent->id}) must succeeded, '{$stripePaymentIntent->status}' detected.");
         }
 
         $this->businessPaymentIntent->status = $stripePaymentIntent->status;
@@ -79,21 +77,9 @@ class Capture extends Action
 
         $this->businessPaymentIntent->data = $businessPaymentIntentData;
 
-        $this->businessPaymentIntent->save();
-
         $stripePaymentIntent = $stripePaymentIntent->capture([
             'application_fee_amount' => $applicationFee->settlement_currency_total_amount,
         ]);
-
-        $this->businessPaymentIntent->status = $stripePaymentIntent->status;
-
-        $businessPaymentIntentData = $this->businessPaymentIntent->data;
-
-        $businessPaymentIntentData['stripe']['payment_intent'] = $stripePaymentIntent->toArray();
-
-        $this->businessPaymentIntent->data = $businessPaymentIntentData;
-
-        $this->businessPaymentIntent->save();
 
         $stripeCharge = $stripePaymentIntent->charges->first();
 
@@ -157,17 +143,6 @@ class Capture extends Action
                     $targetModel->notifyAboutNewOrder();
                 }
             }, 3);
-
-            try {
-                if (in_array($this->businessCharge->payment_provider_charge_method, [
-                    PaymentMethodType::CARD_PRESENT, PaymentMethodType::CARD
-                ])) {
-                    $identifiedCardChargeIssuer = new IdentifiedCardChargeIssuer($this->businessCharge);
-                    $identifiedCardChargeIssuer->process();
-                }
-            } catch(\Exception $exception) {
-                Facades\Log::critical("identified card charge issue have issue: " . $exception->getMessage());
-            }
         } catch (Throwable $exception) {
             $exceptionClassName = get_class($exception);
 
@@ -206,7 +181,7 @@ _MESSAGE
 
                     $metadata['platform'] = Facades\Config::get('app.name');
                     $metadata['version'] = ConfigurationRepository::get('platform_version');
-                    $metadata['environment'] = Facades\Config::get('app.env');
+                    $metadata['environment'] = Facades\Config::get('env');
                     $metadata['business_id'] = $this->business->getKey();
                     $metadata['charge_id'] = $this->businessCharge->getKey();
 

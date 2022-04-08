@@ -76,24 +76,15 @@ export default {
   mounted() {
     if (this.provider) {
       if (this.success_message) {
-        this.messageSuccess = true;
-        this.message = this.success_message;
-
-        this.postHogCaptureData('paynow_setup',
-          this.business.id,
-          this.business.email,
-          {
-            email: this.business.email,
-            name: this.business.name
-          }
-        );
+        this.messageSuccess = true
+        this.message = this.success_message
       }
 
-      this.notSet = false;
+      this.notSet = false
       this.form = this.provider;
     } else {
-      this.edit = true;
-      this.notSet = true;
+      this.edit = true
+      this.notSet = true
     }
   },
   computed: {
@@ -102,31 +93,40 @@ export default {
         ? Boolean(this.provider)
           ? 'Save'
           : 'Complete Setup'
-        : 'Edit';
+        : 'Edit'
     }
   },
   methods: {
     async save() {
-      this.message = '';
+      this.message = ''
 
       if (!this.edit) {
-        this.edit = true;
+        this.edit = true
       } else {
         this.is_processing = true;
 
         try {
-          this.errors = {};
+          this.errors = {}
 
-          const response = await axios.post(this.getDomain('business/' + this.business.id + '/payment-provider/paynow', 'dashboard'), this.form);
+          const response = await axios.post(this.getDomain('business/' + this.business.id + '/payment-provider/paynow', 'dashboard'), this.form)
+
+          this.postHogCaptureData('paynow_setup',
+            this.business.id,
+            this.business.email,
+            {
+              email: this.business.email,
+              name: this.business.name
+            }
+          );
 
           if (this.provider) {
-            this.edit = false;
-            this.notSet = false;
-            this.form.password = '';
-            this.message = response.data.success_message;
-            this.messageSuccess = true;
+            this.edit = false
+            this.notSet = false
+            this.form.password = ''
+            this.message = response.data.success_message
+            this.messageSuccess = true
           } else {
-            window.location = this.getDomain(`business/${this.business.id}/verification`, 'dashboard');
+            window.location = this.getDomain(`business/${this.business.id}/verification`, 'dashboard')
           }
         } catch (error) {
           if (error.response.status === 422) {
@@ -136,8 +136,8 @@ export default {
 
             this.showError(_.first(Object.keys(this.errors)));
           } else {
-            this.messageSuccess = false;
-            this.message = error;
+            this.messageSuccess = false
+            this.message = error
           }
         }
 
@@ -157,3 +157,7 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+
+</style>

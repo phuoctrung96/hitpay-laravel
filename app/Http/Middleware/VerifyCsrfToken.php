@@ -37,7 +37,6 @@ class VerifyCsrfToken extends Middleware
         'shopify/charge',
         'shopify/webhook',
         'shopify/refund',
-        'shopify/checkout/redirect',
     ];
 
     // /**

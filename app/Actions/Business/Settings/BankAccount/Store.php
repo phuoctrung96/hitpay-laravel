@@ -6,6 +6,7 @@ use App\Actions\Exceptions\BadRequest;
 use App\Enumerations\Business\Type as BusinessType;
 use App\Enumerations\CountryCode;
 use App\Models\Business\BankAccount;
+use HitPay\Data\Countries;
 use HitPay\Stripe\CustomAccount\Exceptions\AccountNotFoundException;
 use HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException;
 use HitPay\Stripe\CustomAccount\ExternalAccount\Create;
@@ -42,30 +43,32 @@ class Store extends Action
         //   account is introduced.
 
         if (!in_array($this->business->country, [CountryCode::SINGAPORE, CountryCode::MALAYSIA])) {
-            throw new BadRequest('Setting up bank account for non-Singapore and non-Malaysia based businesses is currently not supported.');
+            throw new BadRequest('Setting up bank account for non-Singapore based businesses is currently not supported.');
         }
 
-        $currencyCodesData = $this->business->currenciesAvailable();
-        $banksData = $this->business->banksAvailable();
+        $country = Countries::get($this->business->country);
+
+        $currencyCodesData = $country->currencies();
+        $banksData = $country->banks();
 
         $rules['currency'] = [ 'required', Rule::in($currencyCodesData) ];
-        $rules['bank_id'] = [ 'required', Rule::in($banksData->pluck('id')) ];
+        $rules['bank_swift_code'] = [ 'required', Rule::in($banksData->pluck('swift_code')) ];
 
         // Not all country requires branch code. E.g. Malaysia, Malaysia is using swift code only.
         //
         // have to make branch code not necessity
         if ($this->business->country === CountryCode::SINGAPORE) {
             if ($this->requireBranchCodeForCertainCountries) {
-                $rules['branch_code'][] = 'required_with:bank_id';
+                $rules['branch_code'][] = 'required_with:bank_swift_code';
             } else {
                 $rules['branch_code'][] = 'nullable';
             }
 
-            $_bankId = $data['bank_id'] ?? null;
+            $_bankSwiftCode = $data['bank_swift_code'] ?? null;
 
-            if (is_string($_bankId)) {
+            if (is_string($_bankSwiftCode)) {
                 /** @var \HitPay\Data\Countries\Objects\Bank $_bank */
-                $_bank = $banksData->where('id', $_bankId)->first();
+                $_bank = $banksData->where('swift_code', $_bankSwiftCode)->first();
 
                 if ($_bank && $_bank->useBranch) {
                     $rules['branch_code'][] = Rule::in($_bank->branches->pluck('code')->toArray());
@@ -77,7 +80,7 @@ class Store extends Action
         //
         $rules['number'] = 'required|digits_between:4,32';
         $rules['holder_name'] = 'required|string';
-        $rules['holder_type'] = [ 'required', Rule::in([ BusinessType::COMPANY, BusinessType::INDIVIDUAL, BusinessType::PARTNER ]) ];
+        $rules['holder_type'] = [ 'required', Rule::in([ BusinessType::COMPANY, BusinessType::INDIVIDUAL ]) ];
         $rules['use_in_hitpay'] = 'required|bool';
         $rules['use_in_stripe'] = 'required|bool';
         $rules['remark'] = 'nullable|string|max:255';
@@ -85,7 +88,7 @@ class Store extends Action
         $data = Facades\Validator::validate($this->data, $rules);
 
         /** @var \HitPay\Data\Countries\Objects\Bank $bank */
-        $bank = $banksData->where('id', $data['bank_id'])->first();
+        $bank = $banksData->where('swift_code', $data['bank_swift_code'])->first();
 
         if ($bank->useBranch) {
             if (array_key_exists('branch_code', $data) && !is_null($data['branch_code'])) {
@@ -99,6 +102,21 @@ class Store extends Action
             $bankRoutingNumber = $bank->swift_code;
         }
 
+        if (!Facades\App::environment('production')) {
+            // A valid routing number is required in test mode.
+            // Consider using a test number from https://stripe.com/docs/connect/testing#account-numbers
+            // choose country to Singapore after open the link.
+            if ($this->business->country == CountryCode::SINGAPORE) {
+                $bankRoutingNumber = '1100-000';
+                $data['number'] = '000123456';
+            }
+
+            if ($this->business->country == CountryCode::MALAYSIA) {
+                $bankRoutingNumber = 'TESTMYKL';
+                $data['number'] = '000123456000';
+            }
+        }
+
         $bankAccount = new BankAccount;
 
         // Currently, we allow bank account from the same country of the business only.
@@ -106,19 +124,9 @@ class Store extends Action
         $bankAccount->country = $this->business->country;
 
         $bankAccount->currency = $data['currency'];
-        $bankAccount->bank_swift_code = $bank->swift_code;
+        $bankAccount->bank_swift_code = $data['bank_swift_code'];
         $bankAccount->bank_routing_number = $bankRoutingNumber;
         $bankAccount->number = $data['number'];
-
-        $bankData = $bank->toArray();
-
-        unset($bankData['branches']);
-
-        $bankAccount->data = [
-            'data' => [
-                'bank' => $bankData,
-            ],
-        ];
         $bankAccount->holder_name = $data['holder_name'];
         $bankAccount->holder_type = $data['holder_type'];
         $bankAccount->remark = $data['remark'] ?? null;
@@ -152,23 +160,18 @@ class Store extends Action
         }
 
         if ($this->business->usingStripeCustomAccount()) {
-            // check partner
-            if ($this->business->business_type == BusinessType::PARTNER && $this->business->country == CountryCode::SINGAPORE) {
-                // keep not create bank for stripe
-            } else {
-                $useInStripe = $data['use_in_stripe'];
+            $useInStripe = $data['use_in_stripe'];
 
-                if (!$useInStripe) {
-                    $useInStripe = $this->business->bankAccounts->where('hitpay_default', true)->count() === 0;
-                }
+            if (!$useInStripe) {
+                $useInStripe = $this->business->bankAccounts->where('hitpay_default', true)->count() === 0;
+            }
 
-                try {
-                    Create::new($this->business->payment_provider)
-                        ->setBusiness($this->business)
-                        ->handle($bankAccount, $useInStripe);
-                } catch (InvalidStateException | AccountNotFoundException $exception) {
-                    Facades\Log::info($exception->getMessage());
-                }
+            try {
+                Create::new($this->business->payment_provider)
+                    ->setBusiness($this->business)
+                    ->handle($bankAccount, $useInStripe);
+            } catch (InvalidStateException | AccountNotFoundException $exception) {
+                Facades\Log::info($exception->getMessage());
             }
         }
 

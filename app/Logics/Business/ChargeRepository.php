@@ -47,7 +47,7 @@ class ChargeRepository
 
     public static function getList(Request $request, Business $business)
     {
-        $paginator = $business->charges()->with('target');
+        $paginator = $business->setConnection('mysql_read')->charges()->with('target');
 
         $paginator->with([
             'walletTransactions' => function (MorphMany $query) {
@@ -132,7 +132,16 @@ class ChargeRepository
 
         $currentBusinessUser = resolve(\App\Services\BusinessUserPermissionsService::class)->getBusinessUser(Auth::user(), $business);
 
-        $paginator = $paginator->paginate($currentBusinessUser->isCashier() ? 10 : null);
+        $per_page = null;
+        if ($currentBusinessUser->isCashier()) {
+            $per_page = 10;
+        } else {
+            if ($request->has('per_page')) {
+                $per_page = (int)$request->per_page;
+            }
+        }
+
+        $paginator = $paginator->paginate($per_page);
 
         $paginator->transform(function (Charge $charge) {
             if ($charge->walletTransactions->count()) {
@@ -276,7 +285,7 @@ class ChargeRepository
                                 'metadata' => [
                                     'platform' => Config::get('app.name'),
                                     'version' => ConfigurationRepository::get('platform_version'),
-                                    'environment' => Config::get('app.env'),
+                                    'environment' => Config::get('env'),
                                     'business_id' => $chargeModel->business_id,
                                     'business_charge_id' => $chargeModel->getKey(),
                                 ],
@@ -288,7 +297,7 @@ class ChargeRepository
                                 'metadata' => [
                                     'platform' => Config::get('app.name'),
                                     'version' => ConfigurationRepository::get('platform_version'),
-                                    'environment' => Config::get('app.env'),
+                                    'environment' => Config::get('env'),
                                     'business_id' => $chargeModel->business_id,
                                     'business_charge_id' => $chargeModel->getKey(),
                                 ],
@@ -314,7 +323,7 @@ class ChargeRepository
                             'metadata' => [
                                 'platform' => Config::get('app.name'),
                                 'version' => ConfigurationRepository::get('platform_version'),
-                                'environment' => Config::get('app.env'),
+                                'environment' => Config::get('env'),
                                 'business_id' => $chargeModel->business_id,
                                 'business_charge_id' => $chargeModel->getKey(),
                             ],
@@ -326,7 +335,7 @@ class ChargeRepository
                             'metadata' => [
                                 'platform' => Config::get('app.name'),
                                 'version' => ConfigurationRepository::get('platform_version'),
-                                'environment' => Config::get('app.env'),
+                                'environment' => Config::get('env'),
                                 'business_id' => $chargeModel->business_id,
                                 'business_charge_id' => $chargeModel->getKey(),
                             ],
@@ -351,7 +360,7 @@ class ChargeRepository
                             'metadata' => [
                                 'platform' => Config::get('app.name'),
                                 'version' => ConfigurationRepository::get('platform_version'),
-                                'environment' => Config::get('app.env'),
+                                'environment' => Config::get('env'),
                                 'business_id' => $chargeModel->business_id,
                                 'business_charge_id' => $chargeModel->getKey(),
                             ],
@@ -365,7 +374,7 @@ class ChargeRepository
                             'metadata' => [
                                 'platform' => Config::get('app.name'),
                                 'version' => ConfigurationRepository::get('platform_version'),
-                                'environment' => Config::get('app.env'),
+                                'environment' => Config::get('env'),
                                 'business_id' => $chargeModel->business_id,
                                 'business_charge_id' => $chargeModel->getKey(),
                             ],

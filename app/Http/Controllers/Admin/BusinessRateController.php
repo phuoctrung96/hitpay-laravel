@@ -27,9 +27,19 @@ class BusinessRateController extends Controller
 
     public function create(Business $business, string $paymentProvider)
     {
+        if ($paymentProvider === 'stripe') {
+            $paymentProvider = $business->payment_provider;
+        } elseif ($paymentProvider === 'grabpay') {
+            $paymentProvider = PaymentProviderEnum::GRABPAY;
+        } elseif ($paymentProvider === 'paynow') {
+            $paymentProvider = PaymentProviderEnum::DBS_SINGAPORE;
+        } else {
+            App::abort(404);
+        }
+
         $paymentProvider = $business->paymentProviders()
             ->with('rates')
-            ->where('payment_provider', $this->validateProvider($paymentProvider, $business))
+            ->where('payment_provider', $paymentProvider)
             ->firstOrFail();
 
         return Response::view('admin.business.custom-rate', compact('business', 'paymentProvider'));
@@ -37,9 +47,19 @@ class BusinessRateController extends Controller
 
     public function store(Request $request, CustomRatesService $customRatesService, Business $business, string $paymentProvider)
     {
+        if ($paymentProvider === 'stripe') {
+            $paymentProvider = $business->payment_provider;
+        } elseif ($paymentProvider === 'grabpay') {
+            $paymentProvider = PaymentProviderEnum::GRABPAY;
+        } elseif ($paymentProvider === 'paynow') {
+            $paymentProvider = PaymentProviderEnum::DBS_SINGAPORE;
+        } else {
+            App::abort(404);
+        }
+
         $paymentProvider = $business->paymentProviders()
             ->with('rates')
-            ->where('payment_provider', $this->validateProvider($paymentProvider, $business))
+            ->where('payment_provider', $paymentProvider)
             ->firstOrFail();
 
         $customRatesService->setCustomRate($paymentProvider, $request->input('method'), $request->input('channel'), $request);
@@ -60,23 +80,5 @@ class BusinessRateController extends Controller
         return Response::redirectToRoute('admin.business.show', [
             'business_id' => $business->getKey(),
         ]);
-    }
-
-    private function validateProvider ($paymentProvider, $business) {
-      $noTranslate = [
-        PaymentProviderEnum::GRABPAY,
-        PaymentProviderEnum::SHOPEE_PAY,
-        PaymentProviderEnum::ZIP
-      ];
-
-      if ($paymentProvider === 'stripe') {
-          return $business->payment_provider;
-      } elseif ($paymentProvider === 'paynow') {
-          return PaymentProviderEnum::DBS_SINGAPORE;
-      } elseif (in_array($paymentProvider, $noTranslate)) {
-          return $paymentProvider;
-      } else {
-          App::abort(404);
-      }      
     }
 }

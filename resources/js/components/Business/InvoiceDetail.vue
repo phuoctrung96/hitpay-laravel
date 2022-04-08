@@ -214,7 +214,7 @@
                                 </div>
                             </template>
                             <template v-else>
-                                <input v-model.number="invoice.amount_no_tax" class="form-control" placeholder="$250" step="0.01" title="Amount" readonly>
+                                <input v-model.number="total_amount" class="form-control" placeholder="$250" step="0.01" title="Amount" readonly>
                             </template>
                         </div>
                         <div v-if="enable_tax_setting" class="tax-setting">
@@ -389,7 +389,7 @@ export default {
                 currency: window.Invoice.currency ?? "",
                 reference: window.Invoice.reference ?? "",
                 auto_invoice_number: false,
-                products: window.Invoice.products,
+                products: [],
                 tax_setting: window.Invoice.tax_settings_id ?? "",
                 memo: window.Invoice.memo ?? "",
                 status: window.Invoice.status,
@@ -406,8 +406,6 @@ export default {
             this.tax_setting = window.Tax_Settings;
 
             this.addCustomer(window.Customer);
-
-            this.payment_by_products = this.invoice.products.length > 0 ? true : false;
         }
 
         if (window.Invoice && window.Invoice.products) {
@@ -608,7 +606,7 @@ export default {
         },
         taxAmount() {
             if (this.invoice.tax_setting && this.enable_tax_setting) {
-                let amount = this.invoice.amount_no_tax;
+                let amount = this.total_amount;
 
                 if (this.added_products.length > 0 && this.payment_by_products) {
                     amount = 0;

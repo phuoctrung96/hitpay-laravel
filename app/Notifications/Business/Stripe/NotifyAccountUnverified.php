@@ -2,73 +2,102 @@
 
 namespace App\Notifications\Business\Stripe;
 
-use App\Business;
+use App\Business\PaymentProvider;
+use App\Enumerations\CountryCode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 
 class NotifyAccountUnverified extends Notification
 {
     use Queueable;
 
-    public Business $business;
-
-    public string $title;
-
-    public array $messages;
+    protected PaymentProvider $paymentProvider;
 
     /**
      * Create a new notification instance.
      *
-     * @param  string  $title
-     * @param  array  $messages
+     * @return void
      */
-    public function __construct(Business $business, string $title, array $messages)
+    public function __construct(PaymentProvider $paymentProvider)
     {
-        $this->business = $business;
-        $this->title = $title;
-        $this->messages = $messages;
+        $this->paymentProvider = $paymentProvider;
     }
 
     /**
      * Get the notification's delivery channels.
      *
-     * @param  \App\Business  $notifiable
+     * @param mixed $notifiable
      *
-     * @return string[]
+     * @return array
      */
-    public function via(Business $notifiable)
+    public function via($notifiable)
     {
-        return [ 'mail' ];
+        return ['mail'];
     }
 
     /**
      * Get the mail representation of the notification.
      *
-     * @param  \App\Business  $notifiable
+     * @param mixed $notifiable
      *
      * @return \Illuminate\Notifications\Messages\MailMessage
-     * @throws \Exception
      */
-    public function toMail(Business $notifiable)
+    public function toMail($notifiable)
     {
-        $mailMessage = new MailMessage;
+        $title = (App::environment('production') ? '' : '['.App::environment().'] ');
 
-        $subject = "HitPay - {$this->title}";
+        $business = $this->paymentProvider->business()->first();
 
-        if (!App::isProduction()) {
-            $environment = App::environment();
+        $paymentMethodName = $business->country === CountryCode::SINGAPORE ? 'Cards and AliPay' : 'HitPay Payment Gateway';
 
-            $subject = "[ {$environment} ] {$subject}";
-        }
+        $title .= "HitPay - Your {$paymentMethodName} Transactions Payouts Are Not Enabled";
 
-        $mailMessage->subject($subject);
-        $mailMessage->view('hitpay-email.stripe.account-unverified', [
-            'title' => $this->title,
-            'messages' => $this->messages,
+        $link = route('dashboard.business.payment-provider.stripe.onboard-verification', [
+            'business_id' => $business->getKey()
         ]);
 
-        return $mailMessage;
+        return (new MailMessage)->view('hitpay-email.stripe.account-unverified', [
+            'title' => $title,
+            'link' => $link,
+            'errorLists' => $this->convertMessageIssue(),
+            'stripeData' => $this->paymentProvider->data['account'],
+            'paymentMethodName' => $paymentMethodName
+        ])->subject($title);
+    }
+
+    /**
+     * @return Collection
+     * @throws \Exception
+     */
+    private function convertMessageIssue() : Collection
+    {
+        $stripeData = $this->paymentProvider->data;
+
+        if ($stripeData == null) {
+            throw new \Exception("stripe data was empty with business id {$this->paymentProvider->business_id}");
+        }
+
+        $stripeData = $stripeData['account'];
+
+        $requirements = $stripeData['requirements'];
+
+        $pastDue = $requirements['past_due'];
+        $currentlyDue = $requirements['currently_due'];
+        $eventuallyDue = $requirements['eventually_due'];
+
+        $errorList = Collection::make(array_unique(array_merge($pastDue, $currentlyDue, $eventuallyDue)));
+
+        // change name of error list to be
+        // make the key array to be word
+        $errorList = $errorList->map(function($item) {
+            $item = str_replace('.', ' ', $item);
+            $item = str_replace('_', ' ', $item);
+            return ucfirst($item);
+        });
+
+        return $errorList;
     }
 }

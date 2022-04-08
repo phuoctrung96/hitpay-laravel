@@ -4,6 +4,7 @@ namespace App\Business;
 
 use App\Business;
 use App\Enumerations\Business\PaymentMethodType;
+use App\Enumerations\Business\PaymentProviderStatus;
 use App\Enumerations\OnboardingStatus;
 use App\Enumerations\PaymentProvider as PaymentProviderEnum;
 use App\Mail\OnboardingSuccess;
@@ -79,7 +80,7 @@ class PaymentProvider extends Model implements OwnableContract
      * @throws \Exception
      */
     public function getRateFor(
-        string $homeCountry, string $homeCurrency, string $chargeCurrency, string $channel, string $method,
+        string $homeCountry, string $homeCurrency, string $chargeCurrency, string $channel = null, string $method = null,
         string $cardCountry = null, string $cardBrand = null, int $amount = null
     ) {
         // TODO - 2022-02-13
@@ -98,7 +99,6 @@ class PaymentProvider extends Model implements OwnableContract
             PaymentMethodType::ALIPAY,
             PaymentMethodType::WECHAT,
             PaymentMethodType::GRABPAY,
-            PaymentMethodType::FPX,
             PaymentMethodType::PAYNOW,
             'direct_debit',
             PaymentMethodType::SHOPEE,
@@ -225,7 +225,7 @@ class PaymentProvider extends Model implements OwnableContract
                     } elseif ($method === PaymentMethodType::GRABPAY) {
                         return [ 0, 0.033 ];
                     } elseif ($method === PaymentMethodType::FPX) {
-                        return [ 100, 0.03 ];
+                        return [ 40, 0.02 ];
                     }
                 }
             }
@@ -250,6 +250,88 @@ class PaymentProvider extends Model implements OwnableContract
         }
 
         throw new Exception('Invalid country, the rate for this country is not set.');
+    }
+
+    /**
+     * Returns Payment Provider Status
+     *
+     * @return string
+     */
+    public function getProviderStatus() : string
+    {
+        if ($this->onboarding_status === OnboardingStatus::SUCCESS) {
+            return PaymentProviderStatus::ENABLED;
+        }
+
+        if (
+            in_array($this->payment_provider, [
+                PaymentProviderEnum::STRIPE_MALAYSIA,
+                PaymentProviderEnum::STRIPE_SINGAPORE
+            ]) &&
+            $this->data['account']['future_requirements']['currently_due'] ?? false
+        ) {
+            return PaymentProviderStatus::REQUIRES_INFORMATION;
+        }
+
+        if (in_array($this->onboarding_status, [
+            OnboardingStatus::PENDING_SUBMISSION,
+            OnboardingStatus::PENDING_VERIFICATION
+        ])) {
+            return PaymentProviderStatus::PENDING_APPROVAL;
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns array of payment methods for current payment provider
+     * @return array
+     * @throws Exception
+     */
+    public function getPaymentMethods() : array
+    {
+        $business_country = $this->business->country;
+
+        $country_data = \HitPay\Data\Countries::get($business_country);
+        $payment_providers = $country_data::paymentProviders();
+
+        foreach ($payment_providers as $payment_provider) {
+            if ($this->payment_provider === $payment_provider->code) {
+                return $payment_provider->methods->toArray();
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Returns array of payment method codes
+     * @return array
+     * @throws Exception
+     */
+    public function getPaymentMethodCodes() : array
+    {
+        return array_map(fn($m) => $m['code'], $this->getPaymentMethods());
+    }
+
+    /**
+     * Returns array of integrations for current payment provider
+     * @return array
+     * @throws Exception
+     */
+    public function getProviderIntegrations() : array
+    {
+        $integrations = [];
+
+        $paymentMethods = $this->getPaymentMethodCodes();
+
+        foreach ($this->business->gatewayProviders as $gatewayProvider) {
+            if (array_intersect($paymentMethods, $gatewayProvider->methods)) {
+                $integrations[] = $gatewayProvider->name;
+            }
+        }
+
+        return $integrations;
     }
 
     public function business () : BelongsTo {

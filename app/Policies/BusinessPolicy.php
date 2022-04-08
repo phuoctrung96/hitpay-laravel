@@ -246,32 +246,4 @@ class BusinessPolicy
 
         return $this->deny();
     }
-
-    /**
-     * Determine if a user can restrict roles.
-     *
-     * @param \App\User $user
-     *
-     * @return \Illuminate\Auth\Access\Response
-     */
-    public function canRestrictRoles(?User $user, Business $business)
-    {
-        return $this->businessUserPermissionsService->can($user, $business, 'canRestrictRoles')
-            ? $this->allow()
-            : $this->deny();
-    }
-
-    /**
-     * Determine if a user can do refunds.
-     *
-     * @param \App\User $user
-     *
-     * @return \Illuminate\Auth\Access\Response
-     */
-    public function canRefundCharges(?User $user, Business $business)
-    {
-        return $this->businessUserPermissionsService->can($user, $business, 'canRefundCharges')
-            ? $this->allow()
-            : $this->deny();
-    }
 }
