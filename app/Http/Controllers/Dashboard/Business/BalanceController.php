@@ -16,13 +16,10 @@ use App\Jobs\Wallet\PayoutToBank;
 use App\Models\Business\BankAccount;
 use HitPay\PayNow\Generator;
 use HitPay\Stripe\CustomAccount\Balance\Retrieve;
-use HitPay\Stripe\CustomAccount\Exceptions\AccountNotFoundException;
-use HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Gate;
@@ -57,10 +54,8 @@ class BalanceController extends Controller
 
         $viewData = compact('business', 'currency', 'wallets');
 
-        try {
+        if ($business->usingStripeCustomAccount()) {
             $viewData['stripeCustomAccountBalance'] = Retrieve::new($business->payment_provider)->setBusiness($business)->handle();
-        } catch (InvalidStateException|AccountNotFoundException $exception) {
-            // Silent is golden.
         }
 
         return Response::view('dashboard.business.balance.home', $viewData);

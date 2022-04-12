@@ -60,7 +60,7 @@ class ZipController extends Controller
                       'type' => 'checkout_id',
                       'value' => $paymentIntent->payment_provider_object_id
                     ],
-                    'amount' => $charge->amount,
+                    'amount' => floor( $charge->amount * 100 ) / 10000,
                     'currency' => 'SGD'
                   ], 200);
 
@@ -102,13 +102,22 @@ class ZipController extends Controller
                       DB::commit();
                       
                       // success
-                      return redirect()->route('securecheckout.payment.request.completed', ['p_charge' => $charge->getKey()]);  
+                      if ($charge->paymentRequest->redirect_url) {
+                        return redirect()->away($charge->paymentRequest->redirect_url . '?reference=' . $charge->paymentRequest->id . '&status=completed');    
+                      } else {
+                        return redirect()->route('securecheckout.payment.request.completed', ['p_charge' => $charge->getKey()]);    
+                      }
 
                     case 'captured': 
                     case 'authorised': 
                       // Currently we does not support this types
                       Log::critical('[Zip] Unsupported status from /charges: ' . $res->status . ', checkout id: ' . $request->query('checkoutId'));
-                      return Response::view('shop.checkout.simpleerror', ['message' => 'Payment failed']);
+
+                      if ($charge->paymentRequest->redirect_url) {
+                        return redirect()->away($charge->paymentRequest->redirect_url . '?reference=' . $charge->paymentRequest->id . '&status=failed');
+                      } else {
+                        return Response::view('shop.checkout.simpleerror', ['message' => 'Payment failed']);                    
+                      } 
                   }
 
                 case 'cancelled':

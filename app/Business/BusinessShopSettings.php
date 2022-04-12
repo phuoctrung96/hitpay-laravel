@@ -18,6 +18,6 @@ class BusinessShopSettings extends Model implements OwnableContract
      */
     protected $table = 'business_store_settings';
 
-    protected $fillable = ['seller_notes', 'shop_state', 'enable_datetime', 'slots', 'can_pick_up', 'is_redirect_order_completion', 'url_redirect_order_completion'];
+    protected $fillable = ['seller_notes', 'shop_state', 'enable_datetime', 'slots', 'can_pick_up', 'is_redirect_order_completion', 'url_redirect_order_completion', 'url_facebook', 'url_instagram', 'url_instagram', 'url_twitter'];
 
 }

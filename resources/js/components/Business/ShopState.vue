@@ -193,6 +193,43 @@
                         <span class="invalid-feedback" role="alert">{{ errors.seller_notes }}</span>
                     </div>
                 </div>
+                <h5 class="text-center mt-3">Social network</h5>
+                <div class="form-row">
+                    <div class="col-6 mb-3">
+                        <label for="street" class="small text-muted text-uppercase">Instagram</label>
+                        <input id="street" v-model="business.url_instagram" class="form-control" :class="{
+                            'is-invalid': errors.url_instagram,
+                            'bg-light': !(is_processing || is_succeeded),
+                        }" :disabled="is_processing || is_succeeded">
+                        <span class="invalid-feedback" role="alert">{{ errors.url_instagram }}</span>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label for="street" class="small text-muted text-uppercase">Facebook</label>
+                        <input id="street" v-model="business.url_facebook" class="form-control" :class="{
+                            'is-invalid': errors.url_facebook,
+                            'bg-light': !(is_processing || is_succeeded),
+                        }" :disabled="is_processing || is_succeeded">
+                        <span class="invalid-feedback" role="alert">{{ errors.url_facebook }}</span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-6 mb-3">
+                        <label for="street" class="small text-muted text-uppercase">Twitter</label>
+                        <input id="street" v-model="business.url_twitter" class="form-control" :class="{
+                            'is-invalid': errors.url_twitter,
+                            'bg-light': !(is_processing || is_succeeded),
+                        }" :disabled="is_processing || is_succeeded">
+                        <span class="invalid-feedback" role="alert">{{ errors.url_twitter }}</span>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label for="street" class="small text-muted text-uppercase">Tiktok</label>
+                        <input id="street" v-model="business.url_tiktok" class="form-control" :class="{
+                            'is-invalid': errors.url_tiktok,
+                            'bg-light': !(is_processing || is_succeeded),
+                        }" :disabled="is_processing || is_succeeded">
+                        <span class="invalid-feedback" role="alert">{{ errors.url_tiktok }}</span>
+                    </div>
+                </div>
                 <button class="btn btn-primary mt-2 d-block" @click="saveChanges()"
                         :disabled="is_processing">
                     <i class="fas fa-save mr-1"></i> Save Changes
@@ -323,7 +360,11 @@ export default {
                 enabled_shipping: true,
                 thank_message: null,
                 is_redirect_order_completion: false,
-                url_redirect_order_completion: null
+                url_redirect_order_completion: null,
+                url_facebook: '',
+                url_instagram: '',
+                url_twitter: '',
+                url_tiktok: ''
             },
 
             pick_up_slots: {
@@ -477,6 +518,38 @@ export default {
                 this.errors.url_redirect_order_completion = "The url is invalid";
             }
 
+            if(this.business.url_instagram != '' & !this.isValidURLNotHttp(this.business.url_instagram)) {
+                this.errors.url_instagram = 'The URL Instagram is invalid.';
+            }
+
+            if(this.business.url_instagram.length > 255) {
+                this.errors.url_instagram = 'The Instagram may not be greater than 255 characters.';
+            }
+
+            if(this.business.url_facebook.length > 255) {
+                this.errors.url_facebook = 'The Facebook may not be greater than 255 characters.';
+            }
+
+            if(this.business.url_facebook != '' & !this.isValidURLNotHttp(this.business.url_facebook)) {
+                this.errors.url_facebook = 'The URL Facebook is invalid.';
+            }
+            
+            if(this.business.url_twitter.length > 255) {
+                this.errors.url_twitter = 'The Twitter may not be greater than 255 characters.';
+            }
+
+            if(this.business.url_twitter != '' & !this.isValidURLNotHttp(this.business.url_twitter)) {
+                this.errors.url_twitter = 'The URL Twitter is invalid.';
+            }
+
+            if(this.business.url_tiktok.length > 255) {
+                this.errors.url_tiktok = 'The Tiktok may not be greater than 255 characters.';
+            }
+
+            if(this.business.url_tiktok != '' & !this.isValidURLNotHttp(this.business.url_tiktok)) {
+                this.errors.url_tiktok = 'The URL Tiktok is invalid.';
+            }
+
             if (Object.keys(this.errors).length > 0) {
                 this.showError(_.first(Object.keys(this.errors)));
                 return;
@@ -542,6 +615,10 @@ export default {
         },
         isValidURL(string) {
             var res = string.match(/(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
+            return (res !== null)
+        },
+        isValidURLNotHttp(string) {
+            var res = string.match(/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
             return (res !== null)
         },
         triggerSlots(event, status) {

@@ -39,6 +39,7 @@
         "pragmarx/recovery": "^0.1.0",
         "pusher/pusher-php-server": "^4.1",
         "quickbooks/v3-php-sdk": "^6.0",
+        "sentry/sentry-laravel": "^2.11",
         "singpolyma/openpgp-php": "^0.4.0",
         "socialiteproviders/shopify": "^1.0",
         "socialiteproviders/xero": "^3.0",

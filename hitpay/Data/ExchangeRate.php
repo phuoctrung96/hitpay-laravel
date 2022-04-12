@@ -144,7 +144,7 @@ class ExchangeRate
      */
     public static function refresh(string $currency)
     {
-        Facades\Cache::forget("_exchange_rates:{$currency}");
+        Facades\Cache::tags('_exchange_rates')->forget("_exchange_rates:{$currency}");
 
         static::getExchangeRatesFor($currency);
     }
@@ -160,7 +160,7 @@ class ExchangeRate
     public static function getExchangeRatesFor(string $currency) : array
     {
         $handler = function () use ($currency) {
-            $request = ( new Client )->get("https://freecurrencyapi.net/api/v2/latest", [
+            $request = ( new Client )->get("https://api.currencyapi.com/v3/latest", [
                 'query' => [
                     'apikey' => Facades\Config::get('services.freecurrencyapi.api_key'),
                     'base_currency' => strtoupper($currency),
@@ -185,7 +185,7 @@ class ExchangeRate
             $exchangeRates = [];
 
             foreach ($contents['data'] as $currencyCode => $rate) {
-                $exchangeRates[strtolower($currencyCode)] = $rate;
+                $exchangeRates[strtolower($currencyCode)] = $rate['value'];
             }
 
             return $exchangeRates;

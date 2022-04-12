@@ -53,10 +53,12 @@ class NotifyOrderRefunded extends Notification implements ShouldQueue
 
         if ($chargeModel) {
             if ($chargeModel->payment_provider_charge_method === 'card_present') {
+                $card = $chargeModel->getDataStripeCard();
+
                 $application = [
                     'application' => [
-                        'identifier' => $chargeModel->data['payment_method_details']['card_present']['receipt']['dedicated_file_name'],
-                        'name' => $chargeModel->data['payment_method_details']['card_present']['receipt']['application_preferred_name'],
+                        'identifier' => $card['receipt']['dedicated_file_name'],
+                        'name' => $card['receipt']['application_preferred_name'],
                     ],
                 ];
             }

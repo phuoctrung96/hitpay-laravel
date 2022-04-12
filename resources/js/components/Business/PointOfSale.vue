@@ -487,7 +487,7 @@
                             <template v-else-if="charges.chosen_method === 'alipay' || charges.chosen_method === 'grabpay'">
                                 Complete The Payment
                             </template>
-                            <template v-else-if="charges.chosen_method === 'wechat' || charges.chosen_method === 'paynow_online'">
+                            <template v-else-if="charges.chosen_method === 'paynow_online'">
                                 Scan The QR Code
                             </template>
                             <template v-else-if="charges.chosen_method === 'cash'">
@@ -593,14 +593,6 @@
                             <p><i class="fas fa-spinner fa-spin fa-3x text-primary"></i></p>
                             <p class="mb-0">Awaiting payment. Please do not close this window until you receive payment confirmation.</p>
                         </template>
-                        <template v-else-if="charges.chosen_method === 'wechat'">
-                            <h3 class="mb-3">WeChat</h3>
-                            <p>{{ currency_display }}{{ Number(amount).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') }}</p>
-                            <div class="mb-3">
-                                <div id="wechat-qr-code"></div>
-                            </div>
-                            <p class="mb-0">Awaiting payment. Please do not close this window until you receive payment confirmation.</p>
-                        </template>
                         <template v-else-if="charges.chosen_method === 'cash'">
                             <h3 class="mb-3">Cash</h3>
                             <p>{{ currency_display }}{{ Number(amount).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') }}</p>
@@ -665,16 +657,6 @@
                                         <p class="small text-muted mb-0">Scan to pay or authenticate using Alipay login details</p>
                                     </div>
                                     <button class="btn btn-danger btn-sm align-self-center ml-3" @click="useMethod('alipay')">Select</button>
-                                </div>
-                            </div>
-                            <div v-if="charges.methods.wechat" class="modal-body bg-light border-bottom">
-                                <div class="media">
-                                    <img :src="getDomain('icons/payment-methods/wechat.svg')" class="listing align-self-center mr-3" alt="WeChat">
-                                    <div class="media-body align-self-center">
-                                        <h6 class="font-weight-bold mt-0 mb-1">WeChat Pay</h6>
-                                        <p class="small text-muted mb-0">Scan to pay</p>
-                                    </div>
-                                    <button class="btn btn-danger btn-sm align-self-center ml-3" @click="useMethod('wechat')">Select</button>
                                 </div>
                             </div>
                             <div class="modal-body bg-light border-bottom">
@@ -1008,7 +990,6 @@ import CardReader from './CardReader'
                         alipay: false,
                         card: false,
                         card_present: false,
-                        wechat: false,
                         paynow_online: false,
                         grabpay: false,
                     },
@@ -1133,7 +1114,6 @@ import CardReader from './CardReader'
                     alipay: false,
                     card: false,
                     card_present: false,
-                    wechat: false,
                     paynow_online: false,
                     grabpay: false,
                 };
@@ -1315,8 +1295,11 @@ import CardReader from './CardReader'
                 if (this.charges.chosen_method === 'cash' || this.charges.chosen_method === 'link') {
                     // complete
                 } else {
+                    let terminal_id = this.terminals.connected === null ? '' : this.terminals.connected.serial_number;
+
                     return axios.post(this.base_url + 'charge/' + this.charges.charge_object.id + '/payment-intent', {
                         method: this.charges.chosen_method,
+                        terminal_id: terminal_id
                     }).then(({data}) => {
                         this.existing_charge = data;
 
@@ -1415,22 +1398,17 @@ import CardReader from './CardReader'
                                 });
 
                                 this.pollChargeStatus();
-                            } else if (this.charges.chosen_method === 'wechat') {
-                                new QRCode('wechat-qr-code', {
-                                    text: data.wechat.qr_code_url,
-                                    width: 256,
-                                    height: 256,
-                                    colorDark: '#000036',
-                                    colorLight: '#fff',
-                                    correctLevel: QRCode.CorrectLevel.H,
-                                });
-
-                                this.pollChargeStatus();
                             } else if (this.charges.chosen_method === 'alipay') {
                                 window.open(data.alipay.redirect_url, '_blank');
 
                                 this.pollChargeStatus();
                             }
+                        }
+                    }).catch(({response}) => {
+                        if (response.status === 400) {
+                            this.cards.error = response.data.error_message;
+                        } else {
+                            console.error(response);
                         }
                     });
                 }
@@ -2142,12 +2120,6 @@ import CardReader from './CardReader'
 <style lang="scss">
 #paynow_online-qr-code img,
 #grabpay-qr-code img,
-#wechat-qr-code img {
-    max-width: 100%;
-    height: auto;
-    margin-left: auto;
-    margin-right: auto;
-}
 
 .number-pad {
     border-color: #ced4da;

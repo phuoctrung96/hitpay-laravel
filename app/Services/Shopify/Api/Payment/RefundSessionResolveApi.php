@@ -15,9 +15,10 @@ class RefundSessionResolveApi extends ApiService
     }
 
     /**
+     * @return array
      * @throws \Exception
      */
-    public function handle()
+    public function handle() : array
     {
         $params = [
             'query' => $this->getQueryString(),
@@ -48,7 +49,6 @@ class RefundSessionResolveApi extends ApiService
             throw new \Exception("Shopify response not have result response");
         }
 
-        $refundSession = $arrResponse['data']['refundSessionResolve']['refundSession'];
         $refundSessionError = $arrResponse['data']['refundSessionResolve']['userErrors'];
 
         if (is_array($refundSessionError)) {
@@ -57,7 +57,7 @@ class RefundSessionResolveApi extends ApiService
             }
         }
 
-        return $refundSession;
+        return $arrResponse;
     }
 
     private function getQueryString()

@@ -4,10 +4,13 @@ namespace App\Actions\Business\Settings\BankAccount;
 
 use App\Enumerations\Business\Type as BusinessType;
 use App\Enumerations\CountryCode;
-use HitPay\Data\Countries;
+use App\Notifications\NotifyOwnerAboutBankUpdate;
 use HitPay\Stripe\CustomAccount\ExternalAccount;
 use Illuminate\Support\Facades;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class Update extends Action
 {
@@ -20,18 +23,18 @@ class Update extends Action
      */
     public function process() : bool
     {
-        $banksData = Countries::get($this->business->country)->banks();
+        $banksData = $this->business->banksAvailable();
 
-        $rules['bank_swift_code'] = [ 'required', Rule::in($banksData->pluck('swift_code')) ];
+        $rules['bank_id'] = [ 'required', Rule::in($banksData->pluck('id')) ];
 
         if ($this->business->country === CountryCode::SINGAPORE) {
-            $rules['branch_code'][] = 'required_with:bank_swift_code';
+            $rules['branch_code'][] = 'required_with:bank_id';
 
-            $_bankSwiftCode = $data['bank_swift_code'] ?? null;
+            $_bankId = $data['bank_id'] ?? null;
 
-            if (is_string($_bankSwiftCode)) {
+            if (is_string($_bankId)) {
                 /** @var \HitPay\Data\Countries\Objects\Bank $_bank */
-                $_bank = $banksData->where('swift_code', $_bankSwiftCode)->first();
+                $_bank = $banksData->where('id', $_bankId)->first();
 
                 if ($_bank && $_bank->useBranch) {
                     $rules['branch_code'][] = Rule::in($_bank->branches->pluck('code')->toArray());
@@ -46,10 +49,25 @@ class Update extends Action
         $rules['use_in_stripe'] = 'required|bool';
         $rules['remark'] = 'nullable|string|max:255';
 
+        // TODO -
+        //   We shouldn't check user password in action class. The action class should be able to used everywhere,
+        //   e.g.
+        //   1. A user can call this action to update the bank account of his / her business,
+        //   2. An admin dashboard can call this action to update the bank account of a business.
+        //   3. A command can be created to call this action to update the bank account of a business.
+        //
+        $rules['password'] = 'required|string';
+
         $data = Facades\Validator::validate($this->data, $rules);
 
+        if (!Hash::check($data['password'], Auth::user()->password)) {
+            throw ValidationException::withMessages([
+                'password' => 'The password is incorrect.',
+            ]);
+        }
+
         /** @var \HitPay\Data\Countries\Objects\Bank $bank */
-        $bank = $banksData->where('swift_code', $data['bank_swift_code'])->first();
+        $bank = $banksData->where('id', $data['bank_id'])->first();
 
         if ($bank->useBranch) {
             if (array_key_exists('branch_code', $data) && !is_null($data['branch_code'])) {
@@ -63,9 +81,19 @@ class Update extends Action
             $bankRoutingNumber = $bank->swift_code;
         }
 
-        $this->bankAccount->bank_swift_code = $data['bank_swift_code'];
+        $this->bankAccount->bank_swift_code = $bank->swift_code;
         $this->bankAccount->bank_routing_number = $bankRoutingNumber;
         $this->bankAccount->number = $data['number'];
+
+        $bankAccountData = $this->bankAccount->data;
+
+        $bankData = $bank->toArray();
+
+        unset($bankData['branches']);
+
+        $bankAccountData['data']['bank'] = $bankData;
+
+        $this->bankAccount->data = $bankAccountData;
         $this->bankAccount->holder_name = $data['holder_name'];
         $this->bankAccount->holder_type = $data['holder_type'];
         $this->bankAccount->remark = $data['remark'] ?? null;
@@ -95,6 +123,9 @@ class Update extends Action
                     ->handle($this->bankAccount, $this->bankAccount->stripe_external_account_default);
             }
         }
+
+        $owner = $this->business->owner()->first();
+        $owner->notify(new NotifyOwnerAboutBankUpdate);
 
         return true;
     }

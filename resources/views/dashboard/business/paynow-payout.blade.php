@@ -60,17 +60,23 @@
                                 <p class="text-dark small mb-0">Transferred Date:
                                     <span class="text-muted">{{ $payout['updated_at'] }}</span></p>
                             @endif
-                            @php([
-                                $bankSwiftCode,
-                                $bankAccountNumber,
-                            ] = explode('@', $payout->payment_provider_account_id))
-                            <p class="text-dark small mb-2">Payout Destination:
-                                <span class="text-muted">{{ \App\Business\Transfer::$availableBankSwiftCodes[$bankSwiftCode] ?? $bankSwiftCode }} ({{ $bankAccountNumber }})</span>
-                            </p>
+                            @if ($payout['payment_provider'] === 'dbs_sg')
+                                @php([
+                                    $bankSwiftCode,
+                                    $bankAccountNumber,
+                                ] = explode('@', $payout->payment_provider_account_id))
+                                <p class="text-dark small mb-2">Payout Destination:
+                                    <span class="text-muted">{{ \App\Business\Transfer::$availableBankSwiftCodes[$bankSwiftCode] ?? $bankSwiftCode }} ({{ $bankAccountNumber }})</span>
+                                </p>
+                            @endif
                             @if ($payout['status'] === 'succeeded')
                                 <span class="small font-weight-bold text-success">Paid</span>
                             @elseif ($payout['status'] === 'succeeded_manually')
                                 <span class="small font-weight-bold text-info">Paid</span>
+                            @elseif ($payout['status'] === 'paid')
+                                <span class="small font-weight-bold text-success">Paid</span>
+                            @elseif ($payout['status'] === 'in_transit')
+                                <span class="small font-weight-bold text-info">In Transit</span>
                             @else
                                 <span class="small font-weight-bold text-warning">Pending</span>
                             @endif
@@ -88,13 +94,13 @@
                 <div class="card-body border-top pt-2">
                 </div>
             </div>
-                
+
             @include('custom-pagination')
             <business-help-guide :page_type="'hitpay_balance'"></business-help-guide>
         </div>
 
         <business-transfer-export></business-transfer-export>
-        
+
     </div>
 @endsection
 

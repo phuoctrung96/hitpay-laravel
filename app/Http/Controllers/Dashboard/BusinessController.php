@@ -3,41 +3,29 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Actions\User\Register\BusinessForm;
-use App\Enumerations\CountryCode;
-use App\Enumerations\VerificationProvider;
-use App\Enumerations\VerificationStatus;
-use App\Models\BusinessPartner;
-use App\Services\Wati\BusinessOnboarding;
-use HitPay\Data\Countries;
-use HitPay\Verification\Cognito\FlowSession\Retrieve;
-use HitPay\Verification\Cognito\FlowSession\Create;
-use Illuminate\Support\Facades;
 use App\Business;
-use App\Business\BusinessCategory;
 use App\Business\HelpGuides;
 use App\Enumerations\Business\ChargeStatus;
-use App\Enumerations\Business\OrderStatus;
+use App\Enumerations\CountryCode;
+use App\Enumerations\VerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Logics\BusinessRepository;
 use App\Manager\ApiKeyManager;
+use App\Services\Wati\BusinessOnboarding;
 use App\Services\XeroApiFactory;
 use App\XeroOrganization;
-use GuzzleHttp\Exception\ClientException;
+use HitPay\Stripe\Payout;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\URL;
-use XeroAPI\XeroPHP\Models\Accounting\Account;
 use XeroAPI\XeroPHP\Models\Accounting\Organisation;
 use XeroAPI\XeroPHP\Models\Accounting\Organisations;
-use HitPay\Stripe\Payout;
-use App\Enumerations\PaymentProvider as PaymentProviderEnum;
 
 class BusinessController extends Controller
 {
@@ -91,9 +79,9 @@ class BusinessController extends Controller
         }
 
         // Ensure that we always have data, even zero
-        if (!$totalCollectionForThisMonthFromDatabase->has('sgd')) {
+        if (!$totalCollectionForThisMonthFromDatabase->has($business->currency)) {
           $totalCollectionForThisMonth[] = [
-            'currency' => 'sgd',
+            'currency' => $business->currency,
             'amount' => '0.00',
           ];
         }
@@ -200,42 +188,44 @@ class BusinessController extends Controller
 
         $verification = $business->verifications()->latest()->first();
 
-        if (Facades\App::environment('local')) {
-            // for mock on local
-            $cognitoResponseMock = '{"id": "flwses_52xR9LKo77r1Np", "user": {"name": {"last": "Knope", "first": "Leslie"}, "email": "user@example.com", "phone": "+19876543212", "address": {"city": "Pawnee", "street": "123 Main St.", "street2": "Unit 42", "postal_code": "46001", "subdivision": "IN", "country_code": "US"}, "id_number": {"type": "us_ssn", "value": "123456789", "category": "tax_id"}, "ip_address": "192.0.2.42", "date_of_birth": "1975-01-18"}, "_meta": "This API format is not v1.0 and is subject to change.", "steps": {"kyc_check": "active", "screening": "waiting_for_prerequisite", "accept_tos": "success", "kyc_screen": "not_applicable", "risk_check": "waiting_for_prerequisite", "verify_sms": "success", "selfie_check": "waiting_for_prerequisite", "documentary_verification": "waiting_for_prerequisite"}, "status": "success", "template": {"id": "flwtmp_4FrXJvfQU3zGUR", "version": 2}, "kyc_check": {"name": {"summary": "match"}, "phone": {"summary": "match"}, "status": "success", "address": {"type": "residential", "po_box": "yes", "summary": "match"}, "id_number": {"summary": "match"}, "date_of_birth": {"summary": "match"}}, "created_at": "2020-07-24T03:26:02Z", "completed_at": "2020-07-24T03:26:02Z", "screening_id": "scr_52xR9LKo77r1Np", "shareable_url": "https://flow.cognitohq.com/verify/flwtmp_4FrXJvfQU3zGUR?key=e004115db797f7cc3083bff3167cba30644ef630fb46f5b086cde6cc3b86a36f", "customer_reference": "your-db-id-3b24110", "previous_session_id": "flwses_42cF1MNo42r9Xj", "documentary_verification": {"status": "success", "documents": [{"images": {"face": "https://example.cognitohq.com/flow_sessions/flwses_52xR9LKo77r1Np/documents/1/face.jpeg", "cropped_back": "https://example.cognitohq.com/flow_sessions/flwses_52xR9LKo77r1Np/documents/1/cropped_back.jpeg", "cropped_front": "https://example.cognitohq.com/flow_sessions/flwses_52xR9LKo77r1Np/documents/1/cropped_front.jpeg", "original_back": "https://example.cognitohq.com/flow_sessions/flwses_52xR9LKo77r1Np/documents/1/original_back.jpeg", "original_front": "https://example.cognitohq.com/flow_sessions/flwses_52xR9LKo77r1Np/documents/1/orignial_front.jpeg"}, "status": "success", "attempt": 1, "analysis": {"authenticity": "match", "image_quality": "high", "extracted_data": {"name": "match", "date_of_birth": "match", "expiration_date": "not_expired", "issuing_country": "match"}}, "extracted_data": {"category": "drivers_license", "id_number": "AB123456", "expiration_date": "1990-05-29", "issuing_country": "US"}}]}}';
-            $responseDecoded = json_decode($cognitoResponseMock, true);
+//        if (Facades\App::environment('local')) {
+//            // for mock on local
+//            $cognitoResponseMock = '{"id": "flwses_52xR9LKo77r1Np", "user": {"name": {"last": "Knope", "first": "Leslie"}, "email": "user@example.com", "phone": "+19876543212", "address": {"city": "Pawnee", "street": "123 Main St.", "street2": "Unit 42", "postal_code": "46001", "subdivision": "IN", "country_code": "US"}, "id_number": {"type": "us_ssn", "value": "123456789", "category": "tax_id"}, "ip_address": "192.0.2.42", "date_of_birth": "1975-01-18"}, "_meta": "This API format is not v1.0 and is subject to change.", "steps": {"kyc_check": "active", "screening": "waiting_for_prerequisite", "accept_tos": "success", "kyc_screen": "not_applicable", "risk_check": "waiting_for_prerequisite", "verify_sms": "success", "selfie_check": "waiting_for_prerequisite", "documentary_verification": "waiting_for_prerequisite"}, "status": "success", "template": {"id": "flwtmp_4FrXJvfQU3zGUR", "version": 2}, "kyc_check": {"name": {"summary": "match"}, "phone": {"summary": "match"}, "status": "success", "address": {"type": "residential", "po_box": "yes", "summary": "match"}, "id_number": {"summary": "match"}, "date_of_birth": {"summary": "match"}}, "created_at": "2020-07-24T03:26:02Z", "completed_at": "2020-07-24T03:26:02Z", "screening_id": "scr_52xR9LKo77r1Np", "shareable_url": "https://flow.cognitohq.com/verify/flwtmp_4FrXJvfQU3zGUR?key=e004115db797f7cc3083bff3167cba30644ef630fb46f5b086cde6cc3b86a36f", "customer_reference": "your-db-id-3b24110", "previous_session_id": "flwses_42cF1MNo42r9Xj", "documentary_verification": {"status": "success", "documents": [{"images": {"face": "https://example.cognitohq.com/flow_sessions/flwses_52xR9LKo77r1Np/documents/1/face.jpeg", "cropped_back": "https://example.cognitohq.com/flow_sessions/flwses_52xR9LKo77r1Np/documents/1/cropped_back.jpeg", "cropped_front": "https://example.cognitohq.com/flow_sessions/flwses_52xR9LKo77r1Np/documents/1/cropped_front.jpeg", "original_back": "https://example.cognitohq.com/flow_sessions/flwses_52xR9LKo77r1Np/documents/1/original_back.jpeg", "original_front": "https://example.cognitohq.com/flow_sessions/flwses_52xR9LKo77r1Np/documents/1/orignial_front.jpeg"}, "status": "success", "attempt": 1, "analysis": {"authenticity": "match", "image_quality": "high", "extracted_data": {"name": "match", "date_of_birth": "match", "expiration_date": "not_expired", "issuing_country": "match"}}, "extracted_data": {"category": "drivers_license", "id_number": "AB123456", "expiration_date": "1990-05-29", "issuing_country": "US"}}]}}';
+//            $responseDecoded = json_decode($cognitoResponseMock, true);
+//
+//            if ($business->country != CountryCode::SINGAPORE && $verification == null) {
+//                $verification = $business->verifications()->create([
+//                    'type' => $business->business_type == 'company' ? 'business' : 'personal',
+//                    'identification' => $responseDecoded['user']['id_number']['value'],
+//                    'name' => $responseDecoded['user']['name']['first'] . ' ' . $responseDecoded['user']['name']['last'],
+//                    'status' => '',
+//                    'cognitohq_data' => $responseDecoded,
+//                    'verification_provider' => VerificationProvider::COGNITO,
+//                    'verification_provider_account_id' => $responseDecoded['id'],
+//                    'verification_provider_status' => 'success',
+//                ]);
+//            }
+//
+//            if ($business->country != CountryCode::SINGAPORE && $verification->verification_provider_status != 'success') {
+//                $verification->update([
+//                    'type' => $business->business_type == 'company' ? 'business' : 'personal',
+//                    'identification' => $responseDecoded['user']['id_number']['value'],
+//                    'name' => $responseDecoded['user']['name']['first'] . ' ' . $responseDecoded['user']['name']['last'],
+//                    'status' => '',
+//                    'cognitohq_data' => $responseDecoded,
+//                    'verification_provider' => VerificationProvider::COGNITO,
+//                    'verification_provider_account_id' => $responseDecoded['id'],
+//                    'verification_provider_status' => 'success',
+//                ]);
+//            }
+//        }
 
-            if ($business->country != CountryCode::SINGAPORE && $verification == null) {
-                $verification = $business->verifications()->create([
-                    'type' => $business->business_type == 'company' ? 'business' : 'personal',
-                    'identification' => $responseDecoded['user']['id_number']['value'],
-                    'name' => $responseDecoded['user']['name']['first'] . ' ' . $responseDecoded['user']['name']['last'],
-                    'status' => '',
-                    'cognitohq_data' => $responseDecoded,
-                    'verification_provider' => VerificationProvider::COGNITO,
-                    'verification_provider_account_id' => $responseDecoded['id'],
-                    'verification_provider_status' => 'success',
-                ]);
-            }
-
-            if ($business->country != CountryCode::SINGAPORE && $verification->verification_provider_status != 'success') {
-                $verification->update([
-                    'type' => $business->business_type == 'company' ? 'business' : 'personal',
-                    'identification' => $responseDecoded['user']['id_number']['value'],
-                    'name' => $responseDecoded['user']['name']['first'] . ' ' . $responseDecoded['user']['name']['last'],
-                    'status' => '',
-                    'cognitohq_data' => $responseDecoded,
-                    'verification_provider' => VerificationProvider::COGNITO,
-                    'verification_provider_account_id' => $responseDecoded['id'],
-                    'verification_provider_status' => 'success',
-                ]);
-            }
-        }
-
-        $isShowModalVerification = true;
+        $isShowModalVerification = config('app.env') !== 'sandbox';
         $isVerificationVerified = false;
+        $verificationStatus = 'pending'; // no have verification
 
         if ($verification !== null) {
+            $verificationStatus = $verification->getStatusName();
             // sg
             if ($business->country == CountryCode::SINGAPORE) {
                 if ($verification->isVerified()) {
@@ -259,8 +249,6 @@ class BusinessController extends Controller
                 if ($verification->status == VerificationStatus::PENDING) {
                     $isShowModalVerification = false;
                 }
-
-                // TODO get step cognito, if user have finish fill data dont show modal cognito flow
             }
         }
 
@@ -277,33 +265,35 @@ class BusinessController extends Controller
                     ->where('user_id', Facades\Auth::id())
                     ->first();
 
-                $isOwner = $businessUser->isOwner();
-
-                if (!$verification) {
-                    $cognitoFlow = new Retrieve();
-                    $customerSignature = $cognitoFlow->getCustomerSignature($business);
-
-                    $verificationProvider = [
-                        'verificationProviderName' => 'cognito',
-                        'publishableKey' => Facades\Config::get('services.cognito.publishable_key'),
-                        'templateId' => Facades\Config::get('services.cognito.template_id'),
-                        'production_ready' => Facades\Config::get('services.cognito.production_ready'),
-                        'customerSignature' => $customerSignature,
-                    ];
-                } else {
-                    if ($verification->verification_provider_status != 'success') {
-                        $cognitoFlow = new Retrieve();
-                        $customerSignature = $cognitoFlow->getCustomerSignature($business);
-
-                        $verificationProvider = [
-                            'verificationProviderName' => 'cognito',
-                            'publishableKey' => Facades\Config::get('services.cognito.publishable_key'),
-                            'templateId' => Facades\Config::get('services.cognito.template_id'),
-                            'production_ready' => Facades\Config::get('services.cognito.production_ready'),
-                            'customerSignature' => $customerSignature,
-                        ];
-                    }
+                if ($businessUser) {
+                    $isOwner = $businessUser->isOwner();
                 }
+
+//                if (!$verification) {
+//                    $cognitoFlow = new Retrieve();
+//                    $customerSignature = $cognitoFlow->getCustomerSignature($business);
+//
+//                    $verificationProvider = [
+//                        'verificationProviderName' => 'cognito',
+//                        'publishableKey' => Facades\Config::get('services.cognito.publishable_key'),
+//                        'templateId' => Facades\Config::get('services.cognito.template_id'),
+//                        'production_ready' => Facades\Config::get('services.cognito.production_ready'),
+//                        'customerSignature' => $customerSignature,
+//                    ];
+//                } else {
+//                    if ($verification->verification_provider_status != 'success') {
+//                        $cognitoFlow = new Retrieve();
+//                        $customerSignature = $cognitoFlow->getCustomerSignature($business);
+//
+//                        $verificationProvider = [
+//                            'verificationProviderName' => 'cognito',
+//                            'publishableKey' => Facades\Config::get('services.cognito.publishable_key'),
+//                            'templateId' => Facades\Config::get('services.cognito.template_id'),
+//                            'production_ready' => Facades\Config::get('services.cognito.production_ready'),
+//                            'customerSignature' => $customerSignature,
+//                        ];
+//                    }
+//                }
             }
         }
 
@@ -316,7 +306,8 @@ class BusinessController extends Controller
             'isShowModalVerification',
             'isVerificationVerified',
             'verificationProvider',
-            'isOwner'
+            'isOwner',
+            'verificationStatus'
         ));
     }
 
@@ -326,6 +317,7 @@ class BusinessController extends Controller
     public function showBusinessCreationForm(Request $request)
     {
         if (Gate::inspect('store', Business::class)->allowed()) {
+            $src_url = $request->get('src');
             $user = Auth::user();
             $email = $user->email;
 
@@ -339,7 +331,7 @@ class BusinessController extends Controller
 
             return Response::view('dashboard.business.create', compact(
                 'email', 'business_categories', 'partnerReferral',
-                'countries', 'selectedCountry'
+                'countries', 'selectedCountry','src_url'
             ));
         }
 

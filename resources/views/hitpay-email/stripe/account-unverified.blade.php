@@ -12,24 +12,17 @@
             <tr>
                 <td style="font-family: sans-serif; font-size: 14px; vertical-align: top;" valign="top">&nbsp;</td>
                 <td class="receipt-container" style="font-family: sans-serif; font-size: 14px; vertical-align: top; width: 80%;" width="80%" valign="top">
-                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">
-                        You can continue to accept payments.
-                    </p>
-
-                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">
-                        To enable bank payouts, please complete the following missing information:
-                    </p>
-
-                    <ul>
-                        @foreach($errorLists as $error)
-                        <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-
-                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">
-                        Log in to your HitPay dashboard, navigate to "Settings > Payment Methods > {{$paymentMethodName}}" and complete the missing information.
-                    </p>
-
+                    @foreach ($messages as $message)
+                        @if (is_array($message))
+                            <ul>
+                                @foreach($errorLists as $error)
+                                    <li>{!! $error !!}</li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">{!! $message !!}</p>
+                        @endif
+                    @endforeach
                     <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Team HitPay</p>
                 </td>
                 <td style="font-family: sans-serif; font-size: 14px; vertical-align: top;" valign="top">&nbsp;</td>

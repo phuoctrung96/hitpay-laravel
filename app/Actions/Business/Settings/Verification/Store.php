@@ -79,10 +79,13 @@ class Store extends Action
             'business_description' => $data['business_description'] ?? null,
         ]);
 
+        $riskLevel = $this->data['type'] === 'personal'
+            ? ComplianceRiskLevel::HIGH_RISK
+            : ComplianceRiskLevel::LOW_RISK;
+
         if (!$this->business->complianceNotes && $this->data['type']) {
             $this->business->complianceNotes()->create([
-                'risk_level' => $this->data['type'] === 'personal' ?
-                    ComplianceRiskLevel::HIGH_RISK : ComplianceRiskLevel::LOW_RISK,
+                'risk_level' => $riskLevel,
             ]);
         }
 
@@ -92,10 +95,7 @@ class Store extends Action
 
         $this->updateBusinessAddressFromVerification($verification);
 
-        // set queue job on process
-        $this->updateStripeInit();
-
-        \App\Jobs\Business\Stripe\Person\CreatePersonFromVerificationJob::dispatch($verification, $data);
+        $this->addPersonToStripeIfRequired();
 
         if (!Facades\App::environment('production')) {
             try {

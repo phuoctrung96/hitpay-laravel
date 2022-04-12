@@ -12,7 +12,6 @@ use App\Business;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Business\BankAccount as BankAccountResource;
 use App\Models\Business\BankAccount;
-use HitPay\Data\Countries;
 use Illuminate\Http;
 use Illuminate\Support\Facades;
 
@@ -48,13 +47,9 @@ class BankAccountController extends Controller
     {
         Facades\Gate::inspect('update', $business)->authorize();
 
-        $country = Countries::get($business->country);
-
-        $banks = $country->banks()->toArray();
-
         return Facades\Response::view('dashboard.business.settings.bank-accounts.create', [
             'business' => $business,
-            'banks' => $banks,
+            'banks' => $business->banksAvailable()->toArray(),
         ]);
     }
 
@@ -110,9 +105,7 @@ class BankAccountController extends Controller
     {
         Facades\Gate::inspect('update', $business)->authorize();
 
-        $country = Countries::get($business->country);
-
-        $banks = $country->banks()->toArray();
+        $banks = $business->banksAvailable()->toArray();
 
         return Facades\Response::view(
             'dashboard.business.settings.bank-accounts.edit',

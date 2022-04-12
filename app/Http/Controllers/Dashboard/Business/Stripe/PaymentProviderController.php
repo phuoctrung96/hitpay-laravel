@@ -9,13 +9,16 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SetCustomPricingFromPartner;
 use App\Logics\Business\PaymentProviderRepository;
 use App\Logics\BusinessRepository;
+use HitPay\Stripe\CustomAccount\AccountLink\Generate;
 use HitPay\Stripe\OAuth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Stripe\Exception\InvalidRequestException;
 
 class PaymentProviderController extends Controller
 {
@@ -34,10 +37,23 @@ class PaymentProviderController extends Controller
         $provider = $business->paymentProviders()->where('payment_provider', $business->payment_provider)->first();
 
         if ($provider && $provider->payment_provider_account_type !== 'standard') {
-            return Response::redirectToRoute(
-                'dashboard.business.payment-provider.stripe.onboard-verification',
-                [ 'business_id' => $business->getKey() ]
-            );
+            try {
+                $accountLink = Generate::new($business->payment_provider)
+                    ->setBusiness($business)
+                    ->handle('account_update');
+            } catch (InvalidRequestException $exception) {
+                Log::critical(
+                    "The business (ID : {$business->getKey()}) is failed to generate account link. Check Stripe error: {$exception->getMessage()}, error code: {$exception->getError()->type}"
+                );
+
+                $url = URL::previous(URL::route('dashboard.business.payment-provider.home', [
+                    'business_id' => $business->getKey(),
+                ]));
+
+                return Response::redirectTo($url)->with('stripe_account_link_error', true);
+            }
+
+            return Response::redirectTo($accountLink);
         }
 
         return Response::view('dashboard.business.payment-providers.stripe', compact('business', 'provider'));

@@ -29,6 +29,8 @@ class BankAccount extends Model implements Business\Contracts\Ownable
      * @inheritdoc
      */
     protected $appends = [
+        'bank_id',
+        'bank_name',
         'bank_code',
         'branch_code',
         'use_in_hitpay',
@@ -59,49 +61,13 @@ class BankAccount extends Model implements Business\Contracts\Ownable
     }
 
     /**
-     * Set the bank swift code.
+     * Get the bank ID.
      *
-     * @param  string  $value
+     * @return string|null
      */
-    protected function setBankSwiftCodeAttribute(string $value) : void
+    public function getBankIdAttribute() : ?string
     {
-        /** @var \HitPay\Data\Countries\Objects\Bank $bank */
-        $bank = Countries::get($this->country)->banks()->where('swift_code', $value)->first();
-
-        $this->attributes['bank_swift_code'] = $bank->swift_code;
-
-        $data = $this->getAttribute('data');
-
-        $bankData = $bank->toArray();
-
-        unset($bankData['branches']);
-
-        $data['data']['bank'] = $bankData;
-
-        $this->setAttribute('data', $data);
-        $this->setAttribute('bank_routing_number', null);
-    }
-
-    /**
-     * Set the bank routing number.
-     *
-     * @param  string|null  $value
-     */
-    protected function setBankRoutingNumberAttribute(?string $value) : void
-    {
-        if (is_string($value)) {
-            $branch = $this->getBank()->branches->where('routing_number', $value)->first();
-
-            if ($branch) {
-                $this->attributes['bank_routing_number'] = $branch->routing_number;
-            } else {
-                // for handle test mode bank accounts
-                // https://stripe.com/docs/connect/testing#account-numbers
-                $this->attributes['bank_routing_number'] = $value;
-            }
-        } else {
-            $this->attributes['bank_routing_number'] = $value;
-        }
+        return $this->data['data']['bank']['id'] ?? $this->bank_swift_code ?? null;
     }
 
     /**
@@ -179,6 +145,6 @@ class BankAccount extends Model implements Business\Contracts\Ownable
      */
     private function getBank() : ?Countries\Objects\Bank
     {
-        return Countries::get($this->country)->banks()->where('swift_code', $this->bank_swift_code)->first();
+        return Countries::get($this->country)->banks()->where('id', $this->bank_id)->first();
     }
 }

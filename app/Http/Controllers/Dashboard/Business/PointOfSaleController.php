@@ -7,6 +7,7 @@ use App\Actions\Business\Stripe\Charge\PaymentIntent\Capture;
 use App\Actions\Business\Stripe\Charge\PaymentIntent\Confirm;
 use App\Actions\Business\Stripe\Charge\PaymentIntent\Create;
 use App\Actions\Business\Stripe\Charge\Source;
+use App\Actions\Exceptions\BadRequest;
 use App\Business;
 use App\Business\Charge;
 use App\Business\Customer;
@@ -257,7 +258,7 @@ class PointOfSaleController extends Controller
      * @param Business $business
      * @param Charge $charge
      * @param BusinessManagerInterface $businessManager
-     * @return \App\Http\Resources\Business\PaymentIntent
+     * @return \App\Http\Resources\Business\PaymentIntent|\Illuminate\Http\JsonResponse
      * @throws HitPayLogicException
      * @throws \App\Actions\Exceptions\BadRequest
      * @throws \Stripe\Exception\ApiErrorException
@@ -294,6 +295,10 @@ class PointOfSaleController extends Controller
                 'required',
                 Rule::in($paymentMethods),
             ],
+            'terminal_id' => [
+                'nullable',
+                'string'
+            ],
         ]);
 
         $providers = $business->paymentProviders()->whereNotNull('payment_provider_account_id')->get();
@@ -305,8 +310,13 @@ class PointOfSaleController extends Controller
             case 'card':
             case 'card_present':
             case 'grabpay':
-
-                $paymentIntent = Create::withBusiness($business)->businessCharge($charge)->data($data)->process();
+                try {
+                    $paymentIntent = Create::withBusiness($business)->businessCharge($charge)->data($data)->process();
+                } catch (BadRequest $exception) {
+                    return Response::json([
+                        'error_message' => 'Transaction Failed. Please complete card payments setup under Settings > Payment Methods in your hitpay dashboard.',
+                    ], 400);
+                }
 
                 return new PaymentIntentResource($paymentIntent);
 

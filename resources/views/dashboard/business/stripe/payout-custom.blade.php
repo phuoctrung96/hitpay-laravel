@@ -59,8 +59,29 @@
                                 <p class="text-dark small mb-2">Payout Destination:
                                     <span class="text-muted">{{ $payout->payment_provider_account_id }}</span>
                                 </p>
-                                @if ($payout['status'] === 'succeeded' || $payout['status'] === 'paid')
+                                @if (isset($payout->data['file']))
+                                    <div class="mb-2">
+                                        <a class="btn btn-sm btn-primary" target="_blank" href="{{ route('dashboard.business.payment-provider.stripe.payout.custom.download', [
+                                            $business->getKey(),
+                                            $payout->getKey(),
+                                        ]) }}">Click here to download</a>
+                                    </div>
+                                @endif
+                                @if(isset($payout->data['stripe']['payout']['arrival_date']) && is_int($payout->data['stripe']['payout']['arrival_date']))
+                                    @php($estimatedArrivalDate = \Illuminate\Support\Facades\Date::createFromTimestamp($payout->data['stripe']['payout']['arrival_date'])->toDateString())
+                                @endif
+                                @if ($payout['status'] === 'succeeded')
                                     <span class="small font-weight-bold text-success">Paid</span>
+                                @elseif ($payout['status'] === 'paid')
+                                    <span class="small font-weight-bold text-success">Paid</span>
+                                    @isset($estimatedArrivalDate)
+                                        <span class="small text-muted">(Estimated Arrival: {{ $estimatedArrivalDate }})</span>
+                                    @endisset
+                                @elseif ($payout['status'] === 'in_transit')
+                                    <span class="small font-weight-bold text-info">In Transit</span>
+                                    @isset($estimatedArrivalDate)
+                                        <span class="small text-muted">(Estimated Arrival: {{ $estimatedArrivalDate }})</span>
+                                    @endisset
                                 @elseif ($payout['status'] === 'succeeded_manually')
                                     <span class="small font-weight-bold text-info">Paid</span>
                                 @else

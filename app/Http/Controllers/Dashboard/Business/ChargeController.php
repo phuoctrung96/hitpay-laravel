@@ -263,7 +263,7 @@ class ChargeController extends Controller
             ],
         ]);
 
-        $charges = $business->charges()->whereIn('status', [
+        $charges = $business->setConnection('mysql_read')->charges()->whereIn('status', [
             ChargeStatus::SUCCEEDED,
             ChargeStatus::REFUNDED,
             ChargeStatus::VOID,
@@ -346,7 +346,7 @@ class ChargeController extends Controller
      */
     public function refund(Request $request, Business $business, Charge $charge)
     {
-        Gate::inspect('operate', $business)->authorize();
+        Gate::inspect('canRefundCharges', $business)->authorize();
 
         // if ($charge->balance !== null) {
         //     throw ValidationException::withMessages(['amount' => 'You can only refund for 1 time.']);
@@ -358,8 +358,6 @@ class ChargeController extends Controller
         ) {
             throw new HitPayLogicException(sprintf('The currency [%s] is invalid.', $currency));
         });
-
-        $maximumRefundable = $maximumRefundable > 1000 ? 1000 : $maximumRefundable;
 
         $data = $this->validate($request, [
             'amount' => [
@@ -402,7 +400,7 @@ class ChargeController extends Controller
 
     public function payNowRefund(Request $request, Business $business, Charge $charge)
     {
-        Gate::inspect('operate', $business)->authorize();
+        Gate::inspect('canRefundCharges', $business)->authorize();
 
         if ($charge->status !== ChargeStatus::SUCCEEDED) {
             throw ValidationException::withMessages([
@@ -412,9 +410,9 @@ class ChargeController extends Controller
             throw ValidationException::withMessages([
                 'amount' => 'You can only refund a SGD charge.',
             ]);
-        } elseif ($charge->payment_provider !== PaymentProvider::GRABPAY && 
-            $charge->payment_provider !== PaymentProvider::SHOPEE_PAY && 
-            $charge->payment_provider !== PaymentProvider::ZIP && 
+        } elseif ($charge->payment_provider !== PaymentProvider::GRABPAY &&
+            $charge->payment_provider !== PaymentProvider::SHOPEE_PAY &&
+            $charge->payment_provider !== PaymentProvider::ZIP &&
             ($charge->payment_provider !== PaymentProvider::DBS_SINGAPORE
             || $charge->payment_provider_charge_type !== 'inward_credit_notification'
             || !Str::startsWith($charge->payment_provider_charge_id, 'DICN'))) {

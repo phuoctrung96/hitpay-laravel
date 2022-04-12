@@ -4,13 +4,10 @@ namespace App\Console\Commands;
 
 use App\Business;
 use App\Business\BusinessReferralPayout;
-use App\Business\Charge;
 use App\Enumerations\Business\Wallet\Type;
+use App\Enumerations\CurrencyCode;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class BusinessReferralFeeCalculation extends Command
@@ -48,17 +45,17 @@ class BusinessReferralFeeCalculation extends Command
     {
         $payoutDate = Carbon::today();
         $businessPayoutFee = DB::table((new BusinessReferralPayout())->getTable())
-            ->select('business_id', DB::raw('SUM(referral_fee) as daily_fee'))
+            ->select('business_id', 'currency', DB::raw('SUM(referral_fee) as daily_fee'))
             ->where('paid_status', false)
-            ->where('currency', 'sgd')
-            ->groupBy('business_id')
+            ->whereIn('currency', [CurrencyCode::MYR, CurrencyCode::SGD])
+            ->groupBy(['business_id','currency'])
             ->orderBy('business_id');
 
         $businessPayoutFee->each(function (\stdClass $record) use ($payoutDate) {
             DB::transaction(function() use ($record, $payoutDate) {
                 /** @var Business $business */
                 if($business = Business::find($record->business_id)) {
-                    $wallet = $business->wallet(Type::AVAILABLE, 'SGD');
+                    $wallet = $business->wallet(Type::AVAILABLE, $record->currency);
                     $wallet->incoming(
                         'business_referral_commission',
                         $record->daily_fee,
@@ -69,7 +66,7 @@ class BusinessReferralFeeCalculation extends Command
                     BusinessReferralPayout::query()
                         ->where('business_id', $business->id)
                         ->where('paid_status', false)
-                        ->where('currency', 'sgd')
+                        ->where('currency', $record->currency)
                         ->update(['paid_status' => true]);
                 }
             });

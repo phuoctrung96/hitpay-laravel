@@ -5,9 +5,9 @@ namespace App\Services\Shopify;
 
 use App\Business;
 use App\BusinessShopifyStore;
-use App\Http\Requests\ShopifyCheckoutRequest;
 use App\Services\Shopify\Api\Payment\PaymentsAppConfigureApi;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class ShopifyApp
@@ -39,24 +39,26 @@ class ShopifyApp
             'shopify_data' => json_encode($shopifyUser)
         ]);
 
-        $api = new PaymentsAppConfigureApi();
-        $api->setToken($shopifyUser->token);
-        $api->setReady(true);
-        $api->setExternalHandler($business->getKey());
+        try {
+            Log::info('shop token check 1: ' . $shopifyUser->token);
 
-        $url = "https://" . $shopifyUser->getNickname() . '/payments_apps/api/2021-10/graphql.json';
+            $api = new PaymentsAppConfigureApi();
+            $api->setToken($shopifyUser->token);
+            $api->setReady(true);
+            $api->setExternalHandler($business->getKey());
 
-        $api->setUrl($url);
+            $url = "https://" . $shopifyUser->getNickname() . '/payments_apps/api/2021-10/graphql.json';
 
-        $status = $api->handle();
+            $api->setUrl($url);
 
-        if (!$status) {
+            $api->handle();
+
+            return "https://" . $shopifyUser->getNickname() . "/services/payments_partners/gateways/" . Config::get('services.shopify.client_id_v2') . "/settings";
+        } catch (\Exception $exception) {
             $businessShopifyStore->delete();
 
-            throw new \Exception("install payment app failed.");
+            throw $exception;
         }
-
-        return "https://" . $shopifyUser->getNickname() . "/services/payments_partners/gateways/" . Config::get('services.shopify.client_id_v2') . "/settings";
     }
 
     /***

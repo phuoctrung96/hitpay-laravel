@@ -270,6 +270,24 @@ class Role extends Model
     }
 
     /**
+     * Check if the role has given restriction.
+     *
+     * @param string $restriction
+     * @param bool $strict
+     *
+     * @return bool
+     */
+    public function hasRestriction($restriction, $business, bool $strict = true) : bool
+    {
+        $businessRoleRestrictions = $business->rolesRestrictions->where('role', strtolower($this->title))->pluck('restriction')->toArray();
+        if (is_string($restriction)) {
+            return in_array($restriction, $businessRoleRestrictions);
+        }
+
+        return false;
+    }
+
+    /**
      * Create log for the role.
      *
      * @param string $event

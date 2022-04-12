@@ -862,18 +862,18 @@ export default {
 
             if (this.$refs.identity_front && this.$refs.identity_front.files.length === 0) {
                 this.errors.identity_front = "Please upload your "+nric+" copy front";
+            } else {
+                if (!this.isValidFile(this.$refs.identity_front.files[0].name)) {
+                    this.errors.identity_front = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
+                }
             }
 
             if (this.$refs.identity_back && this.$refs.identity_back.files.length === 0) {
                 this.errors.identity_back = "Please upload your "+nric+" copy back";
-            }
-
-            if (!this.isValidFile(this.$refs.identity_front.files[0].name)) {
-                this.errors.identity_front = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
-            }
-
-            if (!this.isValidFile(this.$refs.identity_back.files[0].name)) {
-                this.errors.identity_back = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
+            } else {
+                if (!this.isValidFile(this.$refs.identity_back.files[0].name)) {
+                    this.errors.identity_back = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
+                }
             }
 
             if (!this.verification.business_description || this.verification.business_description === '') {

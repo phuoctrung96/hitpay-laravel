@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Lang;
  */
 class Country
 {
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
     public static function getCountries(): array
     {
         $countries = new Collection();
@@ -34,5 +38,25 @@ class Country
         }
 
         return $countries->sortBy('name')->values()->toArray();
+    }
+
+    /**
+     * @param string $selectedCountryCode
+     * @return Collection
+     * @throws \ReflectionException
+     */
+    public static function getCountriesSelected(string $selectedCountryCode): Collection
+    {
+        $countries = collect(static::getCountries());
+
+        return $countries->map(function($item) use ($selectedCountryCode) {
+            if ($item['code'] === $selectedCountryCode) {
+                $item['active'] = true;
+            } else {
+                $item['active'] = false;
+            }
+
+            return $item;
+        });
     }
 }

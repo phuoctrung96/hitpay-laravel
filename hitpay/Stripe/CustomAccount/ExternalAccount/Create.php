@@ -43,7 +43,7 @@ class Create extends ExternalAccount
             'metadata' => [
                 'platform' => Facades\Config::get('app.name'),
                 'version' => ConfigurationRepository::get('platform_version'),
-                'environment' => Facades\Config::get('env'),
+                'environment' => Facades\Config::get('app.env'),
                 'business_id' => $this->business->getKey(),
                 'business_bank_account_id' => $bankAccount->getKey(),
             ],

@@ -69,11 +69,7 @@ class InvoiceRepository
         } elseif ($filterStatus == InvoiceStatus::DRAFT) {
             $paginator->where('status', InvoiceStatus::DRAFT);
         } elseif ($filterStatus == InvoiceStatus::SENT) {
-            $paginator->where('status', InvoiceStatus::SENT)
-                ->where('due_date', '=', null)
-                ->orWhere('due_date', '!=', null)
-                ->where('due_date', '>', now())
-                ->where('status', InvoiceStatus::SENT);
+            $paginator->where('status', InvoiceStatus::SENT);
         } elseif ($filterStatus == InvoiceStatus::PARTIALITY_PAID) {
             $paginator->where('allow_partial_payments', Invoice::ENABLE_PARTIAL_PAYMENT)
                 ->whereHas('invoicePartialPaymentRequests.paymentRequest', function($query) {
@@ -267,7 +263,9 @@ class InvoiceRepository
 
                 $destination = 'invoice-files/';
 
-                $filename = str_replace('-', '', Str::orderedUuid()->toString()) . '.' . $file->getClientOriginalExtension();
+                $originFileName = str_replace(' ', '_', pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+
+                $filename = str_replace('-', '', $originFileName . '_' . Str::orderedUuid()->toString()) . '.' . $file->getClientOriginalExtension();
 
                 $path = $destination . $filename;
 
@@ -429,7 +427,9 @@ class InvoiceRepository
 
                 $destination = 'invoice-files/';
 
-                $filename = str_replace('-', '', Str::orderedUuid()->toString()) . '.' . $file->getClientOriginalExtension();
+                $originFileName = str_replace(' ', '_', pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+
+                $filename = str_replace('-', '', $originFileName . '_' . Str::orderedUuid()->toString()) . '.' . $file->getClientOriginalExtension();
 
                 $path = $destination . $filename;
 
@@ -438,6 +438,12 @@ class InvoiceRepository
                 Storage::disk($storageDefaultDisk)->put($path, file_get_contents($file));
 
                 $invoice->attached_file = $attachedFile;
+            } else {
+                if ($requestData['file_path'] == "") {
+                    Storage::delete($invoice->attached_file);
+
+                    $invoice->attached_file = null;
+                }
             }
 
             $invoice->save();
@@ -578,6 +584,10 @@ class InvoiceRepository
             'attached_file' => [
                 'nullable',
                 'file'
+            ],
+            'file_path' => [
+                'nullable',
+                'string',
             ],
             'allow_partial_payments' => [
                 'required',

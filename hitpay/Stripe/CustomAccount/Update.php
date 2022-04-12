@@ -2,6 +2,9 @@
 
 namespace HitPay\Stripe\CustomAccount;
 
+use App\Business\Verification;
+use App\Jobs\Business\Stripe\Person\Push;
+use Exception;
 use Illuminate\Support\Facades;
 
 class Update extends CustomAccount
@@ -26,6 +29,37 @@ class Update extends CustomAccount
             return Facades\Response::redirectTo($this->generateCustomAccountLink('account_update'));
         }
 
-        return $this->updateAccount($this->generateData());
+        $updated = $this->updateAccount($this->generateData());
+
+        // We create the person here for non-individual business ONLY. For individual, it has been handled during
+        // update account, in previous line.
+        //
+        if ($this->business->business_type !== 'individual' && $this->businessPaymentProvider->stripe_init === 0) {
+            $this->createPersonUsingVerificationData();
+        }
+
+        return $updated;
+    }
+
+    private function createPersonUsingVerificationData() : void
+    {
+        $businessVerification = $this->business->verifications()->latest()->first();
+
+        if (!$businessVerification instanceof Verification) {
+            return;
+        }
+
+        $persons = $businessVerification->getPersonsForStripe();
+
+        try {
+            foreach ($persons as $person) {
+                Push::dispatch($this->business, $person);
+            }
+        } catch (Exception $exception) {
+            Facades\Log::info("Failed to add person to Stripe, error got: {$exception->getMessage()}");
+        }
+
+        $this->businessPaymentProvider->stripe_init = 1;
+        $this->businessPaymentProvider->save();
     }
 }

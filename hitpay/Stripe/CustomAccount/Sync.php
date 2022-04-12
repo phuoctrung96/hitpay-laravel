@@ -2,6 +2,7 @@
 
 namespace HitPay\Stripe\CustomAccount;
 
+use App\Business\PaymentProvider;
 use HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException;
 use Illuminate\Support\Facades\Cache;
 
@@ -13,9 +14,14 @@ class Sync extends CustomAccount
      * @param  string|null  $state
      * @param  bool  $strict
      *
+     * @return \App\Business\PaymentProvider
+     * @throws \HitPay\Stripe\CustomAccount\Exceptions\AccountNotFoundException
+     * @throws \HitPay\Stripe\CustomAccount\Exceptions\GeneralException
+     * @throws \HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException
+     * @throws \Stripe\Exception\ApiErrorException
      * @throws \Throwable
      */
-    public function handle(?string $state, bool $strict = true) : void
+    public function handle(?string $state, bool $strict = true) : PaymentProvider
     {
         if ($strict) {
             if (is_null($state)) {
@@ -24,13 +30,13 @@ class Sync extends CustomAccount
 
             $cacheKey = $this->generateSyncStateCacheKey($state);
 
-            if (Cache::has($cacheKey)) {
-                $this->syncAccount();
-
-                Cache::forget($cacheKey);
+            if (!Cache::has($cacheKey)) {
+                throw $this->exception("Invalid 'state' value is given for this action.", InvalidStateException::class);
             }
-        } else {
-            $this->syncAccount();
+
+            Cache::forget($cacheKey);
         }
+
+        return $this->syncAccount();
     }
 }

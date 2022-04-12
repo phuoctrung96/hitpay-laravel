@@ -233,6 +233,13 @@
             cursor: pointer;
         }
 
+        .social-network{
+            padding: 30px 0px 10px;
+        }
+        .social-network .title{
+            margin: 0px 0px 0px;
+        }
+
         @media (max-width: 767px) {
             .app-banner .promo-banner{
                 font-size: 13px;
@@ -403,7 +410,7 @@
                             </a>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6    ">
                         <h3>{{$business->name}}</h3>
                         <div class="footer-logo d-md-none d-lg-none">
                             <a href="{{ route('shop.business', $business->identifier ?? $business->getKey()) }}">
@@ -431,6 +438,60 @@
                                 <span><img src="{{asset('/images/applepay_icon.svg')}}" width="55px"></span>
                                 <span><img src="{{asset('/images/googlepay_icon.svg')}}" width="55px"></span>
                             </p>
+                        </div>
+                        <div class="social-network">
+                            <p class="title">Social network</p>
+                            <div class="accepted-payment social-network">
+                            <p>
+                                @if($business->url_facebook)
+                                    @if(substr($business->url_facebook, 0, 4) === 'http')
+                                        <span>
+                                            <a href="{{$business->url_facebook}}" target="_blank"><img src="{{asset('/images/social/ico-facebook.png')}}" width="12px"></a>
+                                        </span>
+                                    @else
+                                        <span>
+                                            <a href="https://{{$business->url_facebook}}" target="_blank"><img src="{{asset('/images/social/ico-facebook.png')}}" width="12px"></a>
+                                        </span>
+                                    @endif
+                                @endif
+
+                                @if($business->url_instagram)
+                                    @if(substr($business->url_instagram, 0, 4) === 'http')
+                                        <span>
+                                            <a href="{{$business->url_instagram}}" target="_blank"><img src="{{asset('/images/social/ico-instagram.png')}}" width="24px"></a>
+                                        </span>
+                                    @else
+                                        <span>
+                                            <a href="https://{{$business->url_instagram}}" target="_blank"><img src="{{asset('/images/social/ico-instagram.png')}}" width="24px"></a>
+                                        </span>
+                                    @endif
+                                @endif
+
+                                @if($business->url_twitter)
+                                    @if(substr($business->url_twitter, 0, 4) === 'http')
+                                        <span>
+                                            <a href="{{$business->url_twitter}}" target="_blank"><img src="{{asset('/images/social/ico-twitter.png')}}" width="28px"></a>
+                                        </span>
+                                    @else
+                                        <span>
+                                            <a href="https://{{$business->url_twitter}}" target="_blank"><img src="{{asset('/images/social/ico-twitter.png')}}" width="28px"></a>
+                                        </span>
+                                    @endif
+                                @endif
+
+                                @if($business->url_tiktok)
+                                    @if(substr($business->url_tiktok, 0, 4) === 'http')
+                                        <span>
+                                            <a href="{{$business->url_tiktok}}" target="_blank"><img src="{{asset('/images/social/ico-ticktok.png')}}" width="20px"></a>
+                                        </span>
+                                    @else
+                                        <span>
+                                            <a href="https://{{$business->url_tiktok}}" target="_blank"><img src="{{asset('/images/social/ico-ticktok.png')}}" width="20px"></a>
+                                        </span>
+                                    @endif
+                                @endif
+                                </p>                             
+                            </div>
                         </div>
                     </div>
                 </div>

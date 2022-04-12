@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Business;
 
 use App\Actions\Business\Stripe\Charge\PaymentIntent\Create as PaymentIntentCreate;
 use App\Actions\Business\Stripe\Charge\Source;
+use App\Actions\Exceptions\BadRequest;
 use App\Business;
 use App\Business\Charge as ChargeModel;
 use App\Business\Order;
@@ -22,6 +23,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -105,7 +107,7 @@ class OrderChargeController extends Controller
      * @param \App\Business $business
      * @param \App\Business\Order $order
      *
-     * @return \App\Http\Resources\Business\PaymentIntent
+     * @return \App\Http\Resources\Business\PaymentIntent|\Illuminate\Http\JsonResponse
      * @throws \App\Exceptions\HitPayLogicException
      * @throws \Illuminate\Auth\Access\AuthorizationException
      * @throws \Stripe\Exception\ApiErrorException
@@ -147,10 +149,16 @@ class OrderChargeController extends Controller
 
         $business->charges()->save($charge);
 
-        $paymentIntent = PaymentIntentCreate::withBusiness($business)->businessCharge($charge)->data([
-            'method' => $method,
-            'remark' => $charge->remark
-        ])->process();
+        try {
+            $paymentIntent = PaymentIntentCreate::withBusiness($business)->businessCharge($charge)->data([
+                'method' => $method,
+                'remark' => $charge->remark
+            ])->process();
+        } catch (BadRequest $exception) {
+            return Response::json([
+                'error_message' => $exception->getMessage(),
+            ], 400);
+        }
 
         return new PaymentIntent($paymentIntent);
     }
@@ -239,6 +247,12 @@ class OrderChargeController extends Controller
 
         $charge->setChargeable($order);
 
-        return $paymentIntentManager->create(PaymentMethodType::PAYNOW)->create($charge, $business);
+        try {
+            return $paymentIntentManager->create(PaymentMethodType::PAYNOW)->create($charge, $business);
+        } catch (BadRequest $exception) {
+            return Response::json([
+                'error_message' => $exception->getMessage(),
+            ], 400);
+        }
     }
 }

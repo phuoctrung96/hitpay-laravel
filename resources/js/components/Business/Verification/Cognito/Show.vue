@@ -2,506 +2,537 @@
 
 </style>
 <template>
-    <div>
+    <div class="account-verification">
         <div class="card">
             <div class="row no-gutters justify-content-center">
-                <div class="col-12 col-md-6 d-flex">
+                <div class="col-12 personal">
                     <div class="card-body align-self-start">
-                        <h5 class="text-primary text-center font-weight-bold mb-5">Personal</h5>
-                        <div class="form-group">
-                            <label for="nric">
-                                {{ business.country == 'sg' ? form_names.sg.nric : form_names.my.nric }}
-                            </label>
-                            <input
-                                id="nric"
-                                class="form-control"
-                                v-model="verification.nric"
-                                :class="{'is-invalid' : errors.nric}"
-                                :disabled="verification.nric"
-                            />
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.nric }}
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label for="name">Name</label>
-                            <input id="name"
-                               class="form-control"
-                               v-model="verification.name"
-                               :class="{ 'is-invalid' : errors.name}"
-                               :disabled="verification.name"
-                            />
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.name }}
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label for="sex">Sex</label>
-                            <input id="sex"
-                               class="form-control"
-                               v-model="verification.sex"
-                               :class="{'is-invalid' : errors.sex}"
-                               :disabled="fill_type!='manual'"
-                            />
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.sex }}
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label for="residentialstatus">Residential Status</label>
-                            <input id="residentialstatus" class="form-control"
-                               v-model="verification.residentialstatus"
-                               :class="{'is-invalid' : errors.residentialstatus}"
-                               :disabled="fill_type!='manual'"
-                            />
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.residentialstatus }}
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label for="nationality">Nationality</label>
-                            <input id="nationality"
-                               class="form-control"
-                               v-model="verification.nationality"
-                               :class="{'is-invalid' : errors.nationality}"
-                               :disabled="fill_type!='manual'"
-                            />
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.nationality }}
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label>Date of Birth</label>
-                            <datepicker input-class="form-control w-100"
-                                class="d-block w-100"
-                                id="dob"
-                                v-model="verification.dob"
-                                :disabled-dates="disableDateForDob"
-                                :open-date="defaultDate"
-                                format="yyyy-MM-dd"
-                                :class="{'is-invalid' : errors.dob}"
-                                :disabled="true"
-                            ></datepicker>
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.dob }}
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label for="regadd">Registered Address</label>
-                            <textarea id="regadd" rows="6" class="form-control"
-                                v-model="verification.regadd"
-                                :disabled="true"
-                                :class="{'is-invalid' : errors.regadd}"></textarea>
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.regadd }}
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input id="email"
-                               class="form-control"
-                               v-model="verification.email"
-                               :class="{'is-invalid' : errors.email}"
-                               :disabled="verification.email"
-                            />
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.email }}
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label for="business_description">Business description</label>
-                            <textarea id="business_description" rows="6" class="form-control"
-                                      v-model="verification.business_description"
-                                      :class="{'is-invalid' : errors.business_description}"
-                                      :disabled="fill_type=='completed'"
-                                      placeholder="Please add a description of the goods and services you are providing"></textarea>
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.business_description }}</span>
-                        </div>
-                        <template v-if="fill_type != 'completed' && (fill_type == 'manual' || type == 'individual')">
-                            <div class="form-group border p-2">
-                                <label class="form-label" for="supporting_documents">
-                                    <br>{{ business.country == 'sg' ? form_names.sg.title_upload_document : form_names.my.title_upload_document }}<br/>
-                                </label>
-                                    <span class="small text-muted">
-                                        <b>Corporate</b>
-                                    </span>
-
-                                    <div v-if="business.country == 'sg'">
-                                        <span class="small text-muted">
-                                            Please upload ACRA Biz File.
-                                        </span>
-                                    </div>
-                                    <div v-if="business.country == 'my'">
-                                        <span class="small text-muted">
-                                            Please upload SSM Company Profile.
-                                            <br>
-                                            Notes: For Club/Society/Charities: In addition to SSM Company profile, kindly provide Certificate of Registration (e.g. from Registrar of Societies of Malaysia (ROS))
-                                        </span>
-                                    </div>
-
-                                    <div v-if="business.country=='sg'">
-                                        <div class="small text-muted mt-2">
-                                            <b>Individual</b><br />
-                                                Supporting documents can include government-approved licenses, screenshot of website and any other evidence that proves that you are accepting payments for selling goods and services.
-                                            <br>
-                                            <br>Please refer to section 6.3 of the  <a href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a>  for prohibited list of businesses.<br />
-                                        </div>
-                                    </div>
-
-                                    <div v-if="business.country=='my'">
-                                        <div class="small text-muted mt-4">
-                                        <b>Individual</b><br />
-                                            Supporting documents can include government-approved licenses, screenshot of website and any other evidence that proves that you are accepting payments for selling goods and services.
-                                        <br>
-                                        <br>Please refer to section 6.3 of the  <a href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a>  for prohibited list of businesses.<br />
-                                        </div>
-                                    </div>
-
-                                <input type="file"
-                                       class="form-control-file mt-3" id="supporting_documents"
-                                       ref="supporting_documents" multiple="multiple"
-                                       :class="{'is-invalid' : errors.supporting_documents}"/>
-                                <span class="invalid-feedback" role="alert">
-                                    {{ errors.supporting_documents }}
-                                </span>
-                            </div>
-                            <div class="form-group mt-2 border p-2">
-                                <label class="form-label" for="identity_front">
-                                    Please upload your
+                        <h5 class="text-primary font-weight-medium">Personal</h5>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="nric">
                                     {{ business.country == 'sg' ? form_names.sg.nric : form_names.my.nric }}
-                                    (Front Side)
                                 </label>
-                                <input type="file" class="form-control-file mt-3" id="identity_front"
-                                       placeholder="Please upload your NRIC copy front"
-                                       ref="identity_front"
-                                       :class="{'is-invalid' : errors.identity_front}"
+                                <input
+                                    id="nric"
+                                    class="form-control"
+                                    v-model="verification.nric"
+                                    :class="{'is-invalid' : errors.nric}"
+                                    :disabled="fill_type!='manual'"
                                 />
                                 <span class="invalid-feedback" role="alert">
-                                    {{ errors.identity_front }}
+                                    {{ errors.nric }}
                                 </span>
                             </div>
-                            <div class="form-group border p-2">
-                                <label class="form-label" for="identity_back">
-                                    Please upload your
-                                    {{ business.country == 'sg' ? form_names.sg.nric : form_names.my.nric }}
-                                    (Back Side)
-                                </label>
-                                <input type="file" class="form-control-file mt-3" id="identity_back"
-                                       placeholder="Please upload your NRIC copy back"
-                                       ref="identity_back"
-                                       :class="{'is-invalid' : errors.identity_back}"
+                            <div class="form-group col-md-6">
+                                <label for="name">Name</label>
+                                <input id="name"
+                                   class="form-control"
+                                   v-model="verification.name"
+                                   :disabled="fill_type!='manual'"
+                                   :class="{ 'is-invalid' : errors.name}"
                                 />
                                 <span class="invalid-feedback" role="alert">
-                                    {{ errors.identity_back }}
+                                    {{ errors.name }}
                                 </span>
                             </div>
-                        </template>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="sex">Sex</label>
+                                <select id="sex" class="form-control" v-model="verification.sex"
+                                        :disabled="fill_type!='manual'"
+                                        :class="{'is-invalid' : errors.sex}">
+                                    <option value=""></option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.sex }}
+                                </span>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="residentialstatus">Residential Status</label>
+                                <select id="residentialstatus" class="form-control" v-model="verification.residentialstatus"
+                                        :disabled="fill_type!='manual'"
+                                        :class="{'is-invalid' : errors.residentialstatus}">
+                                    <option value=""></option>
+                                    <option value="Resident and Ordinarily Resident (ROR)">Resident and Ordinarily Resident (ROR)</option>
+                                    <option value="Resident but Not Ordinarily Resident (RNOR)">Resident but Not Ordinarily Resident (RNOR)</option>
+                                    <option value="Non- Resident (NR)">Non- Resident (NR)</option>
+                                </select>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.residentialstatus }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="nationality">Nationality</label>
+                                <select id="nationality" class="form-control" v-model="verification.nationality"
+                                        :disabled="fill_type!='manual'"
+                                        :class="{'is-invalid' : errors.nationality}">
+                                    <option
+                                        v-for="country in countries"
+                                        :value="country.code"
+                                        :selected="country.active"
+                                    >{{country.name}}</option>
+                                </select>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.nationality }}
+                                </span>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Date of Birth</label>
+                                <datepicker input-class="form-control w-100"
+                                    class="d-block w-100"
+                                    id="dob"
+                                    v-model="verification.dob"
+                                    :disabled-dates="disableDateForDob"
+                                    :open-date="defaultDate"
+                                    format="yyyy-MM-dd"
+                                    :class="{'is-invalid' : errors.dob}"
+                                ></datepicker>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.dob }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="regadd">Registered Address</label>
+                                <textarea id="regadd" rows="6" class="form-control"
+                                    v-model="verification.regadd"
+                                    :disabled="fill_type!='manual'"
+                                    :class="{'is-invalid' : errors.regadd}"></textarea>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.regadd }}
+                                </span>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="email">Email Address</label>
+                                <input id="email"
+                                   class="form-control"
+                                   v-model="verification.email"
+                                   :class="{'is-invalid' : errors.email}"
+                                   :disabled="fill_type!='manual'"
+                                />
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.email }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="business_description">Business description</label>
+                                <textarea id="business_description" rows="6" class="form-control"
+                                          v-model="verification.business_description"
+                                          :class="{'is-invalid' : errors.business_description}"
+                                          :disabled="fill_type=='completed'"
+                                          placeholder="Please add a description of the goods and services you are providing"></textarea>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.business_description }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <template v-if="fill_type != 'completed' && (fill_type == 'manual' || type == 'individual')">
+                                    <div class="form-group border p-4">
+                                        <label class="form-label" for="supporting_documents">
+                                            {{ business.country == 'sg' ? form_names.sg.title_upload_document : form_names.my.title_upload_document }}<br/>
+                                        </label>
+                                            <span class="small text-muted font-weight-medium">
+                                                Corporate
+                                            </span>
+
+                                            <div v-if="business.country == 'sg'">
+                                                <span class="small text-muted">
+                                                    Please upload ACRA Biz File.
+                                                </span>
+                                            </div>
+                                            <div v-if="business.country == 'my'">
+                                                <span class="small text-muted">
+                                                    Please upload SSM Company Profile.
+                                                    <br>
+                                                    Notes: For Club/Society/Charities: In addition to SSM Company profile, kindly provide Certificate of Registration (e.g. from Registrar of Societies of Malaysia (ROS))
+                                                </span>
+                                            </div>
+
+                                            <div v-if="business.country=='sg'">
+                                                <div class="small text-muted mt-2 font-weight-medium">
+                                                    Individual<br />
+                                                        Supporting documents can include government-approved licenses, screenshot of website and any other evidence that proves that you are accepting payments for selling goods and services.
+                                                    <br>
+                                                    <br>Please refer to section 6.3 of the  <a href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a>  for prohibited list of businesses.<br />
+                                                </div>
+                                            </div>
+
+                                            <div v-if="business.country=='my'">
+                                                <div class="small text-muted mt-4">
+                                                <b>Individual</b><br />
+                                                    Supporting documents can include government-approved licenses, screenshot of website and any other evidence that proves that you are accepting payments for selling goods and services.
+                                                <br>
+                                                <br>Please refer to section 6.3 of the  <a href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a>  for prohibited list of businesses.<br />
+                                                </div>
+                                            </div>
+
+                                        <input type="file"
+                                               class="form-control-file mt-3" id="supporting_documents"
+                                               ref="supporting_documents" multiple="multiple"
+                                               :class="{'is-invalid' : errors.supporting_documents}"/>
+                                        <span class="invalid-feedback" role="alert">
+                                            {{ errors.supporting_documents }}
+                                        </span>
+                                    </div>
+                                    <div class="form-group mt-2 border p-4">
+                                        <label class="form-label" for="identity_front">
+                                            Please upload your
+                                            {{ business.country == 'sg' ? form_names.sg.nric : form_names.my.nric }}
+                                            (Front Side)
+                                        </label>
+                                        <input type="file" class="form-control-file mt-3" id="identity_front"
+                                               placeholder="Please upload your NRIC copy front"
+                                               ref="identity_front"
+                                               :class="{'is-invalid' : errors.identity_front}"
+                                        />
+                                        <span class="invalid-feedback" role="alert">
+                                            {{ errors.identity_front }}
+                                        </span>
+                                    </div>
+                                    <div class="form-group border p-4">
+                                        <label class="form-label" for="identity_back">
+                                            Please upload your
+                                            {{ business.country == 'sg' ? form_names.sg.nric : form_names.my.nric }}
+                                            (Back Side)
+                                        </label>
+                                        <input type="file" class="form-control-file mt-3" id="identity_back"
+                                               placeholder="Please upload your NRIC copy back"
+                                               ref="identity_back"
+                                               :class="{'is-invalid' : errors.identity_back}"
+                                        />
+                                        <span class="invalid-feedback" role="alert">
+                                            {{ errors.identity_back }}
+                                        </span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div v-if="type == 'company'" class="col-12 col-md-6 d-flex">
+                <div v-if="type !== 'individual'" class="col-12 company">
                     <div class="card-body align-self-start">
-                        <h5 class="text-primary text-center font-weight-bold mb-5">Corporate</h5>
-                        <div class="form-group">
-                            <label>{{ business.country == 'sg' ? form_names.sg.uen : form_names.my.uen }}</label>
-                            <input class="form-control" id="uen" v-model="verification.uen" :disabled="fill_type!='manual'"
-                                   :class="{'is-invalid' : errors.uen}">
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.uen }}
-                            </span>
+                        <h5 class="text-primary font-weight-medium mt-4">Corporate</h5>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>{{ business.country == 'sg' ? form_names.sg.uen : form_names.my.uen }}</label>
+                                <input class="form-control" id="uen" v-model="verification.uen" :disabled="fill_type!='manual'"
+                                       :class="{'is-invalid' : errors.uen}">
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.uen }}
+                                </span>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>{{ business.country == 'sg' ? form_names.sg.entity_name : form_names.my.entity_name }}</label>
+                                <input class="form-control"
+                                   v-model="verification.entity_name"
+                                   id="entity_name"
+                                   :disabled="fill_type!='manual'"
+                                   :class="{'is-invalid' : errors.entity_name}" />
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.entity_name }}
+                                </span>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>{{ business.country == 'sg' ? form_names.sg.entity_name : form_names.my.entity_name }}</label>
-                            <input class="form-control"
-                               v-model="verification.entity_name"
-                               id="entity_name"
-                               :disabled="fill_type!='manual'"
-                               :class="{'is-invalid' : errors.entity_name}" />
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.entity_name }}
-                            </span>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>{{ business.country == 'sg' ? form_names.sg.entity_type : form_names.my.entity_type }}</label>
+                                <select class="form-control" id="entity_type" v-model="verification.entity_type" :disabled="fill_type!='manual'"
+                                       :class="{'is-invalid' : errors.entity_type}">
+                                    <option value="Individual">Individual</option>
+                                    <option value="Local Company">Local Company</option>
+                                    <option value="Foreign Company">Foreign Company</option>
+                                    <option value="Unregistered Local Entity">Unregistered Local Entity</option>
+                                    <option value="Limited Liability Partnerships">Limited Liability Partnerships</option>
+                                    <option value="Unregistered Foreign Entity">Unregistered Foreign Entity</option>
+                                </select>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.entity_type }}</span>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>{{ business.country == 'sg' ? form_names.sg.entity_status : form_names.my.entity_status }}</label>
+                                <select class="form-control" id="entity_status" v-model="verification.entity_status" :disabled="fill_type!='manual'"
+                                       :class="{'is-invalid' : errors.entity_status}">
+                                    <option value="LIVE">Live</option>
+                                    <option value="INACTIVE">Inactive</option>
+                                </select>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.entity_status }}</span>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>{{ business.country == 'sg' ? form_names.sg.entity_type : form_names.my.entity_type }}</label>
-                            <select class="form-control" id="entity_type" v-model="verification.entity_type" :disabled="fill_type!='manual'"
-                                   :class="{'is-invalid' : errors.entity_type}">
-                                <option value="Individual">Individual</option>
-                                <option value="Local Company">Local Company</option>
-                                <option value="Foreign Company">Foreign Company</option>
-                                <option value="Unregistered Local Entity">Unregistered Local Entity</option>
-                                <option value="Limited Liability Partnerships">Limited Liability Partnerships</option>
-                                <option value="Unregistered Foreign Entity">Unregistered Foreign Entity</option>
-                            </select>
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.entity_type }}</span>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Registration Date</label>
+                                <datepicker input-class="form-control w-100"
+                                            class="d-block w-100"
+                                            id="registration_date"
+                                            v-model="verification.registration_date"
+                                            :disabled-dates="disableDates"
+                                            format="yyyy-MM-dd"
+                                            :class="{'is-invalid' : errors.registration_date}"
+                                            :disabled="fill_type!='manual'"
+                                ></datepicker>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.registration_date }}
+                                </span>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>{{ business.country == 'sg' ? form_names.sg.entity_status : form_names.my.entity_status }}</label>
-                            <select class="form-control" id="entity_status" v-model="verification.entity_status" :disabled="fill_type!='manual'"
-                                   :class="{'is-invalid' : errors.entity_status}">
-                                <option value="LIVE">Live</option>
-                                <option value="INACTIVE">Inactive</option>
-                            </select>
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.entity_status }}</span>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="address">Address</label>
+                                <textarea id="address" rows="6" class="form-control"
+                                          v-model="verification.address" :disabled="fill_type!='manual'"
+                                          :class="{'is-invalid' : errors.address}"></textarea>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.address }}
+                                </span>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>{{ business.country == 'sg' ? form_names.sg.primary_activity_desc : form_names.my.primary_activity_desc }}</label>
+                                <textarea class="form-control" id="primary_activity" v-model="verification.primary_activity" :disabled="fill_type!='manual'"
+                                          :class="{'is-invalid' : errors.primary_activity}"></textarea>
+                                <span class="invalid-feedback" role="alert">
+                                    {{ errors.primary_activity }}
+                                </span>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Registration Date</label>
-                            <datepicker input-class="form-control w-100"
-                                        class="d-block w-100"
-                                        id="registration_date"
-                                        v-model="verification.registration_date"
-                                        :disabled-dates="disableDates"
-                                        format="yyyy-MM-dd"
-                                        :class="{'is-invalid' : errors.registration_date}"
-                                        :disabled="fill_type!='manual'"
-                            ></datepicker>
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.registration_date }}
-                            </span>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <button
+                                    v-if="fill_type != 'completed' && verification.shareholders.length < 10"
+                                    :disabled="fill_type!='manual'"
+                                    class="btn btn-outline-primary font-weight-medium mb-2"
+                                    @click="addShareholder">
+                                    <!-- <i class="fa fa-user-plus"
+                                       aria-hidden="true"
+                                       @click="addShareholder"
+                                    >
+                                    </i> -->
+                                    Add Shareholder/Member
+                                </button>
+                                <span id="shareholders_error"></span>
+                                <span v-if="errors.shareholders_error"
+                                    class="mb-2 invalid-feedback d-block" role="alert">
+                                    {{ errors.shareholders_error }}
+                                </span>
+
+                                <form>
+                                    <div v-for="(shareholder, key) in verification.shareholders" class="form-group p-4 mt-2 border">
+                                        <div class="form-row" :id="`shareholder_${key}`">
+                                            <div class="form-group col-md-12">
+                                                <label class="font-weight-medium">
+                                                    SHAREHOLDER #{{ key + 1 }}
+                                                </label>
+                                                <span class="btn-delete ml-3" @click="fill_type != 'myinfo' ? deleteShareholder(key) : ''"
+                                                   v-if="fill_type != 'completed'"
+                                                ><img src="/images/delete_icon.svg" alt="delete"></span>
+                                            </div>
+                                            <!-- <div class="form-group col-md-3">
+                                                <i class="fa fa-user-times"
+                                                   aria-hidden="true"
+                                                   @click="fill_type != 'myinfo' ? deleteShareholder(key) : ''"
+                                                   v-if="fill_type != 'completed'"
+                                                >
+                                                </i>
+                                            </div> -->
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-7">
+                                                <label>Shareholder first name</label>
+                                                <input
+                                                    class="form-control d-inline mb-2"
+                                                    v-model="verification.shareholders_first_name[key]"
+                                                    :class="{'is-invalid' : verification.shareholders_first_name_error[key]}"
+                                                    required="required"
+                                                    :disabled="(fill_type !='manual')"
+                                                    placeholder="input firstname of shareholder "
+                                                />
+                                            </div>
+                                            <div class="form-group col-md-5">
+                                                <span v-if="verification.shareholders_first_name_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
+                                                    {{ verification.shareholders_first_name_error[key] }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-7">
+                                                <label>Shareholder last name</label>
+                                                <input
+                                                    class="form-control d-inline mb-2"
+                                                    v-model="verification.shareholders_last_name[key]"
+                                                    :class="{'is-invalid' : verification.shareholders_last_name_error[key]}"
+                                                    required="required"
+                                                    :disabled="(fill_type !='manual')"
+                                                    placeholder="input lastname of shareholder "
+                                                />
+                                            </div>
+                                            <div class="form-group col-md-5">
+                                                <span v-if="verification.shareholders_last_name_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
+                                                    {{ verification.shareholders_last_name_error[key] }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-7">
+                                                <label>Shareholder {{ business.country == 'sg' ? form_names.sg.nric : form_names.my.nric }}</label>
+                                                <input
+                                                    class="form-control d-inline mb-2"
+                                                    v-model="verification.shareholders_id_number[key]"
+                                                    :class="{'is-invalid' : verification.shareholders_id_number_error[key]}"
+                                                    required="required"
+                                                    :disabled="(fill_type !='manual')"
+                                                />
+                                            </div>
+                                            <div class="form-group col-md-5">
+                                                <span v-if="verification.shareholders_id_number_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
+                                                    {{ verification.shareholders_id_number_error[key] }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-10">
+                                                <label>Shareholder relationship</label> <br />
+
+                                                <input type="checkbox"
+                                                       v-model="verification.shareholders_is_director[key]"
+                                                       true-value="yes"
+                                                       :disabled="(fill_type !='manual')"
+                                                       false-value="no"> Director
+
+                                                <input type="checkbox"
+                                                       v-model="verification.shareholders_is_owner[key]"
+                                                       true-value="yes"
+                                                       :disabled="(fill_type !='manual')"
+                                                       false-value="no"> Owner
+
+                                                <input type="checkbox"
+                                                       v-model="verification.shareholders_is_executive[key]"
+                                                       true-value="yes"
+                                                       :disabled="(fill_type !='manual')"
+                                                       false-value="no"> Executive
+                                            </div>
+                                            <div class="form-group col-md-5">
+                                                <span v-if="verification.shareholders_relationship_error[key]"
+                                                      class="mb-2 invalid-feedback d-block" role="alert">
+                                                    {{ verification.shareholders_relationship_error[key] }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-7">
+                                                <label>Shareholder date of birth</label>
+                                                <datepicker
+                                                    input-class="d-inline w-100"
+                                                    v-model="verification.shareholders_dob[key]"
+                                                    :disabled-dates="disableDateForDob"
+                                                    :open-date="defaultDate"
+                                                    format="yyyy-MM-dd"
+                                                    wrapper-class="w-100"
+                                                    required="required"
+                                                    :disabled="(fill_type !='manual')"
+                                                    :class="{'is-invalid' : verification.shareholders_dob_error[key]}"
+                                                    placeholder="input date of birth shareholder "
+                                                ></datepicker>
+                                            </div>
+                                            <div class="form-group col-md-5">
+                                                <span v-if="verification.shareholders_dob_error[key]"
+                                                      class="mb-2 invalid-feedback d-block" role="alert">
+                                                    {{ verification.shareholders_dob_error[key] }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-7">
+                                                <label>Shareholder address</label>
+                                                <input max="255"
+                                                       class="form-control d-inline mb-2"
+                                                       v-model="verification.shareholders_address[key]"
+                                                       :class="{'is-invalid' : verification.shareholders_address_error[key]}"
+                                                       required="required"
+                                                       :disabled="(fill_type !='manual')"
+                                                       placeholder="input address of shareholder "
+                                                />
+                                            </div>
+                                            <div class="form-group col-md-5">
+                                                <span v-if="verification.shareholders_address_error[key]"
+                                                      class="mb-2 invalid-feedback d-block" role="alert">
+                                                    {{ verification.shareholders_address_error[key] }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-7">
+                                                <label>Shareholder postal code</label>
+                                                <input max="10"
+                                                       class="form-control d-inline mb-2"
+                                                       v-model="verification.shareholders_postal[key]"
+                                                       :class="{'is-invalid' : verification.shareholders_postal_error[key]}"
+                                                       required="required"
+                                                       :disabled="(fill_type !='manual')"
+                                                       placeholder="postal of shareholder "
+                                                />
+                                            </div>
+                                            <div class="form-group col-md-5">
+                                                <span v-if="verification.shareholders_postal_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
+                                                    {{ verification.shareholders_postal_error[key] }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-7">
+                                                <label>Shareholder title</label>
+                                                <input max="255"
+                                                       class="form-control d-inline mb-2"
+                                                       v-model="verification.shareholders_title[key]"
+                                                       :class="{'is-invalid' : verification.shareholders_title_error[key]}"
+                                                       placeholder="title of shareholder "
+                                                       :disabled="(fill_type !='manual')"
+                                                />
+                                            </div>
+                                            <div class="form-group col-md-5">
+                                                <span v-if="verification.shareholders_title_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
+                                                    {{ verification.shareholders_title_error[key] }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-7">
+                                                <label>Shareholder email</label>
+                                                <input type="email" max="255"
+                                                       class="form-control d-inline mb-2"
+                                                       v-model="verification.shareholders_email[key]"
+                                                       :class="{'is-invalid' : verification.shareholders_email_error[key]}"
+                                                       placeholder="email of shareholder"
+                                                       :disabled="(fill_type !='manual')"
+                                                />
+                                            </div>
+                                            <div class="form-group col-md-5">
+                                                <span v-if="verification.shareholders_email_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
+                                                    {{ verification.shareholders_email_error[key] }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>{{ business.country == 'sg' ? form_names.sg.primary_activity_desc : form_names.my.primary_activity_desc }}</label>
-                            <textarea class="form-control" id="primary_activity" v-model="verification.primary_activity" :disabled="fill_type!='manual'"
-                                      :class="{'is-invalid' : errors.primary_activity}"></textarea>
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.primary_activity }}
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <label for="address">Address</label>
-                            <textarea id="address" rows="6" class="form-control"
-                                      v-model="verification.address" :disabled="fill_type!='manual'"
-                                      :class="{'is-invalid' : errors.address}"></textarea>
-                            <span class="invalid-feedback" role="alert">
-                                {{ errors.address }}
-                            </span>
-                        </div>
-                        <div class="form-group">
-                            <button
-                                v-if="fill_type != 'completed' && verification.shareholders.length < 10"
-                                :disabled="fill_type!='manual'"
-                                class="btn btn-primary"
-                                @click="addShareholder">
-                                <i class="fa fa-user-plus"
-                                   aria-hidden="true"
-                                   @click="addShareholder"
-                                >
-                                </i>
-                                Add Shareholder/Member
-                            </button>
-                            <span id="shareholders_error"></span>
-                            <span v-if="errors.shareholders_error"
-                                class="mb-2 invalid-feedback d-block" role="alert">
-                                {{ errors.shareholders_error }}
-                            </span>
-
-                            <form>
-                                <div v-for="(shareholder, key) in verification.shareholders" class="form-group p-4 mt-2 border">
-                                    <div class="form-row" :id="`shareholder_${key}`">
-                                        <div class="form-group col-md-9">
-                                            <label>
-                                                <b>SHAREHOLDER #{{ key + 1 }}</b>
-                                            </label>
-                                        </div>
-                                        <div class="form-group col-md-3">
-                                            <i class="fa fa-user-times"
-                                               aria-hidden="true"
-                                               @click="fill_type != 'myinfo' ? deleteShareholder(key) : ''"
-                                               v-if="fill_type != 'completed'"
-                                            >
-                                            </i>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-7">
-                                            <label>Shareholder first name</label>
-                                            <input
-                                                class="form-control d-inline mb-2"
-                                                v-model="verification.shareholders_first_name[key]"
-                                                :class="{'is-invalid' : verification.shareholders_first_name_error[key]}"
-                                                required="required"
-                                                :disabled="(fill_type !='manual')"
-                                                placeholder="input firstname of shareholder "
-                                            />
-                                        </div>
-                                        <div class="form-group col-md-5">
-                                            <span v-if="verification.shareholders_first_name_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
-                                                {{ verification.shareholders_first_name_error[key] }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-7">
-                                            <label>Shareholder last name</label>
-                                            <input
-                                                class="form-control d-inline mb-2"
-                                                v-model="verification.shareholders_last_name[key]"
-                                                :class="{'is-invalid' : verification.shareholders_last_name_error[key]}"
-                                                required="required"
-                                                :disabled="(fill_type !='manual')"
-                                                placeholder="input lastname of shareholder "
-                                            />
-                                        </div>
-                                        <div class="form-group col-md-5">
-                                            <span v-if="verification.shareholders_last_name_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
-                                                {{ verification.shareholders_last_name_error[key] }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-7">
-                                            <label>Shareholder {{ business.country == 'sg' ? form_names.sg.nric : form_names.my.nric }}</label>
-                                            <input
-                                                class="form-control d-inline mb-2"
-                                                v-model="verification.shareholders_id_number[key]"
-                                                :class="{'is-invalid' : verification.shareholders_id_number_error[key]}"
-                                                required="required"
-                                                :disabled="(fill_type !='manual')"
-                                            />
-                                        </div>
-                                        <div class="form-group col-md-5">
-                                            <span v-if="verification.shareholders_id_number_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
-                                                {{ verification.shareholders_id_number_error[key] }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-10">
-                                            <label>Shareholder relationship</label> <br />
-
-                                            <input type="checkbox"
-                                                   v-model="verification.shareholders_is_director[key]"
-                                                   true-value="yes"
-                                                   :disabled="(fill_type !='manual')"
-                                                   false-value="no"> Director
-
-                                            <input type="checkbox"
-                                                   v-model="verification.shareholders_is_owner[key]"
-                                                   true-value="yes"
-                                                   :disabled="(fill_type !='manual')"
-                                                   false-value="no"> Owner
-
-                                            <input type="checkbox"
-                                                   v-model="verification.shareholders_is_executive[key]"
-                                                   true-value="yes"
-                                                   :disabled="(fill_type !='manual')"
-                                                   false-value="no"> Executive
-                                        </div>
-                                        <div class="form-group col-md-5">
-                                            <span v-if="verification.shareholders_relationship_error[key]"
-                                                  class="mb-2 invalid-feedback d-block" role="alert">
-                                                {{ verification.shareholders_relationship_error[key] }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-7">
-                                            <label>Shareholder date of birth</label>
-                                            <datepicker
-                                                input-class="d-inline w-100"
-                                                v-model="verification.shareholders_dob[key]"
-                                                :disabled-dates="disableDateForDob"
-                                                :open-date="defaultDate"
-                                                format="yyyy-MM-dd"
-                                                wrapper-class="w-100"
-                                                required="required"
-                                                :disabled="(fill_type !='manual')"
-                                                :class="{'is-invalid' : verification.shareholders_dob_error[key]}"
-                                                placeholder="input date of birth shareholder "
-                                            ></datepicker>
-                                        </div>
-                                        <div class="form-group col-md-5">
-                                            <span v-if="verification.shareholders_dob_error[key]"
-                                                  class="mb-2 invalid-feedback d-block" role="alert">
-                                                {{ verification.shareholders_dob_error[key] }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-7">
-                                            <label>Shareholder address</label>
-                                            <input max="255"
-                                                   class="form-control d-inline mb-2"
-                                                   v-model="verification.shareholders_address[key]"
-                                                   :class="{'is-invalid' : verification.shareholders_address_error[key]}"
-                                                   required="required"
-                                                   :disabled="(fill_type !='manual')"
-                                                   placeholder="input address of shareholder "
-                                            />
-                                        </div>
-                                        <div class="form-group col-md-5">
-                                            <span v-if="verification.shareholders_address_error[key]"
-                                                  class="mb-2 invalid-feedback d-block" role="alert">
-                                                {{ verification.shareholders_address_error[key] }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-7">
-                                            <label>Shareholder postal code</label>
-                                            <input max="10"
-                                                   class="form-control d-inline mb-2"
-                                                   v-model="verification.shareholders_postal[key]"
-                                                   :class="{'is-invalid' : verification.shareholders_postal_error[key]}"
-                                                   required="required"
-                                                   :disabled="(fill_type !='manual')"
-                                                   placeholder="postal of shareholder "
-                                            />
-                                        </div>
-                                        <div class="form-group col-md-5">
-                                            <span v-if="verification.shareholders_postal_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
-                                                {{ verification.shareholders_postal_error[key] }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-7">
-                                            <label>Shareholder title</label>
-                                            <input max="255"
-                                                   class="form-control d-inline mb-2"
-                                                   v-model="verification.shareholders_title[key]"
-                                                   :class="{'is-invalid' : verification.shareholders_title_error[key]}"
-                                                   placeholder="title of shareholder "
-                                                   :disabled="(fill_type !='manual')"
-                                            />
-                                        </div>
-                                        <div class="form-group col-md-5">
-                                            <span v-if="verification.shareholders_title_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
-                                                {{ verification.shareholders_title_error[key] }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-row">
-                                        <div class="form-group col-md-7">
-                                            <label>Shareholder email</label>
-                                            <input type="email" max="255"
-                                                   class="form-control d-inline mb-2"
-                                                   v-model="verification.shareholders_email[key]"
-                                                   :class="{'is-invalid' : verification.shareholders_email_error[key]}"
-                                                   placeholder="email of shareholder"
-                                                   :disabled="(fill_type !='manual')"
-                                            />
-                                        </div>
-                                        <div class="form-group col-md-5">
-                                            <span v-if="verification.shareholders_email_error[key]" class="mb-2 invalid-feedback d-block" role="alert">
-                                                {{ verification.shareholders_email_error[key] }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-
                     </div>
                 </div>
 
@@ -521,24 +552,23 @@
                         {{ errors.checkbox_agree }}
                     </span>
                 </div>
-
-                <button
-                    v-if="fill_type !='completed'"
-                    class="btn btn-primary btn-block"
-                    :disabled="is_processing"
-                    @click="saveVerification">
-                    Confirm <i v-if="is_processing" class="fas fa-circle-notch fa-spin"></i>
-                </button>
-
-                <button
-                    v-if="fill_type !='manual'"
-                    class="btn btn-danger btn-block"
-                    data-toggle="modal"
-                    data-target="#confirmDeleteModal">
-                    <template v-if="fill_type =='completed'">Delete</template>
-                    <template v-else>Cancel</template>
-                </button>
-
+                <div class="is-btn-group d-block text-center">
+                    <button
+                        v-if="fill_type !='completed'"
+                        class="btn btn-primary"
+                        :disabled="is_processing"
+                        @click="saveVerification">
+                        Confirm <i v-if="is_processing" class="fas fa-circle-notch fa-spin"></i>
+                    </button>
+                    <button
+                        v-if="fill_type !='manual'"
+                        class="btn btn-danger mt-2"
+                        data-toggle="modal"
+                        data-target="#confirmDeleteModal">
+                        <template v-if="fill_type =='completed'">Delete</template>
+                        <template v-else>Cancel</template>
+                    </button>
+                </div>
                 <div id="confirmDeleteModal" class="modal" tabindex="-1" role="dialog" data-backdrop="static">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
@@ -567,12 +597,16 @@
 
 <script>
 import Datepicker from 'vuejs-datepicker';
+import UploadValidation from "../../../../mixins/UploadValidation";
 
 export default {
     name: "VerificationCognitoShow",
     components: {
         Datepicker
     },
+    mixins: [
+        UploadValidation
+    ],
     props: {
         fill_type: {
             type: String,
@@ -582,6 +616,10 @@ export default {
             type: String,
             required: false,
         },
+        countries: {
+            type: Array,
+            required: true,
+        }
     },
     methods: {
         deleteShareholder(key) {
@@ -907,14 +945,22 @@ export default {
                 this.errors.supporting_documents = "Please upload supporting documents";
             }
 
-            if (this.$refs.identity_front && this.$refs.identity_front.files.length == 0) {
-                var nric = this.form_names[this.business.country].nric;
+            var nric = this.form_names[this.business.country].nric;
+
+            if (this.$refs.identity_front && this.$refs.identity_front.files.length === 0) {
                 this.errors.identity_front = "Please upload your "+nric+" copy front";
+            } else {
+                if (!this.isValidFile(this.$refs.identity_front.files[0].name)) {
+                    this.errors.identity_front = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
+                }
             }
 
-            if (this.$refs.identity_back && this.$refs.identity_back.files.length == 0) {
-                var nric = this.form_names[this.business.country].nric;
+            if (this.$refs.identity_back && this.$refs.identity_back.files.length === 0) {
                 this.errors.identity_back = "Please upload your "+nric+" copy back";
+            } else {
+                if (!this.isValidFile(this.$refs.identity_back.files[0].name)) {
+                    this.errors.identity_back = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
+                }
             }
 
             if (!this.verification.business_description || this.verification.business_description === '') {
@@ -930,6 +976,10 @@ export default {
                     let file = this.$refs.supporting_documents.files[i];
                     if (file.size > 1024 * 1024 * 2) {
                         this.errors.supporting_documents = "Files should not be greater than 2 MB.";
+                    }
+
+                    if (!this.isValidFile(file.name)) {
+                        this.errors.supporting_documents = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
                     }
                 }
             }
@@ -986,7 +1036,7 @@ export default {
                 }
             }
 
-            formData.append('type', this.type === 'company' ? 'business' : 'personal');
+            formData.append('type', this.type === 'individual' ? 'personal' : 'business');
             formData.append('fill_type', this.fill_type);
             formData.append('verification', JSON.stringify(this.verification));
 
@@ -1190,7 +1240,7 @@ export default {
     mounted() {
         this.business = window.Business;
 
-        this.type = this.business.business_type === 'company' ? 'company' : 'individual';
+        this.type = this.business.business_type === 'individual' ? 'individual' : 'company';
 
         if (window.Verification) {
             this.verification = Verification;
@@ -1201,6 +1251,10 @@ export default {
 
             if (Verification.registration_date) {
                 this.verification.registration_date = new Date(Verification.registration_date);
+            }
+
+            if (!Verification.nationality) {
+                this.verification.nationality = this.business.country;
             }
         }
     },

@@ -99,6 +99,7 @@ class PaymentProvider extends Model implements OwnableContract
             PaymentMethodType::ALIPAY,
             PaymentMethodType::WECHAT,
             PaymentMethodType::GRABPAY,
+            PaymentMethodType::FPX,
             PaymentMethodType::PAYNOW,
             'direct_debit',
             PaymentMethodType::SHOPEE,
@@ -225,7 +226,7 @@ class PaymentProvider extends Model implements OwnableContract
                     } elseif ($method === PaymentMethodType::GRABPAY) {
                         return [ 0, 0.033 ];
                     } elseif ($method === PaymentMethodType::FPX) {
-                        return [ 40, 0.02 ];
+                        return [ 100, 0.03 ];
                     }
                 }
             }

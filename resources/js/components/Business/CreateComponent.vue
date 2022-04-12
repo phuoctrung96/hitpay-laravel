@@ -4,6 +4,10 @@
             v-model="form.business_type"
             class="mb-5"/>
 
+        <div class="form-control loggedin-message" v-if="is_message_logout">
+            <p>Logged in as <span class="email">{{email}}</span> please continue to create a business or <span class="logout" @click="doLogout()">logout</span></p>
+        </div>
+
         <template v-if="form.business_type === 'individual'">
             <LoginInput
                 id="shop_name"
@@ -44,19 +48,31 @@
 
         <div class="mb-3">
             <label for="country">Country</label>
-            <select id="country"
-                class="custom-select bg-light"
-                v-model="form.country"
-                :class="{'is-invalid' : errors.country}"
-                :disabled="is_processing">
-                <option
-                    v-for="country in countries"
-                    :value="country.id"
-                    :selected="country.active"
-                >
-                    {{ country.name }}
-                </option>
-            </select>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <div class="form-control flat-icon" id="flat-icon">
+                      <div class="icon" v-if="form.country == 'sg'">
+                        <img src="" src="../images/vendor/flag-icon-css/flags/4x3/sg.svg" alt="">
+                      </div>
+                      <div class="icon" v-if="form.country == 'my'">
+                        <img src="" src="../images/vendor/flag-icon-css/flags/4x3/my.svg" alt="">
+                      </div>
+                    </div>
+                </div> 
+                <select id="country"
+                    class="form-control"
+                    v-model="form.country"
+                    :class="{'is-invalid' : errors.country}"
+                    :disabled="is_processing">
+                    <option
+                        v-for="country in countries"
+                        :value="country.id"
+                        :selected="country.active"
+                    >
+                        {{ country.name }}
+                    </option>
+                </select>
+            </div>
             <span class="invalid-feedback" role="alert">{{ errors.country }}</span>
         </div>
 
@@ -93,7 +109,7 @@
             :disabled="is_processing"
         />
 
-        <div class="mb-3 text-center">
+        <div class="mb-4 text-center">
             <input type="checkbox"
                id="checkbox_agree"
                v-model="form.checkbox_agree"
@@ -129,6 +145,7 @@ import LoginInput from '../Authentication/LoginInput'
 import PhoneInput from '../Authentication/PhoneInput'
 import LoginSelect from '../Authentication/LoginSelect'
 import BusinessModeSwitch from './BusinessModeSwitch'
+import WebsiteHelper from "../../mixins/WebsiteHelper";
 
 export default {
     name: 'BusinessCreate',
@@ -146,7 +163,11 @@ export default {
         referral: String,
         countries: Array,
         country: String,
+        src_url: String
     },
+    mixins: [
+        WebsiteHelper
+    ],
     data() {
         return {
             errors: {
@@ -168,6 +189,7 @@ export default {
             },
             phone_number: '',
             is_processing: false,
+            is_message_logout: true,
             channels: ['Google Search', 'Referral from another HitPay User', 'Social Media', 'Web Development Agency', 'Other'],
             form_names: {
                 'sg': {
@@ -225,19 +247,19 @@ export default {
             if (this.form.website === '') {
                 this.errors.website = 'The website field is required';
             } else {
-                if (!this.isValidHttpUrl(this.form.website)) {
+                /*if (!this.isValidHttpUrl(this.form.website)) {
                     this.errors.website = 'The website must valid url and with prefix http/https';
-                }
+                }*/
             }
 
             if (this.form.referred_channel === 'Other' && this.form.other_referred_channel === '') {
                 this.errors.other_referred_channel = 'Please specify the other referred channel';
             }
 
-            if (!/(^[A-Za-z0-9. ]+$)+/.test(this.form.name)) {
+            if (!/(^[A-Za-z0-9.\-\&\$ ]+$)+/.test(this.form.name)) {
                 this.errors.name = 'Chars, digits, spaces and dots are allowed in name';
             }
-
+            
             if (!/^\+(?:[\d]*)$/.test(this.form.phone_number)) {
                 this.errors.phone_number = 'Phone number should contain country code (ex. +65)';
             }
@@ -307,7 +329,6 @@ export default {
 
             this.is_processing = false;
         },
-
         isValidHttpUrl(string) {
             let url;
 
@@ -318,6 +339,17 @@ export default {
             }
 
             return url.protocol === "http:" || url.protocol === "https:";
+        },
+
+        async doLogout () {
+            this.is_processing = true
+            await axios.post(`/logout`, {
+                csrf: this.csrf
+            })
+
+            this.is_processing = false;
+            
+            window.location.href = this.getDomain('', 'dashboard')
         }
     },
 
@@ -329,6 +361,10 @@ export default {
                 that.form.country = item.id;
             }
         });
+
+        if(this.src_url == "registration"){
+            this.is_message_logout = false;
+        }
     },
 
     computed: {

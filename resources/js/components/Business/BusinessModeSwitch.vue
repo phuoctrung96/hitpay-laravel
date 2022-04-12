@@ -1,17 +1,12 @@
 <template>
-    <div class="business-mode-switch d-flex justify-content-between align-items-center">
-        <div
-            v-for="(option, index) in options"
-            :key="index"
-            class="option d-flex justify-content-center align-items-center"
-            :class="{ selected: option === value }"
-            @click="onClick(option)">
-            {{ option }}
+    <!-- <div class="business-mode-switch d-flex justify-content-between align-items-center"> -->
+    <div class="business-switch-option d-flex">
+        <div v-for="(option, index) in options" :key="index" class="item">
+            <label class="label-checkbox">
+                <input type="radio" :value="option" :v-model="business_type" :checked="option == 'company'"  :name="business_type" @click="onClick(option)"> {{ option }}
+                <span class="checkmark"></span>
+            </label>
         </div>
-
-        <div
-            class="switch-back"
-            :class="{ right: value === options[1] }"/>
     </div>
 </template>
 
@@ -28,11 +23,14 @@ export default {
         },
         value: String
     },
+    data() {
+        return {
+            business_type: 'company'
+        }
+    },
     methods: {
         onClick(option) {
-            if (option !== this.value) {
-                this.$emit('input', option)
-            }
+            this.$emit('input', option)
         }
     }
 }
@@ -78,4 +76,13 @@ export default {
         }
     }
 }
+.account-verification{
+   .business-switch-option{
+        margin: 0px 0px 15px -32px !important;
+        .item{
+            margin: 0px 0px 0px 32px;
+        }
+    }
+} 
+
 </style>

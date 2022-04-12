@@ -6,6 +6,7 @@ use App\Actions\Business\Settings\Verification\Destroy;
 use App\Actions\Business\Settings\Verification\Store;
 use App\Actions\Exceptions\BadRequest;
 use App\Business;
+use App\Enumerations\Business\Type;
 use App\Enumerations\CountryCode;
 use App\Enumerations\VerificationStatus;
 use App\Http\Controllers\Controller;
@@ -15,6 +16,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades;
 use Illuminate\Support\Facades\Session;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Validator;
@@ -69,12 +71,15 @@ class VerificationController extends Controller
             $verification_data = $this->setShareholderData($verification, $verification_data, $businessPersons);
         }
 
+        $verificationStatusName = $verification->getStatusName();
+
         return Facades\Response::view('dashboard.business.verification.completed',
             compact(
                 'business',
                 'verification',
                 'verification_data',
-                'type'
+                'type',
+                'verificationStatusName'
             )
         );
     }
@@ -265,23 +270,6 @@ class VerificationController extends Controller
         throw new NotFoundHttpException;
     }
 
-    public function showManualPage(Request $request, Business $business)
-    {
-        Facades\Gate::inspect('update', $business)->authorize();
-
-        if ($business->verification || $business->verified_wit_my_info_sg) {
-            return Facades\Response::redirectToRoute('dashboard.business.verification.home', $business->getKey());
-        }
-
-        if ($request->type) {
-            $type = $request->type;
-        } else {
-            $type = $business->business_type === 'company' ? 'company' : 'individual';
-        }
-
-        return Facades\Response::view('dashboard.business.verification.manual', compact('business', 'type'));
-    }
-
     public function showConfirmPage(Business $business, Business\Verification $verification)
     {
         Facades\Gate::inspect('update', $business)->authorize();
@@ -337,25 +325,18 @@ class VerificationController extends Controller
                 Store::withBusiness($business)
                     ->data($request->all())
                     ->withRequestFile($request)
-                    ->setPaymentProvider()
                     ->process();
             } catch (BadRequest $exception) {
                 if ($request->wantsJson()) {
                     return Facades\Response::json([
                         'message' => $exception->getMessage(),
-                    ], \Illuminate\Http\Response::HTTP_BAD_REQUEST);
+                    ], Response::HTTP_BAD_REQUEST);
                 }
 
                 return Facades\Response::redirectToRoute('dashboard.business.verification.home', [
                     'business_id' => $business->getKey(),
                 ])->with('error_message', $exception->getMessage());
             }
-        }
-
-        if ($request->fill_type == 'manual') {
-            Session::flash('success_message', 'Your account verification has been submitted, you will be notified once the account is verified. You can start accepting payments.');
-        } else {
-            Session::flash('success_message', 'Your account verification has been completed. You can start accepting payments.');
         }
 
         return route('dashboard.business.verification.home', $business->getKey());

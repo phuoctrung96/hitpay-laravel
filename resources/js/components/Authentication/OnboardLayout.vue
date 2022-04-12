@@ -155,11 +155,6 @@ $topPanelHeight: 60px;
         width: 364px;
       }
 
-      .header {
-        font-size: 25px;
-        margin-bottom: 50px;
-      }
-
       .bottom-link {
         font-size: 16px;
         color: #4A4A4A;

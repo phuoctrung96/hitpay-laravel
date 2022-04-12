@@ -26,19 +26,31 @@
 
       <div class="mb-3">
           <label for="country">Country</label>
-          <select id="country"
-              class="custom-select bg-light"
-              v-model="form.country"
-              :class="{'is-invalid' : errors.country}"
-              :disabled="is_processing">
-              <option
-                  v-for="country in countries"
-                  :value="country.id"
-                  :selected="country.active"
-                >
-                {{ country.name }}
-              </option>
-          </select>
+          <div class="input-group">
+            <div class="input-group-prepend">
+                <div class="form-control flat-icon" id="flat-icon">
+                  <div class="icon" v-if="form.country == 'sg'">
+                    <img src="" src="../images/vendor/flag-icon-css/flags/4x3/sg.svg" alt="">
+                  </div>
+                  <div class="icon" v-if="form.country == 'my'">
+                    <img src="" src="../images/vendor/flag-icon-css/flags/4x3/my.svg" alt="">
+                  </div>
+                </div>
+            </div> 
+            <select id="country"
+                class="form-control"
+                v-model="form.country"
+                :class="{'is-invalid' : errors.country}"
+                :disabled="is_processing">
+                <option
+                    v-for="country in countries"
+                    :value="country.id"
+                    :selected="country.active"
+                  >
+                  {{ country.name }}
+                </option>
+            </select>
+          </div>
           <span class="invalid-feedback" role="alert">{{ errors.country }}</span>
       </div>
 
@@ -48,7 +60,8 @@
           :marginBottom="35"
           type="password"
           :error="errors.password"
-          :disabled="is_processing"/>
+          :disabled="is_processing"
+          :isPassword="true"/>
 
       <LoginInput
           v-model="form.password_confirmation"
@@ -56,22 +69,28 @@
           :marginBottom="35"
           type="password"
           :error="errors.password_confirmation"
-          :disabled="is_processing"/>
+          :disabled="is_processing"
+          :isPassword="true"/>
+    
 
-      <div class="notice text-center mb-4" v-if="form.country=='' || form.country=='sg'">
+      <div class="notice mb-4" v-if="form.country=='' || form.country=='sg'">
+        <p>
           By registering your account, you agree to our <a href="https://www.hitpayapp.com/termsofservice" target="_blank">
           Terms of Service</a>, <a href="https://www.hitpayapp.com/privacypolicy" target="_blank">Privacy Policy</a>,
           <a href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> and the
           <a href="https://stripe.com/connect-account/legal">Stripe Connected Account Agreement.</a>
           You may receive email from us and can opt out at any time.
+        </p>
       </div>
 
-      <div class="notice text-center mb-4" v-if="form.country=='my'">
-          By registering your account, you agree to our <a href="https://hitpayapp.com/en-my/termsofservice" target="_blank">
-          Terms of Service</a>, <a href="https://hitpayapp.com/en-my/privacypolicy" target="_blank">Privacy Policy</a>,
-          <a href="https://hitpayapp.com/en-my/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> and the
+      <div class="notice mb-4" v-if="form.country=='my'">
+        <p>
+          By registering your account, you agree to our <a href="https://hitpayapp.com/my/termsofservice" target="_blank">
+          Terms of Service</a>, <a href="https://hitpayapp.com/my/privacypolicy" target="_blank">Privacy Policy</a>,
+          <a href="https://hitpayapp.com/my/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> and the
           <a href="https://stripe.com/connect-account/legal">Stripe Connected Account Agreement.</a>
           You may receive email from us and can opt out at any time.
+        </p>
       </div>
 
       <CheckoutButton
@@ -137,15 +156,11 @@ export default {
             if (item.active === true) {
                 that.form.country = item.id;
             }
+            console.log(that.form.country);
         });
     },
 
     methods: {
-      getListCountries() {
-          var list = JSON.parse(this.countries);
-
-          return list;
-      },
       async register() {
           this.httpError = ''
           this.errors = {}
@@ -224,9 +239,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.notice {
-  font-size: 12px;
-  color: #9B9B9B;
-  line-height: 1.4;
-}
+  .account-verification{
+    .notice {
+      font-size: 12px;
+      color: #545454;
+      line-height: 1.5;
+    }
+  }
 </style>

@@ -24,33 +24,32 @@ use App\Business\Log;
 use App\Business\Order;
 use App\Business\PaymentCard;
 use App\Business\PaymentIntent;
-use App\Business\PaymentProvider;
-use App\Business\PaymentProviderRate;
 use App\Business\PaymentRequest;
 use App\Business\Product;
 use App\Business\ProductBase;
 use App\Business\ProductCategory;
 use App\Business\ProductVariation;
-use App\Business\SubscriptionPlan;
+use App\Business\RecurringBilling;
 use App\Business\Role;
+use App\Business\RoleRestriction;
 use App\Business\Shipping;
 use App\Business\ShippingDiscount;
 use App\Business\StripeTerminalLocation;
 use App\Business\SubscribedEvent;
-use App\Business\RecurringBilling;
+use App\Business\SubscriptionPlan;
 use App\Business\Tax;
 use App\Business\TaxSetting;
 use App\Business\Transfer;
 use App\Business\Verification;
 use App\Business\Wallet\TopUpIntent;
 use App\Business\XeroLog;
-use App\Enumerations;
 use App\Enumerations\Business\Event;
 use App\Enumerations\Business\ImageGroup;
 use App\Enumerations\Business\NotificationChannel;
 use App\Enumerations\Business\PluginProvider;
 use App\Enumerations\Business\Wallet\Type;
 use App\Enumerations\Image\Size;
+use App\Enumerations\VerificationStatus;
 use App\Exceptions\ModelNotUpdatableException;
 use App\Manager\ApiKeyManager;
 use App\Models\Business\BankAccount;
@@ -63,6 +62,7 @@ use App\Notifications\XeroAccountDisconnectedNotification;
 use Carbon\Carbon;
 use Exception;
 use HitPay\Business\Wallet\HasWallet;
+use HitPay\Data\Countries;
 use HitPay\Model\UsesUuid;
 use HitPay\Stripe\Core;
 use HitPay\User\Contracts\Ownable as OwnableContract;
@@ -77,6 +77,7 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -85,7 +86,6 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Throwable;
-use App\Enumerations\VerificationStatus;
 
 /**
  * Class Business
@@ -152,7 +152,11 @@ class Business extends Model implements OwnableContract
         'thank_message',
         'enabled_shipping',
         'is_redirect_order_completion',
-        'url_redirect_order_completion'
+        'url_redirect_order_completion',
+        'url_facebook',
+        'url_instagram',
+        'url_twitter',
+        'url_tiktok'
     ];
 
     /**
@@ -879,6 +883,16 @@ class Business extends Model implements OwnableContract
     }
 
     /**
+     * Get the roles restrictions.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany|\App\Business\RoleRestriction|\App\Business\RoleRestriction[]
+     */
+    public function rolesRestrictions(): HasMany
+    {
+        return $this->hasMany(RoleRestriction::class, 'business_id', 'id');
+    }
+
+    /**
      * Get the shippings.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany|\App\Business\Shipping|\App\Business\Shipping[]
@@ -962,18 +976,18 @@ class Business extends Model implements OwnableContract
         $customisation = $this->hasOne(CheckoutCustomisation::class, 'business_id', 'id')->get();
 
         if ($customisation->isEmpty()) {
-          $customisation = new CheckoutCustomisation;
-          $customisation->business_id = $this->attributes['id'];
-          $customisation->tint_color = '#4A90E2';
-          $customisation->save();
-          // refresh id & default values
-          $customisation->refresh();
-          return $customisation;
+            $customisation = new CheckoutCustomisation;
+            $customisation->business_id = $this->attributes['id'];
+            $customisation->tint_color = '#4A90E2';
+            $customisation->save();
+            // refresh id & default values
+            $customisation->refresh();
+            return $customisation;
         } else {
-          $cust = $customisation->first();
-          $cust->payment_order = json_decode($cust->payment_order);
-          $cust->method_rules = json_decode($cust->method_rules);
-          return $cust;
+            $cust = $customisation->first();
+            $cust->payment_order = json_decode($cust->payment_order);
+            $cust->method_rules = json_decode($cust->method_rules);
+            return $cust;
         }
     }
 
@@ -985,16 +999,16 @@ class Business extends Model implements OwnableContract
             $customisation = $customisation->first();
 
             if (array_key_exists('theme', $data)) {
-              $customisation->theme = $data['theme'];
-              $customisation->tint_color = $data['customColor'];
+                $customisation->theme = $data['theme'];
+                $customisation->tint_color = $data['customColor'];
             }
 
             if (array_key_exists('payment_order', $data)) {
-              $customisation->payment_order = $data['payment_order'];
+                $customisation->payment_order = $data['payment_order'];
             }
 
             if (array_key_exists('method_rules', $data)) {
-              $customisation->method_rules = $data['method_rules'];
+                $customisation->method_rules = $data['method_rules'];
             }
 
             $customisation->save();
@@ -1035,12 +1049,12 @@ class Business extends Model implements OwnableContract
 
     // Filter business object and return only props that are used in checkout FE
     public function getFilteredData () {
-      return [
-        'id' => $this->id,
-        'name' => $this->name,
-        'country' => $this->country,
-        'currency' => $this->currency
-      ];
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'country' => $this->country,
+            'currency' => $this->currency
+        ];
     }
 
     public function logoUrl()
@@ -1067,6 +1081,7 @@ class Business extends Model implements OwnableContract
             $this->city,
             $this->state,
             $this->country,
+            $this->postal_code
         ]));
     }
 
@@ -1327,6 +1342,22 @@ class Business extends Model implements OwnableContract
         return $this->shopSettings->url_redirect_order_completion ?? '';
     }
 
+    public function getUrlFacebookAttribute() {
+        return $this->shopSettings->url_facebook ?? '';
+    }
+
+    public function getUrlInstagramAttribute() {
+        return $this->shopSettings->url_instagram ?? '';
+    }
+
+    public function getUrlTwitterAttribute() {
+        return $this->shopSettings->url_twitter ?? '';
+    }
+
+    public function getUrlTiktokAttribute() {
+        return $this->shopSettings->url_tiktok ?? '';
+    }
+
     private function getTextColor($hexColor)
     {
 
@@ -1381,9 +1412,9 @@ class Business extends Model implements OwnableContract
     public function businessVerified() : bool
     {
         return ($this->verifications()
-          ->where('type', 'business')
-          ->whereIn('status', [VerificationStatus::VERIFIED, VerificationStatus::MANUAL_VERIFIED])
-          ->count() > 0);
+                ->where('type', 'business')
+                ->whereIn('status', [VerificationStatus::VERIFIED, VerificationStatus::MANUAL_VERIFIED])
+                ->count() > 0);
     }
 
     public function enableAllNotification() : void
@@ -1473,32 +1504,32 @@ class Business extends Model implements OwnableContract
     }
 
     function allowProvider ($provider) {
-      switch (config('services.' . $provider . '.enabled', 'none')) {
-        case 'none':
-          return false;
+        switch (config('services.' . $provider . '.enabled', 'none')) {
+            case 'none':
+                return false;
 
-        case 'all_users':
-          return true;
+            case 'all_users':
+                return true;
 
-        case 'whitelist_only':
-          $whitelist = explode(',', config('services.' . $provider . '.whitelist'));
-          return in_array($this->id, $whitelist);
+            case 'whitelist_only':
+                $whitelist = explode(',', config('services.' . $provider . '.whitelist'));
+                return in_array($this->id, $whitelist);
 
-        default:
-          return false;
-      }
+            default:
+                return false;
+        }
     }
 
     public function allowGrabPay () {
-      return $this->allowProvider('grabpay');
+        return $this->allowProvider('grabpay');
     }
 
     public function allowZip () {
-      return $this->allowProvider('zip');
+        return $this->allowProvider('zip');
     }
 
     public function allowShopee () {
-      return $this->allowProvider('shopee');
+        return $this->allowProvider('shopee');
     }
 
     public function businessReferral():HasOne
@@ -1511,8 +1542,51 @@ class Business extends Model implements OwnableContract
         return $this->belongsTo(BusinessReferral::class, 'referred_by_id');
     }
 
+    /**
+     * @return HasMany
+     */
     public function shopifyStores(): HasMany
     {
         return $this->hasMany(BusinessShopifyStore::class, 'business_id', 'id');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function shopifyPayments(): HasMany
+    {
+        return $this->hasMany(BusinessShopifyPayment::class, 'business_id', 'id');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function shopifyRefunds(): HasMany
+    {
+        return $this->hasMany(BusinessShopifyRefund::class, 'business_id', 'id');
+    }
+
+    public function country() : Countries\Country {
+        return Countries::get($this->country);
+    }
+
+    public function banksAvailable() : Collection
+    {
+        return $this->country()->banks();
+    }
+
+    public function currenciesAvailable() : Collection
+    {
+        return $this->country()->currencies();
+    }
+
+    public function paymentProvidersAvailable() : Collection
+    {
+        return $this->country()->paymentProviders();
+    }
+
+    public function isPartner() : bool
+    {
+        return $this->business_type === Enumerations\Business\Type::PARTNER;
     }
 }

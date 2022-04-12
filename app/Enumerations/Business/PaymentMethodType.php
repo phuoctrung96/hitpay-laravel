@@ -41,6 +41,25 @@ class PaymentMethodType
         ];
     }
 
+    public static function getPaymentMethodsSg()
+    {
+        return [
+            self::CARD,
+            self::PAYNOW,
+            self::GRABPAY,
+            self::ZIP,
+            self::SHOPEE
+        ];
+    }
+
+    public static function getPaymentMethodsMy()
+    {
+        return [
+            self::CARD,
+            self::FPX
+        ];
+    }
+
     public static function displayName ($method) {
       $names = [
         self::CASH             => 'Cash',
@@ -57,6 +76,7 @@ class PaymentMethodType
         self::HOOLAH           => 'Hoolah',
         'direct_debit'         => 'Direct Debit',
         self::ZIP              => 'Zip',
+          self::FPX            => 'FPX',
       ];
 
       $icon = 'fas fa-dollar-sign';

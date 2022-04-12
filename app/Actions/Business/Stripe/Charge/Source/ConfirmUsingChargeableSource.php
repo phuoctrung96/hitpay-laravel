@@ -81,7 +81,7 @@ class ConfirmUsingChargeableSource extends Action
                 'metadata' => [
                     'platform' => Facades\Config::get('app.name'),
                     'version' => ConfigurationRepository::get('platform_version'),
-                    'environment' => Facades\Config::get('env'),
+                    'environment' => Facades\Config::get('app.env'),
                     'business_id' => $this->businessId,
                     'charge_id' => $this->businessChargeId,
                 ],
@@ -231,7 +231,7 @@ _MESSAGE
 
                     $metadata['platform'] = Facades\Config::get('app.name');
                     $metadata['version'] = ConfigurationRepository::get('platform_version');
-                    $metadata['environment'] = Facades\Config::get('env');
+                    $metadata['environment'] = Facades\Config::get('app.env');
                     $metadata['business_id'] = $this->business->getKey();
                     $metadata['charge_id'] = $this->businessCharge->getKey();
 

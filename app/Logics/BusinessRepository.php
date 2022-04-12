@@ -6,6 +6,7 @@ use App\Actions\Business\BasicDetails\UpdateStripeAccount;
 use App\Business;
 use App\Business\BusinessReferral;
 use App\Enumerations\Business\PaymentMethodType;
+use App\Enumerations\Business\Type;
 use App\Enumerations\CountryCode;
 use App\Enumerations\PaymentProvider;
 use App\Enumerations\PaymentProvider as PaymentProviderEnum;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class BusinessRepository
@@ -126,16 +128,45 @@ class BusinessRepository
             ],
         ]);
 
-        $data['id'] = Str::orderedUuid()->toString();
-        $data['payment_provider'] = Customer::getStripePlatformByCountry($data['country']);
+        $website = $data['website'];
 
-        if($user->businessPartner) {
-            $data['business_type'] = 'partner';
+        if (!Facades\URL::isValidUrl($website)) {
+            // try to use https
+            $website = "https://{$website}";
+
+            if (!Facades\URL::isValidUrl($website)) {
+                // if still invalid
+                ValidationException::withMessages([
+                    'website' => 'Invalid website',
+                ]);
+            }
         }
 
-        $customer = Customer::newByCountry($data['country'])->create('business_id:'.$data['id']);
+        $data['website'] = $website;
 
-        $data['payment_provider_customer_id'] = $customer->id;
+        $data['id'] = Str::orderedUuid()->toString();
+        $customer = null; // customer of stripe
+
+        if ($user->businessPartner) { // handle partner
+            $data['business_type'] = Type::PARTNER;
+
+            if ($data['country'] === CountryCode::MALAYSIA) {
+                $data['payment_provider'] = Customer::getStripePlatformByCountry($data['country']);
+
+                $customer = Customer::newByCountry($data['country'])->create('business_id:'.$data['id']);
+
+                $data['payment_provider_customer_id'] = $customer->id;
+            } else {
+                // singapore partner should create payment provider of PayNow
+                $data['payment_provider'] = '';
+            }
+        } else {
+            $data['payment_provider'] = Customer::getStripePlatformByCountry($data['country']);
+
+            $customer = Customer::newByCountry($data['country'])->create('business_id:'.$data['id']);
+
+            $data['payment_provider_customer_id'] = $customer->id;
+        }
 
         try {
             /** @var \App\Business $business */
@@ -205,23 +236,26 @@ class BusinessRepository
                     // If the business is Singapore based (soon other licensed countries) we will create a custom account
                     // for the business.
                     //
-                    try {
-                        Create::new($business->payment_provider)->setBusiness($business)
-                            ->setClientIp($request->ip())
-                            ->setClientUserAgent($request->userAgent())
-                            ->handle();
-                    } catch (\Exception $exception) {
-                        Facades\Log::info('error when create business custom connect: ' . $exception->getMessage());
-                        throw $exception;
+
+                    if ($business->shouldHaveStripeCustomAccount()) {
+                        try {
+                            Create::new($business->payment_provider)->setBusiness($business)
+                                ->setClientIp($request->ip())
+                                ->setClientUserAgent($request->userAgent())
+                                ->handle();
+                        } catch (\Exception $exception) {
+                            Facades\Log::info('error when create business custom connect: ' . $exception->getMessage());
+                            throw $exception;
+                        }
                     }
 
                     if ($business->country === CountryCode::MALAYSIA) {
-                        try {
+                        /*try {
                             $createCognitoFlow = new \HitPay\Verification\Cognito\FlowSession\Create();
                             $createCognitoFlow->setBusiness($business)->handle();
                         } catch (\Exception $exception) {
                             // can be skipped, this func for passing kyc (first_name, last name, phone)
-                        }
+                        }*/
                     }
                 }
 
@@ -233,7 +267,9 @@ class BusinessRepository
                 $user->businessPartner->save();
             }
         } catch (Exception|Throwable $exception) {
-            $customer->delete();
+            if ($customer !== null) {
+                $customer->delete();
+            }
 
             throw $exception;
         }
@@ -282,22 +318,22 @@ class BusinessRepository
             'phone_number' => [
                 'nullable',
             ],
-            'street' => [
+            'address.street' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
-            'city' => [
+            'address.city' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
-            'state' => [
+            'address.state' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
-            'postal_code' => [
+            'address.postal_code' => [
                 'nullable',
                 'string',
                 'max:16',
@@ -317,6 +353,12 @@ class BusinessRepository
                 'date_format:Y-m-d',
             ],
         ]);
+
+        // todo: use mutators/setter in Business model instead
+        if (isset($data['address'])) {
+            $data = array_merge($data, $data['address']);
+            unset($data['address']);
+        }
 
         $business = DB::transaction(function () use ($business, $data) : Business {
             $business->update($data);

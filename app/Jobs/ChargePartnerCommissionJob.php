@@ -45,11 +45,12 @@ class ChargePartnerCommissionJob implements ShouldQueue
 
         $totalCommission = 0;
 
-        $wallet = $this->partner->business->wallet(Type::AVAILABLE, 'SGD');
+        $wallet = $this->partner->business->wallet(Type::AVAILABLE, $this->partner->business->currency);
 
         foreach ($this->partner->businesses as $business) {
             $amount = $business->charges()
                 ->where('status', 'succeeded')
+                ->where('currency', $wallet->currency)
                 ->where('payment_provider_charge_method', '!=', 'cash')
                 ->whereDate('closed_at', '>=', $this->from->toDateString())
                 ->whereDate('closed_at', '<=', $this->to->toDateString())

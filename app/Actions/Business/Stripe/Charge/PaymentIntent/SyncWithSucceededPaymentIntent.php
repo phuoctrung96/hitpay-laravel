@@ -50,7 +50,7 @@ class SyncWithSucceededPaymentIntent extends Action
      */
     public function process() : ?Business\PaymentIntent
     {
-        $this->validateBusinessPaymentIntent('grabpay');
+        $this->validateBusinessPaymentIntent('grabpay', 'fpx');
 
         $stripePaymentIntent = Stripe\PaymentIntent::retrieve($this->businessPaymentIntent->payment_provider_object_id);
 
@@ -172,7 +172,7 @@ _MESSAGE
 
                     $metadata['platform'] = Facades\Config::get('app.name');
                     $metadata['version'] = ConfigurationRepository::get('platform_version');
-                    $metadata['environment'] = Facades\Config::get('env');
+                    $metadata['environment'] = Facades\Config::get('app.env');
                     $metadata['business_id'] = $this->business->getKey();
                     $metadata['charge_id'] = $this->businessCharge->getKey();
 

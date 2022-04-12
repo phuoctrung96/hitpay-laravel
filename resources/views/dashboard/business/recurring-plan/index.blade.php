@@ -72,6 +72,8 @@
                                             @default
                                                 <span class="badge badge-secondary">{{ $item->status }}</span>
                                         @endswitch
+                                        <a href="{{route('dashboard.business.recurring-plan.edit', [$business->getKey(),
+                                                 $item->getKey()])}}" class="float-right">Edit</a>
                                     </div>
                                 </div>
                             </div>

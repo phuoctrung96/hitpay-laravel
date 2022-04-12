@@ -24,6 +24,7 @@ use Illuminate\Support\Str;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\Shopee;
+use App\Business\BusinessCategory;
 
 class ShopeeController extends Controller
 {
@@ -53,12 +54,15 @@ class ShopeeController extends Controller
         $category = null;
       }
 
+      $business_categories = BusinessCategory::all();
+
       return Response::view('dashboard.business.payment-providers.shopee', [
         'business' => $business,
         'provider' => $provider,
         'uen' => $uen,
         'verification' => $verification,
-        'mcc' => $category ? $category->code : ''
+        'mcc' => $category ? $category->code : '',
+        'business_categories' => $business_categories
       ]);
     }
 

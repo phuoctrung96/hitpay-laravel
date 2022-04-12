@@ -74,7 +74,7 @@ class UpdateBusinessCompany extends Action
 
             $this->business->save();
 
-            $this->uploadDocumentFile($businessPaymentProvider);
+            // $this->uploadDocumentFile($businessPaymentProvider);
 
             $businessPaymentProvider = $this->updateAccount();
 

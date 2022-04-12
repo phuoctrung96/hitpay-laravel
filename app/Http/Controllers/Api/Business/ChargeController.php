@@ -6,6 +6,8 @@ use App\Business as BusinessModel;
 use App\Business\Charge as ChargeModel;
 use App\Enumerations\Business\Channel;
 use App\Enumerations\Business\ChargeStatus;
+use App\Enumerations\Business\PaymentMethodType;
+use App\Enumerations\Business\PluginProvider;
 use App\Enumerations\Business\SupportedCurrencyCode;
 use App\Enumerations\CountryCode;
 use App\Enumerations\PaymentProvider;
@@ -14,10 +16,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Business\Charge;
 use App\Jobs\SendExportedCharges;
 use App\Logics\Business\ChargeRepository;
+use App\Manager\BusinessManagerInterface;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -202,7 +206,7 @@ class ChargeController extends Controller
      */
     public function destroy(BusinessModel $business, ChargeModel $charge)
     {
-        Gate::inspect('operate', $business)->authorize();
+        Gate::inspect('canRefundCharges', $business)->authorize();
 
         $charge = ChargeRepository::refund($charge);
 
@@ -264,6 +268,16 @@ class ChargeController extends Controller
      */
     public function export(Request $request, BusinessModel $business)
     {
+        $businessUser = $business->businessUsers();
+        $businessUser = $businessUser->where('user_id', Auth::id())->first();
+
+        if ($businessUser->isCashier()) {
+            return Response::json([
+                'success' => false,
+                'message' => 'You do not have the permission to export the reports'
+            ]);
+        }
+
         Gate::inspect('view', $business)->authorize();
 
         $data = $this->validate($request, [
@@ -275,15 +289,92 @@ class ChargeController extends Controller
                 'required',
                 'date_format:Y-m-d',
             ],
+            'channel' => [
+                'nullable',
+                Rule::in([
+                    'payment_gateway',
+                    'point_of_sale',
+                    'recurrent',
+                    'store_checkout',
+                ]),
+            ],
+            'plugin_provider' => [
+                'nullable',
+                Rule::in(PluginProvider::CHANNELS),
+            ],
+            'payment_method' => [
+                'nullable',
+                Rule::in([
+                    'paynow_online',
+                    'cash',
+                    'paynow',
+                    'alipay',
+                    'card',
+                    'card_present',
+                    'wechat',
+                ]),
+            ],
+            'fields.*' => [
+                'bool',
+            ],
         ]);
 
-        $startsAt = Date::parse($data['starts_at']);
-        $endsAt = Date::parse($data['ends_at']);
+        $charges = $business->setConnection('mysql_read')->charges()->whereIn('status', [
+            ChargeStatus::SUCCEEDED,
+            ChargeStatus::REFUNDED,
+            ChargeStatus::VOID,
+        ])->whereNotNull('closed_at');
+
+        if (!empty($data['payment_method'])) {
+            if ($data['payment_method'] === 'paynow_online') {
+                $charges->where('payment_provider', 'dbs_sg')
+                    ->where('payment_provider_charge_method', $data['payment_method']);
+            } elseif ($data['payment_method'] === 'cash' || $data['payment_method'] === 'paynow') {
+                $charges->where('payment_provider', 'hitpay')
+                    ->where('payment_provider_charge_method', $data['payment_method']);
+            } else {
+                $charges->where('payment_provider', $business->payment_provider)
+                    ->where('payment_provider_charge_method', $data['payment_method']);
+            }
+        }
+
+        if (!empty($data['channel'])) {
+            $charges->where('channel', $data['channel']);
+
+            if (!empty($data['plugin_provider'])) {
+                $charges->where('plugin_provider', $data['plugin_provider']);
+            }
+        }
+
+        $fromDate = Date::parse($data['starts_at']);
+        $toDate = Date::parse($data['ends_at']);
+
+        if ($fromDate->gt($toDate)) {
+            [$fromDate, $toDate] = [$toDate, $fromDate];
+        }
+
+        $charges->whereDate('closed_at', '>=', $fromDate->startOfDay()->toDateTimeString());
+        $charges->whereDate('closed_at', '<=', $toDate->endOfDay()->toDateTimeString());
+
+        if ($charges->count() < 1) {
+            App::abort(422, 'You don\'t have any charge between these date.');
+        }
+
+        if (isset($data['fields'])) {
+            foreach ($data['fields'] as $field => $value) {
+                if ($value) {
+                    $fields[] = $field;
+                }
+            }
+        }
 
         SendExportedCharges::dispatch($business, [
-            'from_date' => $startsAt->startOfDay(),
-            'to_date' => $endsAt->endOfDay(),
-        ]);
+            'from_date' => $data['starts_at'],
+            'to_date' => $data['ends_at'],
+            'payment_method' => $data['payment_method'] ?? null,
+            'plugin_provider' => $data['plugin_provider'] ?? null,
+            'channel' => $data['channel'] ?? null,
+        ], null, $fields ?? []);
 
         return Response::json([
             'success' => true,
@@ -353,6 +444,10 @@ class ChargeController extends Controller
                     'nullable',
                     'string',
                     'max:255',
+                ],
+                'terminal_id' => [
+                    'nullable',
+                    'string'
                 ],
             ], $messages, $customAttributes);
 
@@ -428,6 +523,123 @@ class ChargeController extends Controller
 
         return Response::json([
             'data' => array_values($data),
+        ]);
+    }
+
+    /**
+     * Channel distribution report
+     *
+     * @param Request $request
+     * @param BusinessModel $business
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function getChannelReport(Request $request, BusinessModel $business)
+    {
+        $days_num = 7;
+
+        $cache_key = "business_{$business->id}_sales_channel_report_{$days_num}";
+
+        if (Cache::has($cache_key)) {
+            $data = Cache::get($cache_key);
+        } else {
+            $data = [];
+
+            $results = $business
+                ->setConnection('mysql_read')
+                ->charges()
+                ->selectRaw('sum(home_currency_amount) as total, IFNULL(plugin_provider, "point_of_sale") as plugin_provider')
+                ->where('status', ChargeStatus::SUCCEEDED)
+                ->whereDate('closed_at', '>=', Carbon::today()->subDays($days_num)->setHour(0)->setMinute(0))
+                ->groupBy('plugin_provider')
+                ->pluck('total', 'plugin_provider')
+                ->toArray();
+
+            $total = array_sum($results);
+
+            foreach ($results as $channel => $channel_total) {
+                $data[] = [
+                    'channel' => $channel,
+                    'percentage' => round(($channel_total/$total)*100, 2)
+                ];
+            }
+
+            $expires_at = Carbon::now()->addHours(1);
+
+            Cache::put($cache_key, $data, $expires_at);
+        }
+
+        return Response::json([
+            'data' => array_values($data),
+        ]);
+    }
+
+    /**
+     * Payment method distribution report
+     *
+     * @param Request $request
+     * @param BusinessModel $business
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function getPaymentMethodReport(Request $request, BusinessModel $business)
+    {
+        $days_num = 7;
+
+        $cache_key = "business_{$business->id}_sales_payment_method_report_{$days_num}";
+
+        if (Cache::has($cache_key)) {
+            $data = Cache::get($cache_key);
+        } else {
+            /* @var \App\Manager\BusinessManagerInterface $businessManager */
+            $businessManager = resolve(BusinessManagerInterface::class);
+            $pm_enabled = $businessManager->getByBusinessAvailablePaymentMethods($business, null, true);
+
+            $payment_methods = [];
+
+            if ($business->country === 'sg') {
+                $pm_available = PaymentMethodType::getPaymentMethodsSg();
+            } elseif ($business->country === 'my') {
+                $pm_available = PaymentMethodType::getPaymentMethodsMy();
+            } else {
+                $pm_available = [];
+            }
+
+            foreach ($pm_available as $pm) {
+                $payment_methods[$pm] = [
+                    'payment_method'    => $pm,
+                    'enabled'           => isset($pm_enabled[$pm]),
+                    'number'            => 0,
+                    'percentage'        => 0
+                ];
+            }
+
+            $results = $business
+                ->setConnection('mysql_read')
+                ->charges()
+                ->selectRaw('count(*) as cnt, payment_provider_charge_method')
+                ->where('status', ChargeStatus::SUCCEEDED)
+                ->whereIn('payment_provider_charge_method', $pm_available)
+                ->whereDate('closed_at', '>=', Carbon::today()->subDays($days_num)->setHour(0)->setMinute(0))
+                ->groupBy('payment_provider_charge_method')
+                ->pluck('cnt', 'payment_provider_charge_method')
+                ->toArray();
+
+            $total = array_sum($results);
+
+            foreach ($results as $pm => $pm_total) {
+                $payment_methods[$pm]['number'] = $pm_total;
+                $payment_methods[$pm]['percentage'] = round(($pm_total/$total)*100, 2);
+            }
+
+            $data = array_values($payment_methods);
+            $expires_at = Carbon::now()->addHours(1);
+
+            Cache::put($cache_key, $data, $expires_at);
+        }
+
+        return Response::json([
+            'data' => $data
         ]);
     }
 }

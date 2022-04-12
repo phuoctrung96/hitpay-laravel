@@ -6,8 +6,8 @@
     <div class="row">
         <div class="col-md-12">
             @if($isOwner)
-                <h4 class="title align-content-lg-center" id="title">Verification is <span id="status">Empty</span></h4>
-                <p>Waiting complete the verification.</p>
+                <h4 class="title align-content-lg-center" id="title">Verification <span id="status">Pending</span></h4>
+                <p>Your information is processing. Please refresh this page in a few mins.</p>
             @else
                 <h4 class="title align-content-lg-center" id="title">Business owner verification is pending.</h4>
                 <p>Please ask the owner "<b>{{ $businessUserOwner->email }}</b>" to complete the verification</p>

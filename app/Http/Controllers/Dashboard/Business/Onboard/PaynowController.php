@@ -5,10 +5,8 @@ namespace App\Http\Controllers\Dashboard\Business\Onboard;
 use App\Actions\Business\Onboard\Paynow\Store;
 use App\Actions\Exceptions\BadRequest;
 use App\Business;
-use App\Enumerations\VerificationProvider;
 use App\Http\Controllers\Controller;
 use HitPay\Data\Countries;
-use HitPay\Verification\Cognito\FlowSession\Create;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades;
 use Symfony\Component\HttpFoundation\Response;
@@ -45,14 +43,10 @@ class PaynowController extends Controller
             'success_message' => 'string|max:64|nullable',
         ]);
 
-        $country = Countries::get($business->country);
-
-        $banks = $country->banks()->toArray();
-
         return Facades\Response::view('dashboard.business.onboard.paynow.create', [
             'business' => $business,
             'provider' => null,
-            'banks_list' => $banks,
+            'banks_list' => $business->banksAvailable()->toArray(),
             'success_message' => empty($data['success_message']) ? '' : $data['success_message'],
         ]);
     }
@@ -70,10 +64,7 @@ class PaynowController extends Controller
         Facades\Gate::inspect('update', $business)->authorize();
 
         try {
-            Store::withBusiness($business)
-                ->data($request->all())
-                ->enableBankAccount()
-                ->process();
+            Store::withBusiness($business)->data($request->all())->process();
         } catch (BadRequest $exception) {
             if ($request->wantsJson()) {
                 return Facades\Response::json([

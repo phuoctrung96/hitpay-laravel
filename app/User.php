@@ -8,6 +8,7 @@ use App\Enumerations\PaymentProvider;
 use App\Exceptions\AuthenticationSecretEnabledException;
 use App\Exceptions\ModelRuntimeException;
 use App\Models\BusinessPartner;
+use App\Notifications\User\LoginNotification;
 use App\Notifications\User\ResetPassword as ResetPasswordNotification;
 use App\Notifications\User\VerifyEmail as VerifyEmailNotification;
 use Carbon\Carbon;
@@ -728,6 +729,8 @@ class User extends Authenticatable implements MustVerifyEmail
                     $this->askForAuthenticationSecret($this->accessTokenViaEmailAddress);
                 }
 
+                $this->notify(new LoginNotification);
+
                 return true;
             }
 
@@ -743,6 +746,7 @@ class User extends Authenticatable implements MustVerifyEmail
             || (App::environment('local', 'staging','sandbox') && $password === '000000')) {
             Cache::forget($this->accessTokenViaAuthenticationSecret);
 
+            $this->notify(new LoginNotification);
             return true;
         }
 

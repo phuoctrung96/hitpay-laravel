@@ -9,6 +9,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PayoutCustomController extends Controller
 {
@@ -26,7 +28,7 @@ class PayoutCustomController extends Controller
      * @return \Illuminate\Http\Response
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function __invoke(Request $request, Business $business): \Illuminate\Http\Response
+    public function showPage(Request $request, Business $business): \Illuminate\Http\Response
     {
         Gate::inspect('view', $business)->authorize();
 
@@ -40,5 +42,22 @@ class PayoutCustomController extends Controller
 
         return Response::view('dashboard.business.stripe.payout-custom',
             compact('business', 'paginator', 'provider', 'perPage'));
+    }
+
+    public function download(Business $business, Business\Transfer $transfer)
+    {
+        Gate::inspect('view', $business)->authorize();
+
+        if (!isset($transfer->data['file']['path'])) {
+            throw new NotFoundHttpException;
+        }
+
+        $storageDefaultDisk = Storage::getDefaultDriver();
+
+        if (!Storage::disk($storageDefaultDisk)->exists($transfer->data['file']['path'])) {
+            throw new NotFoundHttpException;
+        }
+
+        return Storage::disk($storageDefaultDisk)->download($transfer->data['file']['path']);
     }
 }

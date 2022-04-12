@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Lang;
  */
 class Conversion
 {
-    public static function convertToUSD($amount, $currency): array
+    public static function convertToUSD($amount, $currency)
     {
         $exchangeRate = json_decode('
         {

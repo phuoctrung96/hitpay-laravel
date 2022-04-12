@@ -60,6 +60,8 @@ class BasicDetailController extends Controller
     }
 
     /**
+     * @deprecated No longer used by business settings page, to be removed
+     *
      * @param \Illuminate\Http\Request $request
      * @param \App\Business $business
      *
@@ -98,6 +100,12 @@ class BasicDetailController extends Controller
         ]);
     }
 
+    /**
+     * @deprecated No longer used by business settings page, to be removed
+     *
+     * @param Request $request
+     * @param BusinessModel $business
+     */
     public function removeLogo(Request $request, BusinessModel $business)
     {
         $business->images()

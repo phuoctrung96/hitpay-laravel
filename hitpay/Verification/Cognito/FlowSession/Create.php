@@ -35,8 +35,8 @@ class Create extends Service
                 'customer_reference' => $this->business->getKey(),
                 'email' => $owner->email,
                 'name' => [
-                    "first" => $owner->first_name,
-                    "last" => $owner->last_name,
+                    "first" => $owner->first_name ?? null,
+                    "last" => $owner->last_name ?? null,
                 ],
                 'phone' => $this->business->phone_number ?: null
             ]

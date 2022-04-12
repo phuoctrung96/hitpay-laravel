@@ -60,6 +60,10 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
 
             $paymentMethods[PaymentMethodType::ALIPAY]   = 'AliPay';
 
+            if ($stripeProvider->payment_provider === PaymentProviderEnum::STRIPE_MALAYSIA && (!$currency || strtolower($currency) === 'myr')) {
+              $paymentMethods[PaymentMethodType::FPX] = 'FPX';
+            }
+
             if ($all && ( !isset($currency) || in_array(strtolower($currency), [ 'sgd', 'myr' ]) )
                 && $this->allowStripeGrabPay($business, $stripeProvider, $grabpayProvider)) {
                 // Stripe GrabPay
@@ -179,7 +183,7 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
         return $paymentMethods;
     }
 
-    public function getBusinessPaymentRequestMethods(Business $business, array $methods)
+    public function getBusinessPaymentRequestMethods(Business $business, array $methods, $currency = 'sgd')
     {
         $paymentMethods     = [];
 
@@ -191,6 +195,7 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
                 case PaymentMethodType::GRABPAY:
                 case PaymentMethodType::WECHAT:
                 case PaymentMethodType::CARD:
+                case PaymentMethodType::FPX:
                     if ($stripeProvider instanceof PaymentProvider) {
                         if ($method === PaymentMethodType::CARD) {
                             $paymentMethods[] = PaymentMethodType::CARD;
@@ -202,6 +207,10 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
 
                         if ($method === PaymentMethodType::ALIPAY) {
                             $paymentMethods[] = PaymentMethodType::ALIPAY;
+                        }
+
+                        if ($method === PaymentMethodType::FPX && $business->country === 'my' && strtolower($currency) === 'myr') {
+                          $paymentMethods[] = PaymentMethodType::FPX;
                         }
 
                         // only if there is no GrabPay direct
@@ -265,10 +274,6 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
 
         if ($stripeProvider instanceof PaymentProvider) {
             $paymentMethods[] = PaymentMethodType::CARD;
-
-            if ($stripeProvider->payment_provider === PaymentProviderEnum::STRIPE_SINGAPORE) {
-                $paymentMethods[PaymentMethodType::WECHAT] = 'WeChatPay';
-            }
 
             $paymentMethods[] = PaymentMethodType::ALIPAY;
 
@@ -372,8 +377,13 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
         ];
     }
 
-    function allowStripeGrabPay ($business, $stripeProvider, $grabpayProvider) {
-      return !($grabpayProvider instanceof PaymentProvider);
+    function allowStripeGrabPay(Business $business, $stripeProvider, $grabpayProvider)
+    {
+        if ($business->country === 'sg') {
+            return false;
+        }
+
+        return !( $grabpayProvider instanceof PaymentProvider );
     }
 
     /**
@@ -386,17 +396,6 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
         $country = Countries::get($business->country);
 
         return $country->paymentProviders();
-    }
-
-    /**
-     * @param Business $business
-     * @return Collection
-     */
-    function getAvailableBanks(Business $business) : Collection
-    {
-        $country = Countries::get($business->country);
-
-        return $country->banks();
     }
 
     /**

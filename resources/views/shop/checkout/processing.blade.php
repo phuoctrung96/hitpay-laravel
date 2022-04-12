@@ -8,6 +8,7 @@
             <charge-wait
               business_id="{{ $business->id }}"
               charge_id="{{ $charge_id }}"
+              timeout="{{ isset($timeout) ? $timeout : 6 }}"
               />
         </div>
         <script>

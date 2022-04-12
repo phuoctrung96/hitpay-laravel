@@ -48,20 +48,9 @@ class Charge extends JsonResource
             $data['order'] = (new Order($this->target))->toArray($request);
         }
 
-        if (in_array($this->payment_provider_charge_method, [
-            'card',
-            'card_present',
-        ])) {
-            if (isset($this->data['payment_method_details']['card'])) {
-                $card = $this->data['payment_method_details']['card'];
-            } elseif (isset($this->data['source']['card'])) {
-                $card = $this->data['source']['card'];
-            } elseif (isset($this->data['source'])) {
-                $card = $this->data['source'];
-            } elseif (isset($this->data['payment_method_details']['card_present'])) {
-                $card = $this->data['payment_method_details']['card_present'];
-            }
+        $card = $this->getDataStripeCard();
 
+        if ($card !== null) {
             if (isset($card['country'])) {
                 $countryCode = $card['country'];
 

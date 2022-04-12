@@ -123,6 +123,7 @@
             :business="{{ json_encode($business) }}"
             business_id="{{ $business->getKey() }}"
             :country_code="{{ json_encode($business->country) }}"
+            verification_status="{{$verificationStatus}}"
         />
     @endif
 

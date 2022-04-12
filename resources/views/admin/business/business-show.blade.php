@@ -132,96 +132,6 @@
                       currency="{{ $business->currency }}"
                       :allow_remove="{{ json_encode($currentBusinessUser->permissions['canRemoveStripeAccount']) }}"
                       :swift_codes="{{ json_encode(\App\Business\Transfer::$availableBankSwiftCodes) }}"></business-rates>
-
-                    {{--
-                    @if ($stripe = $business->paymentProviders->whereIn('payment_provider', [
-                        'stripe_sg',
-                        'stripe_my',
-                    ])->first())
-                        <div class="card-body bg-light p-4 border-top">
-                            <div><i class="fab fa-stripe fa-4x"></i></div>
-                            <p class="mb-0">Account ID: <span
-                                    class="text-muted">{{ $stripe->payment_provider_account_id }}</span></p>
-                            @if (isset($stripe->data['email']) || isset($stripe->data['support_email']))
-                                <p class="text-dark">Detected Stripe Email: <span class="text-muted">
-                                    @if (isset($stripe->data['email']))
-                                            {{ $stripe->data['email'] }}
-                                        @endif
-                                        @if (isset($stripe->data['support_email']))
-                                            @if (isset($stripe->data['email']))
-                                                /
-                                            @endif
-                                            {{ $stripe->data['support_email'] }}
-                                        @endif
-                                </span></p>
-                            @else
-                                <p class="text-dark">Detected Stripe Email: <span class="text-muted">-</span></p>
-                            @endif
-                            @if ($stripe->rates->count())
-                                <p class="text-dark">Custom Rates</p>
-                                <ul>
-                                    @foreach ($stripe->rates as $rate)
-                                        <li><a class="font-weight-bold text-danger" href="#" data-toggle="modal"
-                                               data-target="#deleteModal" data-rate-id="{{ $rate->getKey() }}"
-                                               data-provider-name="Stripe">X</a> - <span
-                                                class="badge badge-success">{{ ucwords(str_replace('_', ' ', $rate->channel)) }}</span>
-                                            <span
-                                                class="badge badge-warning">{{ ucwords(str_replace('_', ' ', $rate->method)) }}</span>
-                                            <span
-                                                class="small">Fee: {{ bcmul($rate->percentage, 100, 2) }}% + {{ getFormattedAmount($business->currency, $rate->fixed_amount) }}</span>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                            <p><a class="btn btn-sm btn-primary" href="{{ route('admin.business.rate.create', [
-                                'business_id' => $business->id,
-                                'provider' => 'stripe',
-                            ]) }}">Set Custom Rate</a></p>
-                            @php($currentBusinessUser = resolve(\App\Services\BusinessUserPermissionsService::class)->getBusinessUser(Auth::user(), $business))
-                            @if($currentBusinessUser->permissions['canRemoveStripeAccount'])
-                                <a class="font-weight-bold text-danger" href="#" data-toggle="modal"
-                                   data-target="#removeStripeAccountModal">Remove Stripe Account</a>
-                            @endif
-                        </div>
-                    @endif
-                    @if ($dbs = $business->paymentProviders->where('payment_provider', 'dbs_sg')->first())
-                        <div class="card-body bg-light p-4 border-top">
-                            <p><img src="{{ asset('paynow.jpg') }}" height="48"></p>
-                            @php([
-                                $bankSwiftCode,
-                                $bankAccountNumber,
-                            ] = explode('@', $dbs->payment_provider_account_id))
-                            <p>Company UEN: <span
-                                    class="text-muted">{{ $dbs->data['company']['uen'] ?? '-' }}</span><br>Company Name:
-                                <span class="text-muted">{{ $dbs->data['company']['name'] ?? '-' }}</span></p>
-                            <p>Payout Receiver: <span
-                                    class="text-muted">{{ $dbs->data['account']['name'] ?? '-' }}</span><br>Payout Bank
-                                Name: <span
-                                    class="text-muted">{{ \App\Business\Transfer::$availableBankSwiftCodes[$bankSwiftCode] ?? $bankSwiftCode }}</span><br>Payout
-                                Bank Account: <span class="text-muted">{{ $bankAccountNumber }}</span></p>
-                            @if ($dbs->rates->count())
-                                <p class="text-dark">Custom Rates</p>
-                                <ul>
-                                    @foreach ($dbs->rates as $rate)
-                                        <li><a class="font-weight-bold text-danger" href="#" data-toggle="modal"
-                                               data-target="#deleteModal" data-rate-id="{{ $rate->getKey() }}"
-                                               data-provider-name="PayNow">X</a> - <span
-                                                class="badge badge-success">{{ ucwords(str_replace('_', ' ', $rate->channel)) }}</span>
-                                            <span
-                                                class="badge badge-warning">{{ ucwords(str_replace('_', ' ', $rate->method)) }}</span>
-                                            <span
-                                                class="small">Fee: {{ bcmul($rate->percentage, 100, 2) }}% + {{ getFormattedAmount($business->currency, $rate->fixed_amount) }}</span>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                            <a class="btn btn-sm btn-primary" href="{{ route('admin.business.rate.create', [
-                                'business_id' => $business->id,
-                                'provider' => 'paynow',
-                            ]) }}">Set Custom Rate</a>
-                        </div>
-                    @endif
-                    --}}
                 @else
                     <div class="card-body px-4 py-3 border-top bg-danger">Payment Provider not set.</div>
                 @endif
@@ -342,6 +252,16 @@
                             <i class="fas fa-calculator fa-fw text-body align-self-center mr-card mr-xs-4 mr-sm-5 mr-md-6"></i>
                             <div class="media-body align-self-center">
                                 <span class="font-weight-bold d-inline-block">@lang('View Terminals')</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                <a class="hoverable" href="{{ route('admin.business.bank_accounts.index', $business->getKey()) }}">
+                    <div class="card-body bg-light px-4 py-3 border-top">
+                        <div class="media">
+                            <i class="fas fa-piggy-bank fa-fw text-body align-self-center mr-card mr-xs-4 mr-sm-5 mr-md-6"></i>
+                            <div class="media-body align-self-center">
+                                <span class="font-weight-bold d-inline-block">@lang('View Bank Accounts')</span>
                             </div>
                         </div>
                     </div>

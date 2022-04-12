@@ -6,6 +6,7 @@ class VerificationProvider extends Enumeration
 {
     const COGNITO = 'cognito';
     const MYINFO = 'myinfo';
+    const MANUAL = 'manual';
 
     /**
      * @param $provider
@@ -16,6 +17,7 @@ class VerificationProvider extends Enumeration
         $names = [
             self::COGNITO  => 'Cognito',
             self::MYINFO  => 'MyInfo',
+            self::MANUAL  => 'Manual',
         ];
 
         return $names[$provider];

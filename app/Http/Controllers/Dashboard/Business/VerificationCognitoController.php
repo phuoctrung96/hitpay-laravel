@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Dashboard\Business;
 
-use App\Actions\Business\Settings\Verification\Cognito\Index;
 use App\Actions\Business\Settings\Verification\Cognito\Show;
 use App\Actions\Business\Settings\Verification\Cognito\Store;
 use App\Actions\Exceptions\BadRequest;
 use App\Business;
+use App\Enumerations\Business\Type;
 use App\Enumerations\CountryCode;
+use App\Enumerations\VerificationProvider;
 use App\Exceptions\HitPayLogicException;
 use App\Http\Controllers\Controller;
 use Exception;
@@ -18,14 +19,12 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades;
 use Illuminate\Support\Facades\Session;
 use Psr\SimpleCache\InvalidArgumentException;
 use Stripe\Exception\ApiErrorException;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 use Throwable;
-use Validator;
 
 class VerificationCognitoController extends Controller
 {
@@ -45,13 +44,13 @@ class VerificationCognitoController extends Controller
                 // redirect to my info with exists verification
                 return Facades\Response::redirectToRoute('dashboard.business.verification.home', $business->getKey());
             } else {
-                if ($verification->verification_provider_status == 'success') {
-                    // redirect to show cognito controller
-                    return Facades\Response::redirectToRoute('dashboard.business.verification.cognito.show', [
-                        $business->getKey(),
-                        $verification->getKey()
-                    ]);
-                }
+//                if ($verification->verification_provider_status == 'success') {
+//                    // redirect to show cognito controller
+//                    return Facades\Response::redirectToRoute('dashboard.business.verification.cognito.show', [
+//                        $business->getKey(),
+//                        $verification->getKey()
+//                    ]);
+//                }
             }
         }
 
@@ -62,14 +61,28 @@ class VerificationCognitoController extends Controller
             }
         }
 
-        $indexData = Index::withBusiness($business)->process();
+        if ($verification === null) {
+            $verification = $business->verifications()->create([
+                'type' => in_array($business->business_type, [Type::COMPANY, Type::PARTNER]) ? 'business' : 'personal',
+                'status' => '',
+                'verification_provider' => VerificationProvider::MANUAL
+            ]);
+        }
 
-        return Facades\Response::view('dashboard.business.verification.cognito.index', $indexData);
+        return Facades\Response::redirectToRoute('dashboard.business.verification.cognito.show', [
+            $business->getKey(),
+            $verification->getKey()
+        ]);
+
+//        $indexData = Index::withBusiness($business)->process();
+
+//        return Facades\Response::view('dashboard.business.verification.cognito.index', $indexData);
     }
 
     /**
      * @param Business $business
      * @param Business\Verification $verification
+     * @return RedirectResponse|Response
      * @throws AuthorizationException
      * @throws Exception
      */
@@ -77,11 +90,11 @@ class VerificationCognitoController extends Controller
     {
         Facades\Gate::inspect('view', $business)->authorize();
 
-        if ($verification->verification_provider_status != 'success') {
-            return Facades\Response::redirectToRoute('dashboard.business.verification.cognito.index', [
-                $business->getKey()
-            ]);
-        }
+//        if ($verification->verification_provider_status != 'success') {
+//            return Facades\Response::redirectToRoute('dashboard.business.verification.cognito.index', [
+//                $business->getKey()
+//            ]);
+//        }
 
         $showData = Show::withBusiness($business)->setVerification($verification)
             ->process();
@@ -95,13 +108,7 @@ class VerificationCognitoController extends Controller
      * @param Business\Verification $verification
      * @return JsonResponse|RedirectResponse|string
      * @throws AuthorizationException
-     * @throws HitPayLogicException
-     * @throws AccountNotFoundException
-     * @throws GeneralException
-     * @throws InvalidStateException
-     * @throws InvalidArgumentException
-     * @throws ApiErrorException
-     * @throws Throwable
+     * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request, Business $business, Business\Verification $verification)
     {
@@ -116,7 +123,6 @@ class VerificationCognitoController extends Controller
                 ->data($request->all())
                 ->withRequestFile($request)
                 ->setVerification($verification)
-                ->setPaymentProvider()
                 ->process();
         } catch (BadRequest $exception) {
             if ($request->wantsJson()) {

@@ -40,7 +40,7 @@ class PayoutController extends Controller
 
         $transfers = $business->setConnection('mysql_read')->transfers()->whereIn('payment_provider', [
             PaymentProvider::DBS_SINGAPORE,
-        ])->paginate($paginateNumber);
+        ])->orderByDesc('id')->paginate($paginateNumber);
 
         return Transfer::collection($transfers);
     }

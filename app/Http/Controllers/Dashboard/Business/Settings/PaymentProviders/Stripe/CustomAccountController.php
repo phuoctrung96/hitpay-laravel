@@ -8,9 +8,12 @@ use HitPay\Stripe\CustomAccount\AccountLink;
 use HitPay\Stripe\CustomAccount\CustomAccount;
 use HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException;
 use HitPay\Stripe\CustomAccount\Sync;
-use HitPay\Stripe\CustomAccount\Update;
 use Illuminate\Http;
 use Illuminate\Support\Facades;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\URL;
+use Stripe\Exception\InvalidRequestException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class CustomAccountController extends Controller
@@ -71,7 +74,19 @@ class CustomAccountController extends Controller
 
         $this->preCheckPaymentProvider($accountLinkGenerator);
 
-        $accountLink = $accountLinkGenerator->handle('account_update');
+        try {
+            $accountLink = $accountLinkGenerator->handle('account_update');
+        } catch (InvalidRequestException $exception) {
+            Log::critical(
+                "The business (ID : {$business->getKey()}) is failed to generate account link. Check Stripe error: {$exception->getMessage()}, error code: {$exception->getError()->type}"
+            );
+
+            $url = URL::previous(URL::route('dashboard.business.payment-provider.home', [
+                'business_id' => $business->getKey(),
+            ]));
+
+            return Response::redirectTo($url)->with('stripe_account_link_error', true);
+        }
 
         return Facades\Response::redirectTo($accountLink);
     }

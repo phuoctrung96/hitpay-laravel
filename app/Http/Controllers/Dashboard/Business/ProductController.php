@@ -12,6 +12,7 @@ use App\Enumerations\CountryCode;
 use App\Enumerations\CurrencyCode;
 use App\Exports\ProductFeedTemplate;
 use App\Http\Controllers\Controller;
+use App\Jobs\SendExportedProducts;
 use App\Logics\Business\ProductRepository;
 use App\Shortcut;
 use Carbon\Carbon;
@@ -22,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -121,7 +123,9 @@ class ProductController extends Controller
             $product_attrs['quantity'][] = $product->variations->sum('quantity');
         }
 
-        return Response::view('dashboard.business.product.index', compact('business', 'products', 'status', 'data') + [
+        $currentBusinessUser = resolve(\App\Services\BusinessUserPermissionsService::class)->getBusinessUser(Auth::user(), $business);
+
+        return Response::view('dashboard.business.product.index', compact('business', 'products', 'status', 'data', 'currentBusinessUser') + [
                 'shopify_only' => $shopifyOnly,
                 'product_attrs' => $product_attrs
             ]);
@@ -923,6 +927,57 @@ class ProductController extends Controller
         Session::flash('success_message', 'We  will start to upload shortly and email you the result.');
         return Response::json([
             'redirect_url' => URL::route('dashboard.business.product.index', $business->getKey()),
+        ]);
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Business $business
+     *
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function export(Request $request, Business $business)
+    {
+        Gate::inspect('operate', $business)->authorize();
+
+        $data = $request->validate([
+            'export_option' => 'required',
+            'inventory' => 'nullable|int|min:0',
+            'before_date' => 'nullable|date_format:Y-m-d'
+        ]);
+
+        $products = $business->products()->with('variations', 'images');
+
+        if ($data['export_option'] === 'created_before') {
+            $products->where('created_at', '<', Date::parse($data['before_date']));
+        }
+
+        $products = $products->orderByDesc('created_at')->limit(1000)->get();
+
+        if ($data['export_option'] === 'inventory') {
+            $inventory = $data['inventory'];
+            $products = $products->map(function ($product) use ($inventory) {
+                if ($product->variations->sum('quantity') < $inventory) {
+                    $product->image_display = $product->display('image');
+                    $product->price_display = $product->display('price');
+                    $product->manageable = $product->isManageable();
+                    $product->variations_sum_quantity = $product->variations->sum('quantity');
+                    $product->published = $product->isPublished();
+                    return $product;
+                }
+            })->reject(null);
+        }
+
+        if ($products->count() < 1) {
+            App::abort(422, 'You don\'t have any products based on the parameters.');
+        }
+
+        SendExportedProducts::dispatch($business, $products, Auth::user());
+
+        return Response::json([
+            'success' => true,
         ]);
     }
 }

@@ -46,6 +46,7 @@ class Business extends JsonResource
             'state' => $this->state,
             'postal_code' => $this->postal_code,
             'country' => $this->country,
+            'country_name' => $this->country_name
         ];
         $data['address_line'] = $this->getAddress();
         $data['country'] = $this->country;
@@ -59,6 +60,7 @@ class Business extends JsonResource
         $data['founding_date'] = optional($this->founding_date)->toDateString();
         $data['locale'] = $this->locale;
         $data['currency'] = $this->currency;
+        $data['currency_name'] = $this->currency_name;
         $data['created_at'] = $this->created_at->toAtomString();
         $data['updated_at'] = $this->updated_at->toAtomString();
         $data['is_verified'] = $this->is_verified;

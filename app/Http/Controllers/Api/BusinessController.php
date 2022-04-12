@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Business as BusinessModel;
 use App\Business\Charge;
+use App\Business\Image as ImageModel;
 use App\Enumerations\Business\ChargeStatus;
+use App\Enumerations\Business\ImageGroup;
+use App\Enumerations\Image\Size;
 use App\Enumerations\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Business;
 use App\Http\Resources\Business\Charge as ChargeResource;
 use App\Logics\BusinessRepository;
 use Carbon\Carbon;
+use HitPay\Image\Processor as ImageProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -165,5 +169,57 @@ class BusinessController extends Controller
         BusinessRepository::updateIdentifier($request, $business);
 
         return new Business($business);
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Business $business
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     * @throws \Throwable
+     */
+    public function uploadLogo(Request $request, BusinessModel $business)
+    {
+        $image = $this->validate($request, [
+            'image' => [
+                'required',
+                'image',
+            ],
+        ])['image'];
+
+        /**
+         * @var \App\Business\Image $image
+         */
+        $image = \DB::transaction(function () use ($business, $image) {
+            $image = ImageProcessor::new($business, ImageGroup::LOGO, $image)
+                ->setCaption($business->name)
+                ->process();
+
+            $business->images()
+                ->where('group', ImageGroup::LOGO)
+                ->where('id', '<>', $image->getKey())
+                ->each(function (ImageModel $image) {
+                    $image->delete();
+                });
+
+            return $image;
+        });
+
+        return Response::json([
+            'logo_url' => $image->getUrl(Size::MEDIUM),
+        ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param BusinessModel $business
+     */
+    public function removeLogo(Request $request, BusinessModel $business)
+    {
+        $business->images()
+            ->where('group', ImageGroup::LOGO)
+            ->each(function (ImageModel $image) {
+                $image->delete();
+            });
     }
 }

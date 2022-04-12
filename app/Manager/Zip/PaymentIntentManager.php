@@ -33,10 +33,8 @@ class PaymentIntentManager implements PaymentIntentManagerInterface
         ->first();
 
       if ($provider instanceof PaymentProvider) {
-        $res = Zip::postRequest('checkouts', [
+        $requestData = [
           'shopper' => [
-            'first_name' => $charge->customer_email,
-            'last_name' => $charge->customer_email,
             'email' => $charge->customer_email,
             'billing_address' => [
               'line1' => '1 Keong Saik Road', // !!
@@ -64,11 +62,23 @@ class PaymentIntentManager implements PaymentIntentManagerInterface
             'merchant_name' => $provider->data['store_name'],
             'merchant_industry' => $provider->data['mcc']
           ]
-        ], 201);
+        ];
+
+        if ($charge->customer_name) {
+          $nameArr = explode(' ', $charge->customer_name);
+
+          $requestData['shopper']['first_name'] = $nameArr[0];
+
+          if (count($nameArr) > 1) {
+            $requestData['shopper']['last_name'] = implode(' ', array_slice($nameArr, 1));
+          }          
+        }
+
+        $res = Zip::postRequest('checkouts', $requestData, 201);
 
         // 1. Set charge fields
-        $charge->home_currency                  = $charge->currency;
-        $charge->home_currency_amount           = $charge->amount;
+        $charge->home_currency        = $charge->currency;
+        $charge->home_currency_amount = $charge->amount;
         $business->charges()->save($charge);
 
         // Create payment intent

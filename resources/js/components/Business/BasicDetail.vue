@@ -51,12 +51,52 @@
                         <label for="registered_country" class="small text-muted text-uppercase">Registered
                             Country</label>
                         <input id="registered_country" type="text" readonly class="form-control-plaintext"
-                               :value="business.country_name">
+                               :value="business.address.country_name">
                     </div>
                     <div class="col-12 col-sm-6 mb-3">
                         <label for="currency" class="small text-muted text-uppercase">Currency</label>
                         <input id="currency" type="text" readonly class="form-control-plaintext"
                                :value="business.currency_name">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-12 col-sm-6 mb-3">
+                        <label for="street" class="small text-muted text-uppercase">Street</label>
+                        <input id="street" v-model="business.address.street" class="form-control"
+                               :class="{
+                            'is-invalid': errors.address__street,
+                            'bg-light': !(is_processing || is_basic_information_succeeded),
+                        }" :disabled="is_processing || is_basic_information_succeeded">
+                        <span class="invalid-feedback" role="alert">{{ errors.address__street }}</span>
+                    </div>
+                    <div class="col-12 col-sm-6 mb-3">
+                        <label for="city" class="small text-muted text-uppercase">City</label>
+                        <input id="city" v-model="business.address.city" class="form-control"
+                               :class="{
+                            'is-invalid': errors.address__city,
+                            'bg-light': !(is_processing || is_basic_information_succeeded),
+                        }" :disabled="is_processing || is_basic_information_succeeded">
+                        <span class="invalid-feedback" role="alert">{{ errors.address__city }}</span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-12 col-sm-6 mb-3">
+                        <label for="state" class="small text-muted text-uppercase">State</label>
+                        <input id="state" v-model="business.address.state" class="form-control"
+                               :class="{
+                            'is-invalid': errors.address__state,
+                            'bg-light': !(is_processing || is_basic_information_succeeded),
+                        }" :disabled="is_processing || is_basic_information_succeeded">
+                        <span class="invalid-feedback" role="alert">{{ errors.address__state }}</span>
+                    </div>
+                    <div class="col-12 col-sm-6 mb-3">
+                        <label for="postal_code" class="small text-muted text-uppercase">Postal Code</label>
+                        <input id="postal_code" v-model="business.address.postal_code" class="form-control"
+                               :class="{
+                            'is-invalid': errors.address__postal_code,
+                            'bg-light': !(is_processing || is_basic_information_succeeded),
+                        }" :disabled="is_processing || is_basic_information_succeeded">
+                        <span class="invalid-feedback" role="alert">{{ errors.address__postal_code }}</span>
                     </div>
                 </div>
                 <div class="form-row">
@@ -137,18 +177,31 @@ import 'vue2-timepicker/dist/VueTimepicker.css';
 import VueTimepicker from 'vue2-timepicker';
 
 export default {
+    props: {
+        business_id: String
+    },
 
     data() {
         return {
             business: {
                 phone_number: null,
                 currency_name: null,
+                country: null,
                 identifier: null,
                 name: null,
                 email: null,
                 display_name: null,
                 statement_description: null,
                 introduction: null,
+                logo_url: null,
+                address: {
+                    street: null,
+                    city: null,
+                    state: null,
+                    postal_code: null,
+                    country: null,
+                    country_name: null
+                }
             },
 
             image: null,
@@ -176,17 +229,8 @@ export default {
 
 
     mounted() {
-        this.business = Business;
+        this.prepareComponent();
 
-        this.default_logo_url = Data.default_logo_url;
-
-        if (Data.logo_url) {
-            this.logo_url = Data.logo_url;
-        } else {
-            this.logo_url = this.default_logo_url;
-        }
-
-        this.prefixes = Data.prefixes;
         this.image_modal = $('#confirmImageModal');
         this.image_canvas = $('#imageCanvas');
         this.reader = new FileReader();
@@ -206,11 +250,30 @@ export default {
     },
 
     methods: {
+        prepareComponent() {
+            this.getBusiness();
+        },
+        getBusiness() {
+            axios.get(this.getDomain(`v1/business/${this.business_id}`, 'api'), {
+                withCredentials: true
+            })
+                .then(response => {
+                    this.business = response.data;
+
+                    this.default_logo_url = response.data.default_logo_url;
+
+                    if (response.data.logo_url) {
+                        this.logo_url = response.data.logo_url;
+                    } else {
+                        this.logo_url = this.default_logo_url;
+                    }
+                });
+        },
         updateInformation() {
             this.is_processing = true;
             this.errors = {};
 
-            if (! /(^[A-Za-z0-9. ]+$)+/.test(this.business.name)) {
+            if (! /(^[A-Za-z0-9.\-\&\$ ]+$)+/.test(this.business.name)) {
                 this.errors.name = 'Only chars and digits with spaces and dots are allowed in name';
             }
 
@@ -225,7 +288,9 @@ export default {
                 return;
             }
 
-            axios.put(this.getDomain('business/' + this.business.id + '/basic-details/information', 'dashboard'), this.business).then(({data}) => {
+            axios.put(this.getDomain('v1/business/' + this.business.id, 'api'), this.business, {
+                withCredentials: true
+            }).then(({data}) => {
                 this.business = data;
 
                 this.is_processing = false;
@@ -237,7 +302,7 @@ export default {
             }).catch(({response}) => {
                 if (response.status === 422) {
                     _.forEach(response.data.errors, (value, key) => {
-                        this.errors[key] = _.first(value);
+                        this.errors[key.replace('.', '__')] = _.first(value);
                     });
 
                     this.showError(_.first(Object.keys(this.errors)));
@@ -258,7 +323,8 @@ export default {
 
             form.append('image', this.image);
 
-            axios.post(this.getDomain('business/' + this.business.id + '/basic-details/logo', 'dashboard'), form, {
+            axios.post(this.getDomain('v1/business/' + this.business.id + '/logo', 'api'), form, {
+                withCredentials: true,
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -276,7 +342,9 @@ export default {
             });
         },
         deleteImage(){
-            axios.delete(this.getDomain('business/' + this.business.id + '/basic-details/logo', 'dashboard')).then(({data}) => {
+            axios.delete(this.getDomain('v1/business/' + this.business.id + '/logo', 'api'), {
+                withCredentials: true
+            }).then(({data}) => {
                 this.image = null;
                 this.logo_url = this.default_logo_url;
             }).catch(({error}) => {

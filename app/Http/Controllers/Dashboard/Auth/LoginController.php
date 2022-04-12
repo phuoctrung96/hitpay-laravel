@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard\Auth;
 use App\Business\Xero;
 use App\Exceptions\AuthenticationSecretEnabledException;
 use App\Http\Controllers\Controller;
+use App\Notifications\User\LoginNotification;
 use App\Services\XeroApiFactory;
 use App\User;
 use App\XeroOrganization;
@@ -137,6 +138,8 @@ class LoginController extends Controller
                 $this->clearLoginAttempts($request);
 
                 if ($request->expectsJson()) {
+                    $user = Auth::user();
+                    $user->notify(new LoginNotification);
                     return Response::json([
                         'redirect_url' => $request->session()->pull('url.intended', $this->defaultRedirectTo()),
                     ]);
@@ -223,6 +226,7 @@ class LoginController extends Controller
         Auth::login($user, true);
 
         if ($request->expectsJson()) {
+            $user->notify(new LoginNotification);
             return Response::json([
                 'redirect_url' => $request->session()->pull('url.intended', $this->defaultRedirectTo()),
             ]);

@@ -3,9 +3,6 @@
 namespace App\Actions\Business\Settings\Verification;
 
 use App\Business\Verification;
-use HitPay\Stripe\CustomAccount\Exceptions\AccountNotFoundException;
-use HitPay\Stripe\CustomAccount\Exceptions\GeneralException;
-use HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException;
 use Illuminate\Support\Facades;
 
 class MoreConfirm extends Action
@@ -17,6 +14,8 @@ class MoreConfirm extends Action
      */
     public function process() : Verification
     {
+        $isNotMyInfo = ( $this->data['fill_type'] ?? 'myinfo' ) !== 'myinfo';
+
         $data = json_decode($this->data['verification'], true);
 
         $rules = [
@@ -28,6 +27,7 @@ class MoreConfirm extends Action
             'dob' => 'nullable|string',
             'regadd' => 'nullable|string',
             'email' => 'nullable|string',
+            'business_description' => 'nullable|string',
         ];
 
         if ($this->data['type'] === 'business') {
@@ -38,19 +38,24 @@ class MoreConfirm extends Action
             $rules['registration_date'] = 'nullable|string';
             $rules['primary_activity-desc'] = 'nullable|string';
             $rules['address'] = 'nullable|string';
-            $rules['shareholders.*'] = 'required|string';
-            $rules['shareholders_first_name.*'] = 'required|string';
-            $rules['shareholders_last_name.*'] = 'required|string';
-            $rules['shareholders_id_number.*'] = 'required|string';
-            $rules['shareholders_dob.*'] = 'required|string';
-            $rules['shareholders_address.*'] = 'required|string';
-            $rules['shareholders_postal.*'] = 'required|string';
-            $rules['shareholders_email.*'] = 'nullable|email';
+
+            // Maybe this will cause some issue for cognito
+            //
+            if ($isNotMyInfo) {
+                $rules['shareholders.*'] = 'required|string';
+                $rules['shareholders_first_name.*'] = 'required|string';
+                $rules['shareholders_last_name.*'] = 'required|string';
+                $rules['shareholders_id_number.*'] = 'required|string';
+                $rules['shareholders_dob.*'] = 'required|string';
+                $rules['shareholders_address.*'] = 'required|string';
+                $rules['shareholders_postal.*'] = 'required|string';
+                $rules['shareholders_email.*'] = 'nullable|email';
+            }
         }
 
-        Facades\Validator::make($data, $rules)->validate();
+        $data = Facades\Validator::make($data, $rules)->validate();
 
-        if ($this->data['type'] === 'business') {
+        if ($isNotMyInfo && $this->data['type'] === 'business') {
             $this->validateShareholder($data);
         }
 
@@ -75,15 +80,17 @@ class MoreConfirm extends Action
             'submitted_data' => $verificationData,
             'verified_at' => $verification->freshTimestamp(),
             'identity_documents' => isset($this->identityDocs) ? json_encode($this->identityDocs) : null,
+            'supporting_documents' => isset($this->supportedDocs) ? json_encode($this->supportedDocs) : null,
             'business_description' => $data['business_description'] ?? null,
         ]);
 
+        $this->business->verified_wit_my_info_sg = true;
+
+        $this->business->save();
+
         $this->updateBusinessAddressFromVerification($verification);
 
-        // set queue job on process
-        $this->updateStripeInit();
-
-        \App\Jobs\Business\Stripe\Person\CreatePersonFromVerificationJob::dispatch($verification, $data);
+        $this->addPersonToStripeIfRequired();
 
         return $verification;
     }

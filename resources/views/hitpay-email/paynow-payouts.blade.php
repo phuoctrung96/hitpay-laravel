@@ -26,7 +26,7 @@
     <p style="font-family: monospace">Net Payout Amount&nbsp;&nbsp;&nbsp; : {{ getFormattedAmount($transfer->currency, $transfer->amount) }}</p>
     <br>
     <p>Login to HitPay Dashboard and navigate to Sales and Reports > Bank Payouts to view the breakdown of payout.</p>
-    <p>If you have any questions, please contact us on WhatsApp at +65 98644718</p>
+    <p>If you have any questions, please contact us on WhatsApp at +65 89518262</p>
     <p>Best,</p>
     <p>Team HitPay</p>
 @endsection

@@ -191,6 +191,46 @@ class HomeController extends Controller
     }
 
 
+
+    public function searchProducts(Business $business, Request $request)
+    {
+        $search = $request->post('query');
+
+        $query = $business
+            ->setConnection('mysql_read')
+            ->products()
+            ->whereRaw(" MATCH (name) AGAINST (? IN BOOLEAN MODE)", $search)
+            ->whereNotNull('published_at');
+
+        $products = $query->get();
+
+        $product_attrs = [];
+        $featured_product_attrs = [];
+        $featured_products = [];
+
+        foreach ($products as $product) {
+            $product_attrs['image'][] = $product->display('image');
+            $product_attrs['price'][] = $product->display('price');
+            $product_attrs['available'][] = $product->isAvailable();
+
+            if($product->is_pinned) {
+                $featured_product_attrs['image'][] = $product->display('image');
+                $featured_product_attrs['price'][] = $product->display('price');
+                $featured_product_attrs['available'][] = $product->isAvailable();
+
+                $productObj = $this->getProductObject($product);
+                $featured_products[] = $productObj;
+            }
+        }
+
+        return Response::json(['products' => array_values($products->toArray()),
+            'product_attrs' => $product_attrs,
+            'featured_products' => $featured_products,
+            'featured_product_attrs' => $featured_product_attrs
+        ]);
+    }
+
+
     public function showIntroduction(Business $business)
     {
         return Response::view('shop.intro', compact('business'));

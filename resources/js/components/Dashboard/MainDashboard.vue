@@ -243,11 +243,12 @@ export default {
       return this.hasProviders && !this.daily_data.providers.find(p => p === 'stripe_sg')
     },
     todayData () {
+      let businessCurrency = this.business.currency;
       return [
         {
-          title: 'SGD Sales',
+          title: businessCurrency.toUpperCase() + ' Sales',
           dollarSign: true,
-          text: this.daily_data.currencies.find(c => c.currency === 'sgd').amount
+          text: this.daily_data.currencies.find(c => c.currency === businessCurrency).amount
         },
         {
           title: 'USD Sales',

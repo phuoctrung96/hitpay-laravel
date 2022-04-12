@@ -72,11 +72,21 @@
 
     <div class="form-group">
         <label for="mcc" class="small text-secondary">MCC</label>
-        <input id="mcc" v-model="form.mcc" class="form-control" :class="{
-            'is-invalid': errors.mcc,
-        }" autocomplete="off" :disabled="disabled">
+
+        <select 
+          v-model="form.mcc"
+          :disabled="disabled"
+          class="custom-select">          
+          <option
+            v-for="opt in business_categories"
+            :key="opt.id"
+            :value="opt.code">
+            {{ opt.category }}
+          </option>
+        </select>
+
         <span class="invalid-feedback" role="alert">{{ errors.mcc }}</span>
-    </div>
+    </div>    
 
     <div class="form-group">
         <label for="password" class="small text-secondary">Enter Your HitPay Account Password</label>
@@ -136,7 +146,8 @@ export default {
     provider: Object,
     uen: String,
     mcc: String,
-    verification: Object
+    verification: Object,
+    business_categories: Array    
   },
   data () {
     return {

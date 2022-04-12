@@ -67,6 +67,24 @@
                 </div>
                 @endif
             </div>
+
+            @if ($productsCategories->lastPage() > 1)
+            <div class="pagination-invoice">
+                <ul class="pagination">
+                    <li class="page-item first{{ ($productsCategories->currentPage() == 1) ? ' disabled' : '' }}" >
+                        <a class="page-link" href="{{ $productsCategories->url(1) }}">Prev</a>
+                    </li>
+                    @for ($i = 1; $i <= $productsCategories->lastPage(); $i++)
+                        <li class="page-item page-number {{ ($productsCategories->currentPage() == $i) ? ' active' : '' }}">
+                            <a class="page-link" href="{{ $productsCategories->url($i) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    <li class="page-item last{{ ($productsCategories->currentPage() == $productsCategories->lastPage()) ? ' disabled' : '' }}">
+                        <a class="page-link" href="{{ $productsCategories->url($productsCategories->currentPage()+1) }}" >Next</a>
+                    </li>
+                </ul>
+            </div>
+            @endif
         </div>
     </div>
 @endsection

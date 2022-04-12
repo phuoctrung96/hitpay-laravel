@@ -6,19 +6,14 @@ use App\Business;
 use App\BusinessShopifyStore;
 use App\Http\Controllers\Controller;
 use App\Services\Shopify\ShopifyApp;
-use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
-use Laravel\Socialite\Facades\Socialite;
-use Laravel\Socialite\Two\InvalidStateException;
-use SocialiteProviders\Manager\Config as SocialiteConfig;
 
 class ShopifyPaymentController extends Controller
 {
@@ -30,25 +25,7 @@ class ShopifyPaymentController extends Controller
         $this->middleware('auth');
     }
 
-    /**
-     * @param \App\Business $business
-     *
-     * @return \Illuminate\Http\Response
-     * @throws \Illuminate\Auth\Access\AuthorizationException
-     */
-    public function index(Business $business)
-    {
-        abort(404);
-    }
-
-    /**
-     * Select business for authentication
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function selectBusiness(Request $request)
+    public function index(Request $request)
     {
         $user = Auth::user();
 
@@ -61,73 +38,9 @@ class ShopifyPaymentController extends Controller
             App::abort(403, 'Wow, your account is having multiple businesses, please contact us.');
         }
 
-        return Response::redirectToRoute('dashboard.business.payment.integration.shopify.redirect', [
-                'business_id' => $user->businessesOwned->first()->getKey(),
-            ] + $request->all());
-    }
-
-    /**
-     * @param Request $request
-     * @param Business $business
-     * @return mixed
-     * @throws \Illuminate\Auth\Access\AuthorizationException
-     */
-    public function redirect(Request $request, Business $business)
-    {
-        Gate::inspect('update', $business)->authorize();
-
-        $this->hmacCheck($request);
-
-        $domain = $request->get('shop');
-
-        $shopify = '.myshopify.com';
-
-        if (Str::endsWith($domain, $shopify)) {
-            $domain = str_replace($shopify, '', $domain);
-        }
-
-        $config = new SocialiteConfig(
-            Config::get('services.shopify.client_id_v2'),
-            Config::get('services.shopify.client_secret_v2'),
-            URL::route('dashboard.payment.integration.shopify.authorize'),
-            [
-                'subdomain' => $domain,
-            ]
-        );
-
-        $request->session()->put('shopify_app', [
-            'shopify_domain' => $domain,
-            'business_id' => $business->getKey(),
-        ]);
-
-        return Socialite::with('shopify')->setConfig($config)->scopes([
-            'write_payment_gateways',
-            'write_payment_sessions',
-            'read_payment_gateways',
-            'read_payment_sessions',
-        ])->redirect();
-    }
-
-    /**
-     * Redirect the authorization to the actual path.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function doAuthorizationRedirection(Request $request)
-    {
-        $this->hmacCheck($request);
-
-        $shopifyApp = $request->session()->pull('shopify_app');
-
-        if ($shopifyApp['shopify_domain'].'.myshopify.com' !== $request->get('shop')) {
-            App::abort(404);
-        }
-
         return Response::redirectToRoute('dashboard.business.payment.integration.shopify.authorize', [
-                'business_id' => $shopifyApp['business_id'],
-            ] + $request->all());
+            'business_id' => $user->businessesOwned->first()->getKey(),
+        ] + $request->all());
     }
 
     /**
@@ -135,6 +48,7 @@ class ShopifyPaymentController extends Controller
      * @param Business $business
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
      * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws \Exception
      */
     public function authorizeAccount(Request $request, Business $business)
     {
@@ -142,35 +56,19 @@ class ShopifyPaymentController extends Controller
 
         Gate::inspect('update', $business)->authorize();
 
-        try {
-            $clientId = Config::get('services.shopify.client_id_v2');
-            $clientSecret = Config::get('services.shopify.client_secret_v2');
-            $config = new \SocialiteProviders\Manager\Config($clientId, $clientSecret, '');
+        $sessionShopifyUser = $request->session()->get('shopify_app_manage_' . $request->get('shop'));
 
-            /**
-             * @var \SocialiteProviders\Manager\OAuth2\User $shopifyUser
-             */
-            $shopifyUser = Socialite::driver('shopify')->setConfig($config)->user();
-        } catch (ClientException $exception) {
-            $body = json_decode($exception->getResponse()->getBody()->getContents(), true);
-
-            if ($body !== false && $body['error'] === 'invalid_request') {
-                return Response::redirectToRoute('dashboard.business.payment.integration.shopify.redirect', [
-                        'business_id' => $business->getKey(),
-                    ] + $request->all());
-            }
-
-            throw $exception;
-        } catch (InvalidStateException $exception) {
-            return Response::redirectToRoute('dashboard.business.payment.integration.shopify.redirect', [
-                'business_id' => $business->getKey(),
-            ]);
+        if ($sessionShopifyUser == "") {
+            throw new \Exception("Have issue on shopify user null");
         }
+
+        $shopifyUser = $sessionShopifyUser['shopifyUser'];
 
         $businessShopifyStores = $business->shopifyStores()->get();
 
-        $shopifyName = $shopifyUser->getName();
-        $shopifyDomain = $shopifyUser->getNickname();
+        $shopifyName = $shopifyUser->name;
+
+        $shopifyDomain = $shopifyUser->nickname;
 
         $newAuthenticated = true;
 
@@ -260,7 +158,7 @@ class ShopifyPaymentController extends Controller
      * @return \Illuminate\Http\RedirectResponse
      * @throws \Exception
      */
-    public function confirm(Request $request, Business $business)
+    public function confirm(Request $request, Business $business): \Illuminate\Http\RedirectResponse
     {
         $this->hmacCheck($request);
 
@@ -268,10 +166,19 @@ class ShopifyPaymentController extends Controller
 
         $shopifyUser = $shopifyApp['shopifyUser'];
 
+        Log::info('shopify users install ---------');
+        Log::info(json_encode($shopifyUser));
+
         // install app
         $urlCallback = ShopifyApp::installApp($business, $shopifyUser);
 
-        return Redirect::to($urlCallback);
+        // setting up iframe protection
+        // https://shopify.dev/apps/store/security/iframe-protection
+        $headers = [
+            'Content-Security-Policy' => "frame-ancestors https://{$shopifyUser->getNickname()} https://admin.shopify.com"
+        ];
+
+        return Redirect::to($urlCallback)->withHeaders($headers);
     }
 
     /**
@@ -299,9 +206,9 @@ class ShopifyPaymentController extends Controller
             asort($parameters);
 
             $parameters = implode('&', $parameters);
-            $hitpayHmac = hash_hmac('sha256', $parameters, Config::get('services.shopify.client_secret_v2'));
+            $hitPayHmac = hash_hmac('sha256', $parameters, Config::get('services.shopify.client_secret_v2'));
 
-            if ($request->get('hmac') !== $hitpayHmac) {
+            if ($request->get('hmac') !== $hitPayHmac) {
                 App::abort(404);
             }
         }

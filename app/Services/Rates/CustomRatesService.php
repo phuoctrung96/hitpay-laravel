@@ -51,16 +51,7 @@ class CustomRatesService
             PaymentProviderEnum::STRIPE_MALAYSIA,
             PaymentProviderEnum::STRIPE_SINGAPORE,
         ])) {
-            $paymentProvider->rates->each(function (PaymentProviderRate $rate) use ($method, $channel) {
-                if ($method === $rate->method && $channel === $rate->channel) {
-                    throw ValidationException::withMessages([
-                        'channel' => 'This selected channel is already assigned with '.str_replace('_', ' ',
-                                $rate->method).'.',
-                        'method' => 'This selected method is already assigned with '.str_replace('_', ' ',
-                                $rate->channel).'.',
-                    ]);
-                }
-            });
+            $this->validateMultiMethodProvider($paymentProvider, $method, $channel);
 
             $rule = [
                 'method' => [
@@ -76,11 +67,7 @@ class CustomRatesService
                 ],
             ];
         } elseif ($paymentProvider->payment_provider === PaymentProviderEnum::GRABPAY) {
-          $paymentProvider->rates->each(function (PaymentProviderRate $rate) use (&$channels) {
-            if (($key = array_search($rate->channel, $channels)) !== false) {
-                unset($channels[$key]);
-            }
-          });
+          $this->validateMultiMethodProvider($paymentProvider, $method, $channel);
 
           $rule = [
             'method' => [
@@ -108,6 +95,24 @@ class CustomRatesService
                     ]),
                 ],
             ];
+        } elseif ($paymentProvider->payment_provider === PaymentProviderEnum::SHOPEE_PAY) {
+          $this->validateSingleMethodProvider($paymentProvider, $method, $channels);
+
+          $rule = [
+            'method' => [
+                'required',
+                Rule::in([ PaymentMethodType::SHOPEE ]),
+            ],
+          ];            
+        } elseif ($paymentProvider->payment_provider === PaymentProviderEnum::ZIP) {
+          $this->validateSingleMethodProvider($paymentProvider, $method, $channels);
+
+          $rule = [
+            'method' => [
+                'required',
+                Rule::in([ PaymentMethodType::ZIP ]),
+            ],
+          ];
         }
 
         return array_merge($rule, [
@@ -126,5 +131,26 @@ class CustomRatesService
                 'max:100',
             ],
         ]);
+    }
+
+    private function validateSingleMethodProvider (PaymentProvider $paymentProvider, string $method, &$channels) {
+      $paymentProvider->rates->each(function (PaymentProviderRate $rate) use (&$channels) {
+        if (($key = array_search($rate->channel, $channels)) !== false) {
+            unset($channels[$key]);
+        }
+      });
+    }
+
+    private function validateMultiMethodProvider (PaymentProvider $paymentProvider, string $method, string $channel) {
+      $paymentProvider->rates->each(function (PaymentProviderRate $rate) use ($method, $channel) {
+        if ($method === $rate->method && $channel === $rate->channel) {
+            throw ValidationException::withMessages([
+                'channel' => 'This selected channel is already assigned with '.str_replace('_', ' ',
+                        $rate->method).'.',
+                'method' => 'This selected method is already assigned with '.str_replace('_', ' ',
+                        $rate->channel).'.',
+            ]);
+        }
+      });
     }
 }

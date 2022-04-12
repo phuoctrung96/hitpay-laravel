@@ -1,5 +1,5 @@
 <template>
-    <nav class="left-side-menu d-flex flex-column navbar-expand-md">
+    <nav class="left-side-menu navbar-expand-md">
         <div
             class="p-2 p-md-0 pt-md-5 top-line d-flex justify-content-between justify-content-md-center align-items-center">
       <span class="d-inline d-md-none">
@@ -96,6 +96,7 @@ export default {
                 {
                     title: 'Invoicing',
                     icon: 'invoice.svg',
+                    child_title: 'Try me',
                     path: '/business/:business_id/invoice',
                     visible: this.isVisibleMenuItem('canOperateInvoicing'),
                 },
@@ -174,6 +175,13 @@ export default {
                     ? -1
                     : id
                 : id
+
+            let item = document.getElementById(id);
+            if(this.menuExpanded != -1) {
+                item.classList.add('hidden-try-me');
+            }else{
+                item.classList.remove('hidden-try-me');
+            }
         },
         processMenuItem(item, rootParent, id) {
             let newId = id
@@ -284,23 +292,24 @@ $backColor: #011B5F;
         @include padded-vscroll-bar(16px, $backColor);
 
         .menu-items-container {
+            padding: 0px 12px 0px 17px;
             @media screen and (max-width: 768px) {
                 height: 100%;
             }
 
             @media screen and (min-width: 768px) {
-                margin-top: 75px;
+                margin-top: 45px;
             }
 
-            .menu-item-main {
-                &:not(:last-child) {
-                    margin-bottom: 16px;
-                }
+            // .menu-item-main {
+            //     &:not(:last-child) {
+            //         margin-bottom: 16px;
+            //     }
 
-                :not(:last-child) {
-                    margin-bottom: 16px;
-                }
-            }
+            //     :not(:last-child) {
+            //         margin-bottom: 16px;
+            //     }
+            // }
         }
     }
 }

@@ -99,13 +99,13 @@ class UpdateBusinessPerson extends Action
         Facades\DB::beginTransaction();
 
         try {
-            $this->uploadDocumentFile($businessPaymentProvider, $activePerson);
+            // $this->uploadDocumentFile($businessPaymentProvider, $activePerson);
 
             $activePerson = $this->updateBusinessPerson($activePerson, $params);
 
-            $this->updateStripePerson($activePerson);
+            // $this->updateStripePerson($activePerson);
 
-            $businessPaymentProvider = $this->updateAccount();
+            // $businessPaymentProvider = $this->updateAccount();
 
             Facades\DB::commit();
 

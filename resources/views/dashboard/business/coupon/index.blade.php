@@ -71,6 +71,24 @@
                 </div>
                 @endif
             </div>
+
+            @if ($paginator->lastPage() > 1)
+            <div class="pagination-invoice">
+                <ul class="pagination">
+                    <li class="page-item first{{ ($paginator->currentPage() == 1) ? ' disabled' : '' }}" >
+                        <a class="page-link" href="{{ $paginator->url(1) }}">Prev</a>
+                    </li>
+                    @for ($i = 1; $i <= $paginator->lastPage(); $i++)
+                        <li class="page-item page-number {{ ($paginator->currentPage() == $i) ? ' active' : '' }}">
+                            <a class="page-link" href="{{ $paginator->url($i) }}">{{ $i }}</a>
+                        </li>
+                    @endfor
+                    <li class="page-item last{{ ($paginator->currentPage() == $paginator->lastPage()) ? ' disabled' : '' }}">
+                        <a class="page-link" href="{{ $paginator->url($paginator->currentPage()+1) }}" >Next</a>
+                    </li>
+                </ul>
+            </div>
+            @endif
         </div>
     </div>
 @endsection

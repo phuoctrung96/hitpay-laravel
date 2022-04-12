@@ -4,9 +4,9 @@
 @section('business-content')
     <div class="row">
         <div class="col-12 col-md-12 col-lg-9">
-            <verification
-            :fill_type="'manual'">
-            </verification>
+            <manual-verification
+                :countries="{{ $countries }}"
+            ></manual-verification>
         </div>
     </div>
 @endsection

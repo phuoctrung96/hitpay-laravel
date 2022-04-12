@@ -9,8 +9,8 @@
                 <div class="card-body p-4">
                     <label class="small text-uppercase text-muted mb-3">Integrations</label>
                     <h2 class="text-primary mb-3 title">{{ $business->name }} will connected to Shopify Payment</h2>
-                    <p>You will connected to
-                        <span class="font-weight-bold">{{ $shopifyDomain }}</span> and subscribed to our app. If you want to stop using this app or want to connect to another shopify account, you may uninstall the app from your Shopify dashboard or click the red text below.
+                    <p>Your HitPay account will be connecting to
+                        <span class="font-weight-bold">{{ $shopifyDomain }}</span> and and it will be added as a payment app. If you want to stop using this app or want to connect to another shopify account, you may uninstall the app from your Shopify dashboard.
                     </p>
                 </div>
                 <div class="card-body bg-light border-top p-4">

@@ -3,12 +3,11 @@
 namespace App\Notifications\Business\Stripe;
 
 use App\Business\Transfer;
-use App\Models\Business\BankAccount;
 use App\Notifications\Notification;
-use HitPay\Data\Countries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\App;
+use Stripe\BankAccount;
 
 class NotifySuccessfulPayout extends Notification
 {
@@ -18,14 +17,14 @@ class NotifySuccessfulPayout extends Notification
 
     public string $csvFile;
 
-    public BankAccount $bankAccount;
+    public ?BankAccount $bankAccount;
 
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct(Transfer $transfer, BankAccount $bankAccount, string $csvFile)
+    public function __construct(Transfer $transfer, ?BankAccount $bankAccount, string $csvFile)
     {
         $this->transfer = $transfer;
 
@@ -61,21 +60,10 @@ class NotifySuccessfulPayout extends Notification
 
         $mailMessage = new MailMessage;
 
-        $country = Countries::get($this->transfer->business->country);
-
-        $bank = $country->banks()->where('id', $this->bankAccount->bank_swift_code)->first();
-
-        if ($bank === null) {
-            $bankName = "";
-        } else {
-            $bankName = $bank->toArray()['name'];
-        }
-
         $mailMessage->view('hitpay-email.stripe-payouts', [
             'title' => $title,
             'transfer' => $this->transfer,
             'bankAccount' => $this->bankAccount,
-            'bankName' => $bankName,
         ])->subject($title);
 
         if ($this->csvFile) {

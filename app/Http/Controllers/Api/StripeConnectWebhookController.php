@@ -4,9 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\Business\Stripe\Account\SyncFromWebhook;
 use App\Actions\Business\Stripe\Payouts;
-use App\Actions\Business\Stripe\Person\CreateFromWebhook;
-use App\Actions\Business\Stripe\Person\DeleteFromWebhook;
-use App\Actions\Business\Stripe\Person\UpdateFromWebhook;
 use App\Actions\Exceptions\BadRequest;
 use App\Business\PaymentProvider as PaymentProviderModel;
 use App\Http\Controllers\Controller;
@@ -109,11 +106,7 @@ class StripeConnectWebhookController extends Controller
             }
 
             if ($provider->payment_provider_account_type === 'custom') {
-                SyncFromWebhook::withData([
-                    'payment_provider' => $paymentProviderName,
-                ])->withStripeEvent($event)->process();
-
-                Log::info("A custom connected account has been updated via Stripe webhook, ");
+                ( new SyncFromWebhook )->process($this->paymentProvider->code, $event->account);;
             } else {
                 Customer::new($paymentProviderName);
 
@@ -138,37 +131,6 @@ class StripeConnectWebhookController extends Controller
             $business = $provider->business;
 
             Log::critical('The business `'.$business->name.'` [ID: '.$business->getKey().'] has de-authorized HitPay.');
-        } elseif ($event->type == Stripe\Event::PERSON_UPDATED) {
-            try {
-                $personUpdateFromWebhook = new UpdateFromWebhook();
-                $personUpdateFromWebhook->person($this->paymentProvider->code, $event->account, $event->data->object->id)
-                    ->process();
-            } catch (\Exception $exception) {
-                Log::critical("Warning when event person.updated, error:
-                    {$exception->getMessage()} ({$exception->getFile()}:
-                    {$exception->getLine()})\n{$exception->getTraceAsString()}");
-            }
-        } elseif ($event->type == Stripe\Event::PERSON_DELETED) {
-            try {
-                $personDeleteFromWebhook = new DeleteFromWebhook();
-                $personDeleteFromWebhook->person($this->paymentProvider->code, $event->account, $event->data->object->id)
-                    ->process();
-            } catch (\Exception $exception) {
-                Log::critical("Warning when event person.deleted, error:
-                    {$exception->getMessage()} ({$exception->getFile()}:
-                    {$exception->getLine()})\n{$exception->getTraceAsString()}");
-            }
-        } elseif ($event->type == Stripe\Event::PERSON_CREATED) {
-            try {
-                $personCreatedFromWebhook = new CreateFromWebhook();
-                $personCreatedFromWebhook->person($this->paymentProvider->code, $event->account, $event->data->object->id)
-                    ->setCreationMode()
-                    ->process();
-            } catch (\Exception $exception) {
-                Log::critical("Warning when event person.created, error:
-                    {$exception->getMessage()} ({$exception->getFile()}:
-                    {$exception->getLine()})\n{$exception->getTraceAsString()}");
-            }
         }
 
         return Response::json();
@@ -204,7 +166,7 @@ class StripeConnectWebhookController extends Controller
                 throw $exception;
             }
 
-            Log::error($exception->getMessage());
+            Log::notice($exception->getMessage());
         }
     }
 }

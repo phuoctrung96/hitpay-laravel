@@ -28,6 +28,7 @@
                               <span v-if="campaignCashback" class="small d-block">For this transaction the customer has enjoyed a ${{ (campaignCashback.amount/100).toFixed(2)}} cashback, the maximum refund amount is ${{ (maxRefundAmount/100).toFixed(2)}}</span>
                               <span v-if="error" class="text-danger" role="alert"><small>{{ error }}</small></span>
                           </div>
+                          <a href="https://hitpay.zendesk.com/hc/en-us/articles/900004328183-What-are-the-charges-for-refunds-and-chargebacks-" target="_blank">What are the charges for refunds?</a>
                         </template>
 
                         <div class="text-right">

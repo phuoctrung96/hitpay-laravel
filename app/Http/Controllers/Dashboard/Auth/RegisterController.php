@@ -102,7 +102,11 @@ class RegisterController extends Controller
 
             $route = 'dashboard.business.create';
         } else {
-            $route = 'dashboard.home';
+            $extra = [
+                'src' => 'registration',
+            ];
+
+            $route = 'dashboard.business.create';
         }
 
         if($request->has('partner_referral')) {

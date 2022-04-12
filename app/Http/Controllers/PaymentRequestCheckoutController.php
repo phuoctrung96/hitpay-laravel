@@ -156,7 +156,7 @@ class PaymentRequestCheckoutController extends Controller
 
             $params['alreadyPaid'] = false;
 
-            $this->addDropInParams($params);
+            $this->addDropInParams($params, $businessManager);
         }
 
         return Response::json($params)->header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -198,7 +198,7 @@ class PaymentRequestCheckoutController extends Controller
 
             $params['alreadyPaid'] = false;
 
-            $this->addDropInParams($params);
+            $this->addDropInParams($params, $businessManager);
         }
 
         return Response::json($params)->header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -436,7 +436,7 @@ class PaymentRequestCheckoutController extends Controller
         return $method;
     }
 
-    function addDropInParams(&$params)
+    function addDropInParams(&$params, $businessManager)
     {
         $business = $params['business'];
 
@@ -444,7 +444,8 @@ class PaymentRequestCheckoutController extends Controller
         // replace business with filtered version
         $params['business'] = $business->getFilteredData();
         // stripe
-        $params['stripePkey'] = config('services.stripe.sg.key');
+        $params['stripePkey'] = $businessManager->getStripePublishableKey($business);
+        
         // pusher
         $params['pusher'] = [
             'key' => config('broadcasting.connections.pusher.key'),
@@ -522,7 +523,7 @@ class PaymentRequestCheckoutController extends Controller
             $paymentMethods = $businessManager->getBusinessPaymentMethods($business, $defaultLink);
         } else {
             // payment request mode
-            if (!$paymentMethods = $businessManager->getBusinessPaymentRequestMethods($business, $paymentRequest->payment_methods)) {
+            if (!$paymentMethods = $businessManager->getBusinessPaymentRequestMethods($business, $paymentRequest->payment_methods, $paymentRequest->currency)) {
                 $paymentMethods = $businessManager->getBusinessProviderPaymentMethods($business, $provider, $paymentRequest->currency);
             }
         }

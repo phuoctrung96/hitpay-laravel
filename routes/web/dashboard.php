@@ -90,11 +90,9 @@ Route::namespace('Dashboard')->group(function () {
                         Route::get('{currency}', 'BalanceController@showCurrencyPage')->name('currency');
                     });
 
-                    Route::prefix('user-management')->name('users.')->group(function() {
-                        Route::get('/', 'UserController@index')->name('index');
-                        Route::post('invite', 'UserController@invite')->name('invite');
-                        Route::post('{id}/update', 'UserController@update')->name('update');
-                        Route::get('{id}/detach', 'UserController@detach')->name('detach');
+                    Route::prefix('role-restrictions')->name('restrictions.')->group(function() {
+                        Route::get('/', 'RoleRestrictionsController@index')->name('index');
+                        Route::put('/', 'RoleRestrictionsController@update')->name('update');
                     });
                     Route::get('partners', function(\Illuminate\Http\Request $request, \App\Business $business){
                         return view('dashboard.business.partners.index',['business' => $business]);
@@ -262,9 +260,7 @@ Route::namespace('Dashboard')->group(function () {
 
                     Route::prefix('payment-integration/shopify')->name('payment.integration.shopify.')->group(function () {
                         Route::get('/', 'ShopifyPaymentController@index')->name('index');
-                        Route::get('redirect', 'ShopifyPaymentController@redirect')->name('redirect');
                         Route::get('authorize', 'ShopifyPaymentController@authorizeAccount')->name('authorize');
-
                         Route::get('/confirm', 'ShopifyPaymentController@confirm')->name('confirm');
                     });
 
@@ -331,7 +327,7 @@ Route::namespace('Dashboard')->group(function () {
                         Route::get('disconnect', 'XeroController@disconnect')->name('disconnect');
                     });
 
-                    Route::get('payment-provider', 'PaymentProviderController@home')->name('payment-provider.home');
+                    Route::get('payment-provider', 'PaymentProviderController@showHomePage')->name('payment-provider.home');
 
                     Route::prefix('payment-provider/paynow')->name('payment-provider.paynow.')->group(function () {
                         Route::get('/', 'PayNowController@showHomepage')->name('homepage');
@@ -355,7 +351,9 @@ Route::namespace('Dashboard')->group(function () {
                             Route::get('authorize', 'PaymentProviderController@authorizeAccount')->name('authorize');
                             Route::get('redirect', 'PaymentProviderController@doRedirection')->name('redirect');
                             Route::get('payout', 'PayoutController')->name('payout');
-                            Route::get('payout-custom', 'PayoutCustomController')->name('payout.custom');
+                            Route::get('payout-custom', 'PayoutCustomController@showPage')->name('payout.custom');
+                            Route::get('payout-custom/{b_transfer}/download', 'PayoutCustomController@download')
+                                ->name('payout.custom.download');
 
                             Route::get('onboard-verification', 'OnboardVerificationController@show')
                                 ->name('onboard-verification');
@@ -442,6 +440,7 @@ Route::namespace('Dashboard')->group(function () {
                         Route::get('/', 'ProductController@index')->name('index');
                         Route::post('/', 'ProductController@store')->name('store');
                         Route::get('create', 'ProductController@create')->name('create');
+                        Route::post('export', 'ProductController@export')->name('export');
                         Route::get('create-in-bulk', 'ProductController@createInBulk')->name('bulk');
                         Route::get('download-feed-template', 'ProductController@downloadFeedTemplate')->name('download-feed-template');
                         Route::post('upload-feed-template', 'ProductController@uploadFeedFile')->name('upload-feed-template');
@@ -512,7 +511,8 @@ Route::namespace('Dashboard')->group(function () {
                         Route::post('confirm/{b_verification?}', 'VerificationController@confirm')->name('confirm');
                         Route::post('delete/{b_verification}', 'VerificationController@delete')->name('delete');
                         Route::get('{type}/redirect', 'VerificationController@redirect')->name('redirect');
-                        Route::get('manual/{type?}', 'VerificationController@showManualPage')->name('manual');
+                        Route::get('manual/{type?}', 'ManualVerificationController@create')->name('manual');
+                        Route::post('manual', 'ManualVerificationController@store')->name('manual.store');
 
                         Route::post('more_confirm/{b_verification?}', 'VerificationMoreConfirmController@store')->name('more_confirm');
 
@@ -549,9 +549,9 @@ Route::namespace('Dashboard')->group(function () {
         });
 
         Route::prefix('payment-integration/shopify')->namespace('Business')->name('payment.integration.shopify.')->group(function () {
-            Route::get('/', 'ShopifyPaymentController@index')->name('home');
-            Route::get('redirect', 'ShopifyPaymentController@selectBusiness')->name('business.select');
-            Route::get('authorize', 'ShopifyPaymentController@doAuthorizationRedirection')->name('authorize');
+            Route::get('/', 'ShopifyPaymentController@index')->name('index');
+            Route::get('redirect', 'ShopifyOauthController@redirect')->name('redirect');
+            Route::get('authorize', 'ShopifyOauthController@doAuthorizationRedirection')->name('authorize');
         });
 
         Route::prefix('integration/xero')->namespace('Business')->name('integration.xero.')->group(function () {

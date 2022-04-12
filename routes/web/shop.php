@@ -30,6 +30,7 @@ Route::namespace('Shop')->group(function () {
         Route::post('checkout', 'CheckoutController@doCheckout')->name('.checkout');
         Route::get('checkout', 'CheckoutController@showPreCheckoutPage')->name('.show.checkout');
         Route::get('getJsonCoupon/{coupon_code}', 'CheckoutController@getJsonCoupon')->name('getJsonCoupon');
+        Route::get('product/search', 'HomeController@searchProducts')->name('.product.search');
         Route::get('product/{product_id}', 'ProductController@showProductPage')->name('.product');
         Route::post('product/category/{category_id}', 'HomeController@getProductWithCategory')->name('.getProductCategory');
         Route::post('product/{product_id}', 'CheckoutController@doExpressCheckout')->name('.product.checkouts');

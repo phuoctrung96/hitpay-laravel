@@ -7,6 +7,7 @@ use App\Actions\Business\Stripe\Charge\PaymentIntent\Capture as PaymentIntentCap
 use App\Actions\Business\Stripe\Charge\PaymentIntent\Confirm as PaymentIntentConfirm;
 use App\Actions\Business\Stripe\Charge\PaymentIntent\Create as PaymentIntentCreate;
 use App\Actions\Business\Stripe\Charge\Source\Create as SourceCreate;
+use App\Actions\Exceptions\BadRequest;
 use App\Business;
 use App\Business\Charge;
 use App\Enumerations\Business\Channel;
@@ -31,7 +32,7 @@ class ChargeController extends BaseController
      * @param \Illuminate\Http\Request $request
      * @param \App\Business $business
      *
-     * @return \App\Http\Resources\Business\PaymentIntent
+     * @return \App\Http\Resources\Business\PaymentIntent|\Illuminate\Http\JsonResponse
      * @throws \App\Exceptions\HitPayLogicException
      * @throws \Illuminate\Auth\Access\AuthorizationException
      * @throws \Illuminate\Validation\ValidationException
@@ -74,9 +75,16 @@ class ChargeController extends BaseController
 
         $business->charges()->save($charge);
 
-        $paymentIntent = PaymentIntentCreate::withBusiness($business)->businessCharge($charge)->data([
-            'method' => $paymentMethod ?? 'card',
-        ])->process();
+        try {
+            $paymentIntent = PaymentIntentCreate::withBusiness($business)->businessCharge($charge)->data([
+                'method' => $paymentMethod ?? 'card',
+                'terminal_id' => $data['terminal_id'] ?? null
+            ])->process();
+        } catch (BadRequest $exception) {
+            return Response::json([
+                'error_message' => 'Transaction Failed. Please complete card payments setup under Settings > Payment Methods in your hitpay dashboard.',
+            ], 400);
+        }
 
         return new PaymentIntent($paymentIntent);
     }

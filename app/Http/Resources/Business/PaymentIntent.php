@@ -45,6 +45,7 @@ class PaymentIntent extends JsonResource
                     if ($this->status === 'requires_source_action'
                         || $this->status === 'requires_action'
                         || $this->payment_provider_method === PaymentMethodType::CARD_PRESENT
+                        || $this->payment_provider_method === PaymentMethodType::FPX
                         || $this->payment_provider_method === PaymentMethodType::GRABPAY) {
                         if (isset($this->data['client_secret'])) {
                             $clientSecret = $this->data['client_secret'];

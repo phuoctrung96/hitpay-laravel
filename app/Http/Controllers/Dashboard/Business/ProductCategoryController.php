@@ -60,7 +60,7 @@ class ProductCategoryController extends Controller
     {
         Gate::inspect('view', $business)->authorize();
 
-        $productsCategories = $business->productCategories()->paginate(25);;
+        $productsCategories = $business->productCategories()->paginate(25);
 
         return Response::view('dashboard.business.product-categories.index', compact('business', 'productsCategories'));
     }

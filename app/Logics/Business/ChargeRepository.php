@@ -285,7 +285,7 @@ class ChargeRepository
                                 'metadata' => [
                                     'platform' => Config::get('app.name'),
                                     'version' => ConfigurationRepository::get('platform_version'),
-                                    'environment' => Config::get('env'),
+                                    'environment' => Config::get('app.env'),
                                     'business_id' => $chargeModel->business_id,
                                     'business_charge_id' => $chargeModel->getKey(),
                                 ],
@@ -297,7 +297,7 @@ class ChargeRepository
                                 'metadata' => [
                                     'platform' => Config::get('app.name'),
                                     'version' => ConfigurationRepository::get('platform_version'),
-                                    'environment' => Config::get('env'),
+                                    'environment' => Config::get('app.env'),
                                     'business_id' => $chargeModel->business_id,
                                     'business_charge_id' => $chargeModel->getKey(),
                                 ],
@@ -323,7 +323,7 @@ class ChargeRepository
                             'metadata' => [
                                 'platform' => Config::get('app.name'),
                                 'version' => ConfigurationRepository::get('platform_version'),
-                                'environment' => Config::get('env'),
+                                'environment' => Config::get('app.env'),
                                 'business_id' => $chargeModel->business_id,
                                 'business_charge_id' => $chargeModel->getKey(),
                             ],
@@ -335,7 +335,7 @@ class ChargeRepository
                             'metadata' => [
                                 'platform' => Config::get('app.name'),
                                 'version' => ConfigurationRepository::get('platform_version'),
-                                'environment' => Config::get('env'),
+                                'environment' => Config::get('app.env'),
                                 'business_id' => $chargeModel->business_id,
                                 'business_charge_id' => $chargeModel->getKey(),
                             ],
@@ -360,7 +360,7 @@ class ChargeRepository
                             'metadata' => [
                                 'platform' => Config::get('app.name'),
                                 'version' => ConfigurationRepository::get('platform_version'),
-                                'environment' => Config::get('env'),
+                                'environment' => Config::get('app.env'),
                                 'business_id' => $chargeModel->business_id,
                                 'business_charge_id' => $chargeModel->getKey(),
                             ],
@@ -374,7 +374,7 @@ class ChargeRepository
                             'metadata' => [
                                 'platform' => Config::get('app.name'),
                                 'version' => ConfigurationRepository::get('platform_version'),
-                                'environment' => Config::get('env'),
+                                'environment' => Config::get('app.env'),
                                 'business_id' => $chargeModel->business_id,
                                 'business_charge_id' => $chargeModel->getKey(),
                             ],

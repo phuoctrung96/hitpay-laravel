@@ -113,7 +113,7 @@ class InvoiceController extends Controller
             $status = null;
         }
         $paginator = $paginator->orderByDesc('id')->paginate(10);
-        $paginator->appends('status', $status);
+        $paginator->appends(request()->except('page'));
 
         $now = Carbon::now();
         $invoiceMonth = $invoiceMonth->where('status', '=', InvoiceStatus::PAID)
@@ -270,9 +270,8 @@ class InvoiceController extends Controller
                 'required_if:allow_partial_payments,true',
                 'string'
             ],
-            'attached_file' => [
+            'file_path' => [
                 'nullable',
-                'file'
             ]
         ];
 
@@ -339,6 +338,11 @@ class InvoiceController extends Controller
             Storage::disk($storageDefaultDisk)->put($path, file_get_contents($file));
 
             $invoice->attached_file = $attached_file;
+        }else{
+            if (!$data['file_path'] && $invoice->attached_file) {
+                Storage::delete($invoice->attached_file);
+                $invoice->attached_file = null;
+            }
         }
 
         $invoice = $business->invoices()->save($invoice);

@@ -100,6 +100,26 @@ class StoreSettingsController extends Controller
                 'string',
                 'max:500',
             ],
+            'url_facebook' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'url_instagram' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'url_twitter' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'url_tiktok' => [
+                'nullable',
+                'string',
+                'max:255',
+            ]
         ]);
 
 
@@ -118,6 +138,10 @@ class StoreSettingsController extends Controller
                 $business->shopSettings->enabled_shipping = $shopSettingsData['enabled_shipping'];
                 $business->shopSettings->is_redirect_order_completion = $shopSettingsData['is_redirect_order_completion'];
                 $business->shopSettings->url_redirect_order_completion = $shopSettingsData['url_redirect_order_completion'];
+                $business->shopSettings->url_facebook = $shopSettingsData['url_facebook'];
+                $business->shopSettings->url_instagram = $shopSettingsData['url_instagram'];
+                $business->shopSettings->url_twitter = $shopSettingsData['url_twitter'];
+                $business->shopSettings->url_tiktok = $shopSettingsData['url_tiktok'];
                 $business->shopSettings->save();
 
             } else $business->shopSettings()->create($shopSettingsData);
@@ -180,6 +204,10 @@ class StoreSettingsController extends Controller
         $data['seller_notes'] = $business->seller_notes;
         $data['is_redirect_order_completion'] = $business->is_redirect_order_completion;
         $data['url_redirect_order_completion'] = $business->url_redirect_order_completion;
+        $data['url_facebook'] = $business->url_facebook;
+        $data['url_instagram'] = $business->url_instagram;
+        $data['url_twitter'] = $business->url_twitter;
+        $data['url_tiktok'] = $business->url_tiktok;
 
         return Response::json($data);
     }

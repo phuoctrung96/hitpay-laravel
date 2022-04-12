@@ -112,18 +112,25 @@
                                         @else
                                             refunded at
                                         @endif
-                                        {{ $refund->created_at->toDateTimeString() }}.</span><br><small class="text-monospace">Reference ID: {{ $refund->id }}</small></li>
+                                        {{ $refund->created_at->toDateTimeString() }}.</span><br><small class="text-monospace">Reference ID: {{ $refund->id }}</small>
+                                        @if($charge->payment_provider === \App\Enumerations\PaymentProvider::DBS_SINGAPORE && isset($charge->data['txnInfo']))
+                                            <br><small class="text-monospace">Name: {{$charge->data['txnInfo']['senderParty']['name']}}</small>
+                                            <br><small class="text-monospace">Bank: {{$charge->data['txnInfo']['senderParty']['senderBankId']}}</small>
+                                        @endif
+                                        </li>
                             @endforeach
                         </ol>
                     </div>
                 @endif
                 @if ($charge->status === 'succeeded')
                     <div class="card-footer px-4 border-top">
-                        @if ($charge->payment_provider !== \App\Enumerations\PaymentProvider::DBS_SINGAPORE)
-                            <business-refund></business-refund>
-                        @else
-                            <business-paynow-refund></business-paynow-refund>
-                        @endif
+                        @can('canRefundCharges', $business)
+                            @if ($charge->payment_provider !== \App\Enumerations\PaymentProvider::DBS_SINGAPORE)
+                                <business-refund></business-refund>
+                            @else
+                                <business-paynow-refund></business-paynow-refund>
+                            @endif
+                        @endcan
                         <business-charge></business-charge>
                     </div>
                 @endif

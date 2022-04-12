@@ -12,8 +12,10 @@ use App\Http\Requests\RefundRequest;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Business\Refund as RefundResource;
 use App\Logics\Business\ChargeRepository;
+use App\Services\BusinessUserPermissionsService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response;
 
 class RefundController extends Controller
@@ -54,9 +56,8 @@ class RefundController extends Controller
      *      )
      * )
      */
-    public function store(RefundRequest $request)
+    public function store(RefundRequest $request, BusinessUserPermissionsService $businessUserPermissionsService)
     {
-
         $user = Auth::user();
 
         $charge = Charge::find($request->payment_id);
@@ -65,16 +66,14 @@ class RefundController extends Controller
 
         if (!$user->businesses->contains($charge->business->id)) {
             App::abort(403, 'User doesnt have access to the business');
+        }elseif(!$businessUserPermissionsService->can($user, $charge->business, 'canRefundCharges')){
+            App::abort(401, 'User is not authorized to do this action');
         }elseif ($charge->status !== ChargeStatus::SUCCEEDED) {
             App::abort(403, 'You can only refund a charge which is succeeded');
-        }elseif ($charge->balance !== null) {
-            App::abort(403, 'Maximum 1 refund per charge.');
         } elseif ($refundAmount > $charge->amount || $refundAmount + $charge->refunds->sum('amount') > $charge->amount) {
             App::abort(403, 'Total refund amount must be less than payment amount.');
-        }elseif (!in_array($charge->payment_provider_charge_method, $refund_payment_types)) {
+        } elseif (!in_array($charge->payment_provider_charge_method, $refund_payment_types)) {
             App::abort(403, 'Refund is only applicable if the initial charge was made with PayNow or Card');
-        }elseif ($charge->payment_provider_charge_method == PaymentMethodType::CARD && $request->amount > 1000){
-            App::abort(403, 'Maximum refund amount for cards should be 1000.');
         }
 
         if ($charge->payment_provider_charge_method === PaymentMethodType::PAYNOW){

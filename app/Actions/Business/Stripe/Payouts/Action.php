@@ -183,7 +183,7 @@ abstract class Action extends BaseAction
             'metadata' => [
                 'platform' => Facades\Config::get('app.name'),
                 'version' => ConfigurationRepository::get('platform_version'),
-                'environment' => Facades\Config::get('env'),
+                'environment' => Facades\Config::get('app.env'),
                 'business_id' => $this->businessId,
                 'business_transfer_id' => $this->businessTransfer->getKey(),
             ],
@@ -217,6 +217,8 @@ abstract class Action extends BaseAction
 
         $this->businessTransfer->save();
 
-        GenerateCsv::dispatch($this->businessTransfer);
+        if ($this->businessTransfer->status === 'paid' && !isset($this->businessTransfer->data['file'])) {
+            GenerateCsv::dispatch($this->businessTransfer);
+        }
     }
 }

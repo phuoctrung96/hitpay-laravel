@@ -261,7 +261,7 @@
                                     </div>
 
                                     <div
-                                        v-if="!dataOk && helperText"
+                                        v-if="helperText"
                                         class="helper-text font-weight-medium mt-5 mb-2">
                                         <ul>
                                             <li v-for="(ht, index) in helperText" :key="index">
@@ -304,9 +304,9 @@
                                                 </div>
 
                                                 <span class="text-2 mt-2 mb-4">Payment will be made to <span
-                                                    class="text-2 font-weight-medium">"HITPAY PAYMENTS - CUSTOMERS’ ACCOUNT"</span> on behalf of "{{
+                                                    class="text-2 font-weight-medium">"HITPAY PAYMENTS - CUSTOMERS’ ACCOUNT"</span> on behalf of <b>"{{
                                                         business.name
-                                                    }}"</span>
+                                                    }}"</b></span>
                                             </div>
                                         </div>
 
@@ -362,15 +362,16 @@
                                     </div>
 
                                     <div
+                                        v-show="errorMessage"
+                                        class="alert alert-danger align-self-center">
+                                        {{ errorMessage }}
+                                    </div>
+
+                                    <div
                                         v-show="charges.chosen_method === 'card'"
                                         key="options-card"
                                         class="options">
-                                        <div
-                                            v-show="errorMessage"
-                                            class="alert alert-danger">
-                                            {{ errorMessage }}
-                                        </div>
-
+                                       
                                         <div id="card-element" class="form-control bg-white p-2"></div>
 
                                         <div class="desktop-flex card-logos">
@@ -389,6 +390,16 @@
                                                 <p><i class="fas fa-spinner fa-spin fa-3x text-primary"></i></p>
                                             </div>
                                         </template>
+                                    </div>
+
+                                    <div
+                                      v-show="charges.chosen_method === 'fpx'"
+                                      key="options-fpx"
+                                      class="options options-fpx">
+
+                                      <div id="fpx-bank-element">
+                                        <!-- A Stripe Element will be inserted here. -->
+                                      </div>
                                     </div>
 
                                     <div
@@ -503,9 +514,7 @@
                                     <span
                                         v-if="charges.chosen_method === 'paynow_online'"
                                         class="mobile text-2-mobile">Payment will be made to <span
-                                        class="text-2-mobile font-weight-medium">“HITPAY PAYMENTS - CUSTOMERS’ ACCOUNT</span> on behalf of “{{
-                                            business.name
-                                        }}”</span>
+                                        class="text-2-mobile font-weight-medium">“HITPAY PAYMENTS - CUSTOMERS’ ACCOUNT</span> on behalf of <b>“{{ business.name }}”</b></span>
                                 </div>
                             </div>
                         </div>
@@ -658,7 +667,12 @@ export default {
             },
             errors: {
                 email: null,
-                amount: null
+                amount: null,
+                amountMin: false
+            },
+            minAmounts: {
+              fpx: 2,
+              zip: 2
             },
             shakingErrors: {
                 email: false,
@@ -672,6 +686,7 @@ export default {
             },
             cards: {
                 card: null,
+                fpx: null,
                 elements: null,
                 status: null,
                 stripe: null,
@@ -706,7 +721,8 @@ export default {
                 grabpay_paylater: 'grabpay_paylater2.png',
                 shopee_pay: 'shopee.png',
                 hoolah: 'hoolah.png',
-                zip: 'zip.png'
+                zip: 'zip.png',
+                fpx: 'fpx.png'
             },
             paymentMethodSetHeight: [
               'grabpay',
@@ -746,6 +762,7 @@ export default {
             },
             psElementMounted: false,
             cardElementMounted: false,
+            fpxElementMounted: false,
             emailEnterTimer: false,
             cardBrands: [
                 '/icons/payment-brands/visa-small.png',
@@ -777,7 +794,8 @@ export default {
             showTestPaymentNotice: this.show_test_payment,
             hoolahRedirect: '',
             shopeeQrUrl: '',
-            orderStatusPoll: null
+            orderStatusPoll: null,
+            fpxBankOk: false
         }
     },
     async created() {
@@ -924,10 +942,13 @@ export default {
                 case 'grabpay_paylater':
                 case 'hoolah':
                 case 'zip': {
-                    return this.in_progress || this.hasErrors
+                  return this.in_progress || this.hasErrors
                 }
+                case 'fpx': {
+                  return this.in_progress || this.hasErrors || !this.fpxBankOk
+                }                
                 default: {
-                    return true
+                  return true
                 }
             }
         },
@@ -987,7 +1008,13 @@ export default {
             let res = []
 
             if (this.errors.amount) {
+              if (this.errors.amountMin) {
+                if (this.minAmounts.hasOwnProperty(this.charges.chosen_method)) {
+                  res.push(`Minimum amount allowed for this method is ${this.minAmounts[this.charges.chosen_method].toFixed(2)}`)
+                }                
+              } else {
                 res.push('Enter a valid amount')
+              }
             }
 
             if (this.errors.email) {
@@ -1160,7 +1187,7 @@ export default {
             // checkout.charge_amount will always have a value in a floating point format
             const amount = this.getStripeAmount()
 
-            if (this.methods.includes('card')) {
+            if (this.methods.includes('card') || this.methods.includes('fpx')) {
                 if (this.show_payment_request_button === false) {
                     this.show_payment_request_button = true;
                     this.createStripePaymentRequest(amount)
@@ -1178,7 +1205,7 @@ export default {
         },
 
         async changeMethod(method, scroll = true) {
-            if (this.isValidInput() && !this.changingMethod) {
+            if (this.allowChangeMethod()) {
                 this.changingMethod = true
 
                 try {
@@ -1191,6 +1218,10 @@ export default {
                     }
 
                     this.charges.chosen_method = method
+
+                    // Check again to set or reset min amount error state
+                    this.isValidInput()
+
                     this.errorMessage = null
                     this.in_progress = false
 
@@ -1254,12 +1285,28 @@ export default {
 
                 // without setTimeout (even with zero delay) sometimes spinner will not be shown during QR generation
                 window.setTimeout(async () => {
-                  const {data} = await axios.post(this.base_url + 'charge/' + this.charges.charge_object.id + '/create-payment-intent', {
-                      method: this.charges.chosen_method,
-                      email: this.checkout.email,
-                      description: this.checkout.description,
-                      amount: this.checkout.charge_amount
-                  })
+                  let result;
+
+                  try {
+                      result = await axios.post(
+                          this.base_url + 'charge/' + this.charges.charge_object.id + '/create-payment-intent', {
+                              method : this.charges.chosen_method,
+                              email : this.checkout.email,
+                              description : this.checkout.description,
+                              amount : this.checkout.charge_amount
+                          })
+                  } catch ({ response }) {
+                      if (response.status === 400) {
+                          that.errorMessage = response.data.error_message;
+                          that.in_progress = false;
+                      } else {
+                          console.error(response);
+                      }
+
+                      return;
+                  }
+
+                  let data = result.data;
 
                   if (data.alreadyPaid) {
                       this.alreadyPaid()
@@ -1291,7 +1338,7 @@ export default {
                       } else {
                           this.disabled_payment_method_buttons = false
 
-                          if (this.charges.chosen_method === 'card') {
+                          if (this.charges.chosen_method === 'card') {                            
                               await this.cards.stripe.createPaymentMethod({
                                   type : "card",
                                   card : this.cards.card
@@ -1338,6 +1385,21 @@ export default {
                                       });
                                   }
                               });
+                          } else if (this.charges.chosen_method === 'fpx') {
+                            this.suppressBeforeUnload = true
+
+                            const res = await this.cards.stripe.confirmFpxPayment(this.existing_charge.payment_intent.client_secret, {
+                              payment_method: {
+                                fpx: this.cards.fpx
+                              },
+                              return_url: this.getDomain(`/redirect/fpx/${this.existing_charge.id}`, 'securecheckout')
+                            })
+
+                            if (res.error) {
+                              this.errorMessage = res.error.code === 'parameter_invalid_empty'
+                                ? 'Please select FPX bank'
+                                : res.error.message
+                            }
                           } else {
                             switch (this.charges.chosen_method) {
                               case 'wechat': {
@@ -1367,8 +1429,9 @@ export default {
 
                                 break
                               }
-                              case 'alipay': {
-                                window.open(data.alipay.redirect_url, '_blank')
+                              case 'alipay': {                                
+                                this.suppressBeforeUnload = true
+                                window.location.href = data.alipay.redirect_url
                                 break
                               }
                               case 'grabpay': {
@@ -1384,7 +1447,6 @@ export default {
 
                               case 'grabpay_direct':
                               case 'grabpay_paylater': {
-                                //window.open(data.redirect_url, '_blank')
                                 this.suppressBeforeUnload = true
                                 window.location.href = data.redirect_url
                                 break
@@ -1508,6 +1570,7 @@ export default {
         },
         checkAmount() {
             this.errors.amount = ''
+            this.errors.amountMin = false
 
             if (this.checkout.charge_amount) {
                 // remove ,
@@ -1518,9 +1581,16 @@ export default {
                 } else {
                     const numAmount = Number(filteredAmount)
 
-                    this.errors.amount = numAmount > 0.5
-                        ? ''
-                        : 'Amount should be greater then zero'
+                    if (numAmount > 0.5) {
+                      if (this.minAmounts.hasOwnProperty(this.charges.chosen_method)) {
+                        if (numAmount < this.minAmounts[this.charges.chosen_method]) {
+                          this.errors.amount = `Amount should be greater then ${this.minAmounts[this.charges.chosen_method].toFixed(2)}`
+                          this.errors.amountMin = true
+                        }
+                      }
+                    } else {
+                      this.errors.amount = 'Amount should be greater then zero'
+                    }
                 }
             } else {
                 this.errors.amount = 'Amount is required'
@@ -1558,6 +1628,16 @@ export default {
             })
 
             return !Boolean(this.errors.amount) && !Boolean(this.errors.email)
+        },
+
+        allowChangeMethod () {
+          let res = this.isValidInput()
+
+          if (!res) {
+            res = !this.errors.email && this.errors.amountMin
+          }
+          
+          return res && !this.changingMethod
         },
 
         createStripeCards() {
@@ -1598,6 +1678,31 @@ export default {
                     this.cardElementMounted = true
                 })
             }
+        },
+
+        createStripeFPX () {
+          if (!this.fpxElementMounted) {
+            this.cards.fpx = this.cards.elements.create('fpxBank', {
+              style: {
+                base: {
+                  // Add your base input styles here. For example:
+                  padding: '10px 12px',
+                  color: '#32325d',
+                  fontSize: '16px',
+                }
+              },
+              accountHolderType: 'company'
+            })
+
+            this.$nextTick(() => {
+              this.cards.fpx.mount('#fpx-bank-element')
+              this.fpxElementMounted = true
+            })
+
+            this.cards.fpx.on('change', (event) => {
+              this.fpxBankOk = event.complete
+            })
+          }
         },
 
         async createStripePaymentRequest(amount) {
@@ -1692,8 +1797,6 @@ export default {
                                             that.errorMessage = 'Unknown error';
                                             that.in_progress = false;
                                             that.disabled_payment_method_buttons = false;
-
-                                            console.log(data);
                                         }
                                     }).catch((response) => {
                                         ev.complete('fail');
@@ -1709,6 +1812,13 @@ export default {
                                             console.error(response);
                                         }
                                     });
+                                }
+                            }).catch(({response}) => {
+                                if (response.status === 400) {
+                                    that.errorMessage = response.data.error_message;
+                                    that.in_progress = false;
+                                } else {
+                                    console.error(response);
                                 }
                             })
                         })
@@ -1727,6 +1837,7 @@ export default {
             }
 
             this.createStripeCards()
+            this.createStripeFPX()
         },
 
         loadIcon(icon) {
@@ -1809,7 +1920,8 @@ export default {
                 case 'grabpay_direct':
                 case 'grabpay_paylater':
                 case 'hoolah':
-                case 'zip': {
+                case 'zip': 
+                case 'fpx': {
                     this.pay()
                     break
                 }
@@ -1851,8 +1963,19 @@ export default {
             this.clearTimeoutTimer()
 
             if (this.timeoutValue > 0) {
-                this.timeoutTimer = window.setTimeout(() => {
-                    this.isTimedOut = true
+                this.timeoutTimer = window.setTimeout(async () => {
+                    try {
+                      const res = await axios.get(`${this.base_url}charge/${this.charge.id}/charge-completed`)
+
+                      if (res.data.completed) {
+                          this.alreadyPaid()
+                      } else {
+                        this.isTimedOut = true  
+                      }
+
+                    } catch (error) {
+                      this.isTimedOut = true
+                    }
                 }, this.timeoutValue)
             }
         },
@@ -2532,6 +2655,23 @@ $emailContainerPadding: 12px;
 
                 &.options-card {
                   max-width: 300px;
+                }
+
+                &.options-fpx {
+                  min-width: 300px;
+
+                  #fpx-bank-element {
+                    width: 250px;
+
+                    @media screen and (max-width: $breakpoint) {
+                      margin-bottom: 16px;
+                    }
+
+                    @media screen and (min-width: $breakpoint) {
+                      margin-top: 48px;
+                      margin-bottom: 32px;
+                    }
+                  }
                 }
 
                 .bank-image {

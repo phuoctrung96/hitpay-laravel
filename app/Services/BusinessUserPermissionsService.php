@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Business;
 use App\Business\BusinessUser;
 use App\Enumerations\BusinessRole;
+use App\Enumerations\Restriction;
 use App\Models\BusinessPartner;
 use App\Role;
 use App\User;
@@ -46,6 +47,7 @@ class BusinessUserPermissionsService
         'canOperateSettingsXeroIntegration',
         'canOperateTaxSettings',
         'canManageUsers',
+        'canRestrictRoles',
         'canSendBalanceToBank',
         'canManageWallets',
         'canUpdateBusiness',
@@ -55,12 +57,14 @@ class BusinessUserPermissionsService
         'canDeleteAdminUsers',
         'canChangeBankAccount',
         'canExportCharges',
+        'canExportProducts',
         'canRemoveStripeAccount',
         'canOperateNotifications',
         'canSeePartnerPage',
         'canSeeSettingsPartners',
         'canOperateReferralProgram',
         'canOperatePaymentGatewayShopifyPaymentApp',
+        'canRefundCharges',
     ];
 
     public function get(BusinessUser $businessUser): array
@@ -350,6 +354,17 @@ class BusinessUserPermissionsService
         return $businessUser->isOwner() || $businessUser->isAdmin();
     }
 
+    private function canRestrictRoles(BusinessUser $businessUser): bool
+    {
+        if(auth()->user()->businessPartner instanceof BusinessPartner) {
+            return false;
+        }
+
+        return $businessUser->isOwner() || $businessUser->isAdmin();
+    }
+
+
+
     private function canSeeSettingsPartners(BusinessUser $businessUser): bool
     {
         if(auth()->user()->businessPartner instanceof BusinessPartner) {
@@ -374,6 +389,11 @@ class BusinessUserPermissionsService
         return !$businessUser->isCashier();
     }
 
+    private function canExportProducts(BusinessUser $businessUser)
+    {
+        return !$businessUser->isCashier();
+    }
+
     private function canSeePartnerPage()
     {
         return auth()->user()->businessPartner instanceof BusinessPartner;
@@ -387,5 +407,13 @@ class BusinessUserPermissionsService
     private function canOperatePaymentGatewayShopifyPaymentApp(BusinessUser $businessUser): bool
     {
         return !$businessUser->isCashier();
+    }
+
+    private function canRefundCharges(BusinessUser $businessUser): bool
+    {
+        if ($businessUser->isCashier() && $businessUser->role->hasRestriction(Restriction::REFUND, $businessUser->business))
+            return false;
+
+        return true;
     }
 }

@@ -2,22 +2,26 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\Business\Stripe\Charge\PaymentIntent\Capture;
 use App\Business\Charge;
+use App\Business\PaymentIntent;
 use App\Business\Refund;
 use App\Enumerations\Business\ChargeStatus;
+use App\Enumerations\Business\PaymentMethodType;
 use App\Exceptions\HitPayLogicException;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendExportedChargesToAdmin;
 use App\Jobs\SendExportedRefundsToAdmin;
+use App\Notifications\NotifyAdminAboutNonIdentifiableChargeSource;
+use Exception;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
-use App\Notifications\NotifyAdminAboutNonIdentifiableChargeSource;
 
 class ChargeController extends Controller
 {
@@ -131,6 +135,86 @@ class ChargeController extends Controller
     public function show(Request $request, Charge $charge)
     {
         return Response::view('admin.charge-single', compact('charge'));
+    }
+
+    public function showUncapturedPage(Request $request)
+    {
+        if ($request->has('charge_id')) {
+            $chargeId = $request->get('charge_id');
+
+            if (is_string($chargeId) && strlen($chargeId) > 0) {
+                $result = $this->isUncapturedCharge(Charge::find($chargeId));
+
+                if ($result instanceof Charge) {
+                    $charge = $result;
+                } elseif (is_string($result)) {
+                    $errorMessage = $result;
+                }
+            }
+        }
+
+        return Response::view('admin.charge.uncaptured', [
+            'charge' => $charge ?? false,
+            'errorMessage' => $errorMessage ?? null,
+        ]);
+    }
+
+    public function capture(Charge $charge)
+    {
+        $result = $this->isUncapturedCharge($charge, true);
+
+        $response = Response::redirectToRoute('admin.charge.uncaptured', [ 'charge_id' => $charge->getKey() ]);
+
+        if ($result instanceof PaymentIntent) {
+            try {
+                Capture::withBusinessPaymentIntent($result)->process();
+            } catch (Exception $exception) {
+                $exceptionClassName = get_class($exception);
+
+                Log::info(
+                    "{$exceptionClassName} - {$exception->getMessage()} ({$exception->getFile()}:{$exception->getLine()})\n{$exception->getTraceAsString()}"
+                );
+
+                return $response->with('errorMessage', $exception->getMessage());
+            }
+        } elseif (is_string($result)) {
+            return $response->with('errorMessage', $result);
+        }
+
+        return $response->with('successMessage', "The charge (ID : {$charge->getKey()}) has been captured.");
+    }
+
+    protected function isUncapturedCharge(?Charge $charge, bool $returnPaymentIntent = false)
+    {
+        if (!$charge instanceof Charge) {
+            return 'Charge not found with the given ID.';
+        }
+
+        if ($charge->status !== ChargeStatus::REQUIRES_PAYMENT_METHOD) {
+            return "This charge is not in status 'requires_payment_method', but '{$charge->status}'.";
+        }
+
+        $paymentIntents = $charge->paymentIntents()->get();
+
+        if ($paymentIntents->where('status', 'succeeded')->count() > 0) {
+            return "This charge is already having succeeded payment intents, but the charge status is not succeeded. Please contact developers.";
+        }
+
+        $cardPresented = $paymentIntents->where('payment_provider_method', PaymentMethodType::CARD_PRESENT);
+
+        if ($cardPresented->count() === 0) {
+            return "No card presented payment intent found for this charge.";
+        }
+
+        if ($cardPresented->count() > 1) {
+            return "More than 1 presented payment intent found for this charge. Please contact developer.";
+        }
+
+        if ($returnPaymentIntent) {
+            return $cardPresented->first();
+        }
+
+        return $charge;
     }
 
     public function markAsRefund(Request $request, Charge $charge)

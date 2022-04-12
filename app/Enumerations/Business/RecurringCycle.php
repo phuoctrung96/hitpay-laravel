@@ -11,4 +11,6 @@ class RecurringCycle extends Enumeration
     const MONTHLY = 'monthly';
 
     const YEARLY = 'yearly';
+
+    const SAVE_CARD = 'save_card';
 }

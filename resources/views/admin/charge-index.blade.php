@@ -195,6 +195,9 @@
             <admin-business-refund-export :type="'autorefunds'" class="mb-3"></admin-business-refund-export>
             <admin-business-refund-export :type="'cashbacks'"></admin-business-refund-export>
             <admin-business-referral-fees-export></admin-business-referral-fees-export>
+            <div class="mt-3">
+                <a class="btn btn-secondary" href="{{ route('admin.charge.uncaptured') }}">Capture</a>
+            </div>
         </div>
     </div>
 @endsection
