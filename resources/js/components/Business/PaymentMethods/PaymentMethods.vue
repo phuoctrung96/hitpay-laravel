@@ -141,10 +141,10 @@
             <div class="col-sm-5" v-if="item.payment_provider == method.slug">
               <div class="row" >
                 <div class="col-5 pb-2">Status</div>
-                <div class="col-7 pb-2"><span class="text-success">{{
+                <div class="col-7 pb-2"><span :class="item.payment_provider_status == 1 ? 'text-success' : 'text-danger'">{{
                       item.payment_provider_status == 1
                         ? "Connected"
-                        : "disabled"
+                        : "Disabled"
                     }}</span></div>
                 <div class="col-5 pb-2">Payments</div>
                 <div class="col-7 pb-2 font-weight-bold">Enabled</div>
@@ -155,19 +155,19 @@
             <div class="col-sm-7" v-if="item.payment_provider == method.slug">
               <div class="row">
                 <div class="col-5 pb-2">Pricing</div>
-                <div class="col-7 pb-2 font-weight-bold">3% + $0.50</div>
+                <div class="col-7 pb-2 font-weight-bold">{{item.fee[0]}}</div>
                 <div class="col-5 pb-2">Payout Schedule</div>
-                <div class="col-7 pb-2 font-weight-bold">2 Business Days</div>
+                <div class="col-7 pb-2 font-weight-bold">{{ item.fee[1] }} Business Days</div>
                 <div class="col-5 pb-2"> Integration</div> 
-                 <div class="col-7 pb-2"><span class="w-50"
-                      ><span class="badge badge-primary">Woo Commerce</span>
+                 <div class="col-7 pb-2"><span class="w-50">
+                   <!-- <span class="badge badge-primary">Woo Commerce</span>
                       <span class="badge badge-primary">Payment Links</span>
                       <span class="badge badge-primary">Invoice</span>
                       <span class="badge badge-primary">POS</span>
                       <span class="badge badge-primary">Online store</span>
                       <span class="badge badge-primary">Wix</span>
                       <span class="badge badge-primary">Shopify</span>
-                      <span class="badge badge-primary">Xero</span>
+                      <span class="badge badge-primary">Xero</span> -->
                       <button type="button" class="btn btn-primary mr-2">
                         + Add
                       </button></span
@@ -304,10 +304,10 @@ export default {
     },
   },
   methods: {
-    prepareComponent() {
-      this.getBusiness();
-      this.getBanksList();
-      this.getPaymentProviders();
+    async prepareComponent() {
+      await this.getBusiness();
+      await this.getBanksList();
+      await this.getPaymentProviders();
     },
 
     mounted() {
@@ -417,14 +417,14 @@ export default {
       }
     },
 
-    getBusiness() {
-      axios
+    async getBusiness() {
+      await axios
         .get(this.getDomain(`v1/business/${this.business_id}`, "api"), {
           withCredentials: true,
         })
         .then((response) => {
           this.business = response.data;
-          this.prepareSupportedPaymentProviders();
+          // this.prepareSupportedPaymentProviders();
         });
     },
 
@@ -645,8 +645,9 @@ export default {
     },
   },
 
-  mounted() {
-    this.prepareComponent();
+  async mounted() {
+    await this.prepareComponent();
+    await this.mounted();
   },
 };
 </script>
