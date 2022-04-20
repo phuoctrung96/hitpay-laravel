@@ -42,7 +42,7 @@ Vue.mixin({
             }
 
             if (path !== null) {
-                return domain + '/' + path;
+                return domain+ ':8000' + '/' + path;
             }
 
             return domain;

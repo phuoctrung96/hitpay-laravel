@@ -44,6 +44,8 @@ class Kernel extends HttpKernel
         'api' => [
             'throttle:60,1',
             'bindings',
+            \App\Http\Middleware\VerifyCsrfToken::class,
+
         ],
 
         'client_credentials' => [
@@ -80,6 +82,7 @@ class Kernel extends HttpKernel
         'payment.request.access' => \App\Http\Middleware\PaymentRequestCheckoutAccess::class,
         'shop.enabled' => \App\Http\Middleware\ShopIsEnabled::class,
         'partner' => PartnerMiddleware::class,
+        'cors' => \App\Http\Middleware\cors::class,
     ];
 
     /**

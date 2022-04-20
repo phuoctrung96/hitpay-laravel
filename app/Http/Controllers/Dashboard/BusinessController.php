@@ -352,6 +352,7 @@ class BusinessController extends Controller
         Gate::inspect('store', Business::class)->authorize();
 
         $business = BusinessRepository::store($request, Auth::user());
+        // dd('business');die();
 
         if(!empty(Auth::user()->xero_data)) {
             ApiKeyManager::create($business);

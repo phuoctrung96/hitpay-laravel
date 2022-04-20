@@ -30,6 +30,7 @@
     "dependencies": {
         "@splidejs/vue-splide": "^0.3.5",
         "announcekit-vue": "^2.0.4",
+        "bootstrap-icons": "^1.8.1",
         "bootstrap-select": "^1.13.18",
         "bootstrap-vue": "^2.21.2",
         "jw-vue-pagination": "^1.0.3",

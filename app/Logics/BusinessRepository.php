@@ -161,14 +161,17 @@ class BusinessRepository
                 $data['payment_provider'] = '';
             }
         } else {
+            
             $data['payment_provider'] = Customer::getStripePlatformByCountry($data['country']);
-
+            
             $customer = Customer::newByCountry($data['country'])->create('business_id:'.$data['id']);
+            // dd($data);die;
 
             $data['payment_provider_customer_id'] = $customer->id;
         }
 
         try {
+
             /** @var \App\Business $business */
             $business = DB::transaction(function () use ($user, $data, $request) : Business {
                 $code = $request->session()->get('business_referral');
