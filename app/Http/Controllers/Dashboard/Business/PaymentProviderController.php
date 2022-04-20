@@ -30,7 +30,7 @@ class PaymentProviderController extends Controller
      */
     public function showHomePage(Business $business) : Http\Response
     {
-        Facades\Gate::inspect('view', $business)->authorize();
+        // Facades\Gate::inspect('view', $business)->authorize();
 
         $availablePaymentProviders = $business->paymentProvidersAvailable()->pluck('data.code');
         $paymentProvidersDisabled = [];
