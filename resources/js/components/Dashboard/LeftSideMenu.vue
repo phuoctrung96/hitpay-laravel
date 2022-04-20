@@ -1,9 +1,15 @@
 <template>
     <nav class="left-side-menu navbar-expand-md">
         <div
-            class="p-2 p-md-0 pt-md-5 top-line d-flex justify-content-between justify-content-md-center align-items-center">
-      <span class="d-inline d-md-none">
-        {{ business.name }}
+            class="p-2 py-3 p-md-0 pt-md-5 top-line d-flex justify-content-between justify-content-md-center align-items-center flex-md-row flex-row-reverse">
+      <span class="d-inline d-md-none flex-grow-1 text-center text-white">
+        <svg
+                class=""
+                height="30"
+                viewBox="0 0 576 144">
+                <use xlink:href='/images/hitpay.svg#hitpay'></use>
+            </svg>
+
       </span>
 
             <svg
@@ -284,6 +290,7 @@ $backColor: #011B5F;
 
     .navbar-toggler {
         color: white;
+        background-color: #021b60;
     }
 
     #navbarNavDropdown {

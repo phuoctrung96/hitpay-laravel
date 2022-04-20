@@ -7,7 +7,7 @@
     <title>{{ $title }} - {{ $app_name }}</title>
     @stack('head-script')
     <script src="{{ mix('js/app.js') }}" defer></script>
-    <link href="{{ mix('css/app.css') }}" rel="stylesheet">     
+    <link href="{{ mix('css/app.css') }}" rel="stylesheet">  
     @stack('head-stack')
 </head>
 @yield('root-content')

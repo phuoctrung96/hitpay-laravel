@@ -281,7 +281,7 @@ class PaymentProvider extends Model implements OwnableContract
             return PaymentProviderStatus::PENDING_APPROVAL;
         }
 
-        return null;
+        return true;
     }
 
     /**

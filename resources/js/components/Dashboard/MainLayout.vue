@@ -26,7 +26,7 @@
             </div>
         </div>
 
-      <div class="help-line d-flex justify-content-between align-items-center py-3 px-4 main-top-bar">
+      <div class="help-line justify-content-between align-items-center py-3 px-4 main-top-bar d-md-flex d-none">
         <span
           v-if="title"
           class="page-title mb-0">
@@ -38,9 +38,9 @@
           name="test"></slot>
 
         <div class="d-flex align-items-center">
-            <a data-nolt="button" :href="nolt_link" class="mr-3 menu-items-desktop">Feedback</a>
+            <a  :href="nolt_link" class="mr-3 menu-items-desktop"><img class="mr-2" src="/images/feedback_header.svg">Feedback</a>
             <div class="announcekit menu-items-desktop">
-            <a href="#" class="ak-trigger">What's New <AnnounceKit
+            <a href="#" class="ak-trigger"><img class="mr-2" src="/images/wats_new.svg">What's New <AnnounceKit
                 :user="{id: business.id, email: business.email, name: business.name}"
                 catchClick=".ak-trigger"
                 widget="https://announcekit.co/widgets/v2/5LtzW" />
