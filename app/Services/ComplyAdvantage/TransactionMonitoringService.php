@@ -57,11 +57,11 @@ class TransactionMonitoringService
             Log::error($exception->getResponse()->getBody()->__toString());
             throw new \Exception($exception->getResponse()->getBody()->__toString());
         } catch (Exception $exception) {
-            throw new \Exception($exception->getResponse()->getBody()->__toString());
+            throw new \Exception($exception->getMessage());
         }
     }
 
-    public function submitTransaction(Business $business, Business\Charge $charge){
+    public function submitTransaction(Business $business, Business\Charge $charge, Business\Refund $refund = null){
         try {
             $client = new Client([
                 'base_uri' => self::$baseApiUrl,
@@ -89,13 +89,13 @@ class TransactionMonitoringService
 
             $response = $client->post('v2/transactions', [
                 'body' => json_encode([
-                    'id' => $charge->getKey(),
+                    'id' => $refund ? $refund->getKey() : $charge->getKey(),
                     'source_format' => '4',
                     'data' => [
-                        'tx_id' => $charge->getKey(),
+                        'tx_id' => $refund ? $refund->getKey() : $charge->getKey(),
                         'tx_date_time' => gmdate('Y-m-d H:i:s',$charge->closed_at->getTimestamp()),
                         'tx_direction' => 'Inbound',
-                        'tx_type' => 'Payment',
+                        'tx_type' => $refund ? 'Refund' : 'Payment',
                         'tx_base_currency' => SupportedCurrencyCode::USD,
                         'tx_base_amount' => Conversion::convertToUSD(getReadableAmountByCurrency($charge->currency, (int)$charge->amount), $charge->currency),
                         'tx_currency' => $charge->currency,
@@ -113,9 +113,9 @@ class TransactionMonitoringService
                         'customer_id' => $business->getKey(),
                         'customer_name' => $business->name,
                         'customer_type' => $business->merchantCategory->code ?? null,
-                        'customer_account_balance' => getReadableAmountByCurrency($charge->currency, $business->wallet(Type::AVAILABLE, $business->currency)->balance ?? 0),
+                        'customer_account_balance' => getReadableAmountByCurrency($business->currency, $business->wallet(Type::AVAILABLE, $business->currency)->balance ?? 0),
                         'customer_account_currency' => $business->currency,
-                        'customer_base_account_balance' => null,
+                        'customer_base_account_balance' => Conversion::convertToUSD(getReadableAmountByCurrency($business->currency, $business->wallet(Type::AVAILABLE, $business->currency)->balance ?? 0), $business->currency),
                         'customer_account_number' => null,
                         'customer_account_type' => null,
                         'customer_sort_code' => null,
@@ -141,7 +141,7 @@ class TransactionMonitoringService
                         'counterparty_account_number' => null,
                         'counterparty_sort_code' => null,
                         'counterparty_date_of_birth' => null,
-                        'counterparty_country' => $this->getUserInformationByIp('country', $charge->request_ip_address),
+                        'counterparty_country' => $this->getUserInformationByIp('countrycode', $charge->request_ip_address),
                         'counterparty_bank_country' => null,
                         'counterparty_state' => null,
                         'counterparty_address' => null,
@@ -154,14 +154,14 @@ class TransactionMonitoringService
                 ])
             ]);
 
-            $token = json_decode((string)$response->getBody(), true);
+            $response = json_decode((string)$response->getBody(), true);
 
-            return $token;
+            return $response;
         } catch (ServerException $exception) {
             Log::error($exception->getResponse()->getBody()->__toString());
             throw new \Exception($exception->getResponse()->getBody()->__toString());
         } catch (Exception $exception) {
-            throw new \Exception($exception->getResponse()->getBody()->__toString());
+            throw new \Exception($exception->getMessage());
         }
     }
 }

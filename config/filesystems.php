@@ -57,6 +57,15 @@ return [
             'url' => env('AWS_S3_URL'),
         ],
 
+        's3_hotglue' => [
+            'driver' => 's3',
+            'key' => env('AWS_HOTGLUE_S3_ACCESS_KEY_ID'),
+            'secret' => env('AWS_HOTGLUE_S3_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_HOTGLUE_S3_DEFAULT_REGION'),
+            'bucket' => env('AWS_HOTGLUE_S3_BUCKET'),
+            'url' => env('AWS_S3_URL'),
+        ],
+
     ],
 
 ];

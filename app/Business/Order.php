@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 
 class Order extends Model
@@ -338,6 +339,9 @@ class Order extends Model
                     ];
                 }
             }
+
+            $hotglueOrderedQuantity = $rollback ? $orderedProduct->quantity : -$orderedProduct->quantity;
+            Artisan::queue('update:hotglue-product-quantity --business_id=' . $business->id . ' --product_id=' . $product->id . ' --ordered_quantity=' . $hotglueOrderedQuantity);
         }
 
         if (count($notifiableProducts)) {

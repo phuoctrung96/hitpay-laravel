@@ -108,6 +108,11 @@ class Capture extends Action
         $businessChargeData = $this->businessCharge->data;
 
         $businessChargeData['application_fee'] = $this->businessPaymentIntent->data['application_fee'];
+
+        if (isset($this->businessPaymentIntent->data['hitpay'])) {
+            $businessChargeData['hitpay'] = $this->businessPaymentIntent->data['hitpay'];
+        }
+
         $businessChargeData['stripe']['charge'] = $stripeCharge->toArray();
 
         $this->businessCharge->data = $businessChargeData;

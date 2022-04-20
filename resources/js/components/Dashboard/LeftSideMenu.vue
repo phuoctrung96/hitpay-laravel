@@ -97,6 +97,7 @@ export default {
                         {title: 'Coupons', path: '/business/:business_id/coupon', visible: this.isVisibleMenuItem('canOperateOnlineShopCoupons')},
                         {title: 'Shipping', path: '/business/:business_id/setting/shipping', visible: this.isVisibleMenuItem('canOperateOnlineShopShipping')},
                         {title: 'Store Settings', path: '/business/:business_id/setting/shop', visible: this.isVisibleMenuItem('canOperateOnlineShopStoreSettings')},
+                        {title: 'Inventory Sync', path: '/business/:business_id/integration/hotglue/home', visible: this.isVisibleMenuItem('canOperateOnlineShopHotglueIntegration')}
                     ]
                 },
                 {
@@ -125,7 +126,7 @@ export default {
                     children: [
                         { title: 'Charges', path: '/business/:business_id/charge', visible: this.isVisibleMenuItem('canOperateCharges') },
                         { title: 'HitPay Balance', path: '/business/:business_id/balance', visible: this.isVisibleMenuItem('canManageWallets') },
-                        { title: 'Bank Payouts', path: '/business/:business_id/payment-provider/paynow/payout',                     additionalPaths: bankPayoutsPaths, visible: this.isVisibleMenuItem('canOperateBankPayouts') },
+                        { title: 'Bank Payouts', path: '/business/:business_id/payouts',                     additionalPaths: bankPayoutsPaths, visible: this.isVisibleMenuItem('canOperateBankPayouts') },
                         { title: 'Fee Invoices', path: '/business/:business_id/fee-invoices', visible: this.isVisibleMenuItem('canOperateFeeInvoices') },
                     ],
                 },

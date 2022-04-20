@@ -9,7 +9,5 @@ interface BusinessManagerInterface
 {
     public function createStripeConnectionToken(Business $business);
 
-    // public function getAvailableBanks(Business $business);
-
     public function getBusinessesConnectedToXero(): Collection;
 }

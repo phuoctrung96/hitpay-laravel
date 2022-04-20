@@ -1,4 +1,4 @@
-@php($title = __('Stripe Payouts'))
+@php($title = __('HitPay Payouts'))
 @php($type = 'paynow')
 @extends('layouts.business')
 
@@ -13,17 +13,17 @@
 
                     @if(
                         $business->payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE &&
-                        $provider->payment_provider_account_type == 'standard'
+                        $provider->payment_provider_account_type === 'standard'
                     )
                         <a class="btn col text-uppercase d-flex {{ $type === 'stripe' ? 'active btn-outline-primary' : 'bg-light' }}"
-                           href="{{ route('dashboard.business.payment-provider.stripe.payout', [$business->getKey()]) }}">
+                           href="{{ route('dashboard.business.payment-provider.stripe.payout.standard', [$business->getKey()]) }}">
                             <span class="w-100 align-self-center">Stripe Payouts</span>
                         </a>
                     @endif
 
                     @if(
                         $business->payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE &&
-                        $provider->payment_provider_account_type == 'custom'
+                        $provider->payment_provider_account_type === 'custom'
                     )
                         <a class="btn col text-uppercase d-flex {{ $type === 'stripe' ? 'active btn-outline-primary' : 'bg-light' }}"
                            href="{{ route('dashboard.business.payment-provider.stripe.payout.custom', [$business->getKey()]) }}">

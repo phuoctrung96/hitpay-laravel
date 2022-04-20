@@ -53,13 +53,17 @@ class BusinessController extends Controller
 
         $this->authorizeForUser($user, 'view', $business);
 
-        $businessBankAccount = $business->bankAccounts->first();
+        $businessCountry = $business->country();
 
-        if (!$businessBankAccount) {
-            if ($business->usingStripeCustomAccount()) {
-                Session::flash('error_message', 'Please input your bank account first');
+        if (!$businessCountry::skip_verification) {
+            $businessBankAccount = $business->bankAccounts->first();
 
-                return Response::redirectToRoute('dashboard.business.settings.bank-accounts.create-page', $business->getKey());
+            if (!$businessBankAccount) {
+                if ($business->usingStripeCustomAccount()) {
+                    Session::flash('error_message', 'Please input your bank account first');
+
+                    return Response::redirectToRoute('dashboard.business.settings.bank-accounts.create-page', $business->getKey());
+                }
             }
         }
 
@@ -220,8 +224,14 @@ class BusinessController extends Controller
 //            }
 //        }
 
-        $isShowModalVerification = config('app.env') !== 'sandbox';
-        $isVerificationVerified = false;
+        if ($businessCountry::skip_verification) {
+            $isShowModalVerification = false;
+            $isVerificationVerified = true;
+        } else {
+            $isShowModalVerification = config('app.env') !== 'sandbox';
+            $isVerificationVerified = false;
+        }
+
         $verificationStatus = 'pending'; // no have verification
 
         if ($verification !== null) {
@@ -249,6 +259,11 @@ class BusinessController extends Controller
                 if ($verification->status == VerificationStatus::PENDING) {
                     $isShowModalVerification = false;
                 }
+            }
+        } else {
+            if ($business->country === CountryCode::SINGAPORE && $business->verified_wit_my_info_sg === true) {
+                $isShowModalVerification = false;
+                $isVerificationVerified = true;
             }
         }
 
@@ -352,7 +367,6 @@ class BusinessController extends Controller
         Gate::inspect('store', Business::class)->authorize();
 
         $business = BusinessRepository::store($request, Auth::user());
-        // dd('business');die();
 
         if(!empty(Auth::user()->xero_data)) {
             ApiKeyManager::create($business);

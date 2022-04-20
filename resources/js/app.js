@@ -42,7 +42,7 @@ Vue.mixin({
             }
 
             if (path !== null) {
-                return domain+ ':8000' + '/' + path;
+                return domain + '/' + path;
             }
 
             return domain;
@@ -182,6 +182,7 @@ Vue.component('business-invoice-detail', require('./components/Business/InvoiceD
 Vue.component('business-invoice-bulk', require('./components/Business/BulkInvoices').default);
 Vue.component('business-notifications', require('./components/Business/Notifications').default);
 Vue.component('business-edit-slug', require('./components/Business/EditSlug').default);
+Vue.component('business-hotglue', require('./components/Business/Hotglue').default);
 Vue.component('product-category-create-edit', require('./components/Business/ProductCategory').default);
 Vue.component('add-product', require('./components/Shop/AddProduct').default);
 Vue.component('create-payment-link', require('./components/Business/PaymentLinkCreate').default);

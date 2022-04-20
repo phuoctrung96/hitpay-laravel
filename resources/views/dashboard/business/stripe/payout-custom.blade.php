@@ -1,4 +1,4 @@
-@php($title = __('Stripe Payouts'))
+@php($title = __('Cards Payouts'))
 @php($type='stripe')
 @extends('layouts.business')
 
@@ -7,33 +7,42 @@
         <div class="col-md-9 col-lg-8 main-content">
             @if ($business->paymentProviders->where('payment_provider', \App\Enumerations\PaymentProvider::DBS_SINGAPORE)->count())
                 <div class="btn-group btn-group-sm mb-3 w-100 shadow-sm">
-                    <a class="btn col text-uppercase d-flex {{ $type === 'paynow' ? 'active btn-outline-primary' : 'btn-light' }}" href="{{ route('dashboard.business.payment-provider.paynow.payout', [
-                        $business->getKey(),
-                    ]) }}"><span class="w-100 align-self-center">HitPay Payouts</span></a>
+                    <a
+                        class="btn col text-uppercase d-flex
+                        {{ $type === 'paynow' ? 'active btn-outline-primary' : 'btn-light' }}"
+                        href="{{ route('dashboard.business.payment-provider.paynow.payout', [$business->getKey()]) }}">
+                        <span class="w-100 align-self-center">HitPay Payouts</span>
+                    </a>
 
                     @if(
                         $business->payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE &&
-                        $provider->payment_provider_account_type == 'standard'
+                        $provider->payment_provider_account_type === 'standard'
                     )
-                        <a class="btn col text-uppercase d-flex {{ $type === 'stripe' ? 'active btn-outline-primary' : 'bg-light' }}"
-                           href="{{ route('dashboard.business.payment-provider.stripe.payout', [$business->getKey()]) }}">
+                        <a
+                            class="btn col text-uppercase d-flex
+                            {{ $type === 'stripe' ? 'active btn-outline-primary' : 'bg-light' }}"
+                            href="{{ route('dashboard.business.payment-provider.stripe.payout.standard', [$business->getKey()]) }}">
                             <span class="w-100 align-self-center">Stripe Payouts</span>
                         </a>
                     @endif
 
                     @if(
                         $business->payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE &&
-                        $provider->payment_provider_account_type == 'custom'
+                        $provider->payment_provider_account_type === 'custom'
                     )
-                        <a class="btn col text-uppercase d-flex {{ $type === 'stripe' ? 'active btn-outline-primary' : 'bg-light' }}"
-                           href="{{ route('dashboard.business.payment-provider.stripe.payout.custom', [$business->getKey()]) }}">
+                        <a
+                            class="btn col text-uppercase d-flex
+                            {{ $type === 'stripe' ? 'active btn-outline-primary' : 'bg-light' }}"
+                            href="{{ route('dashboard.business.payment-provider.stripe.payout.custom', [$business->getKey()]) }}">
                             <span class="w-100 align-self-center">Cards Payouts</span>
                         </a>
                     @endif
 
-                    <a class="btn col text-uppercase d-flex {{ $type === 'platform' ? 'active btn-outline-primary' : 'bg-light' }}" href="{{ route('dashboard.business.platform.payout', [
-                        $business->getKey(),
-                    ]) }}"><span class="w-100 align-self-center">Platform Payouts</span></a>
+                    <a
+                        class="btn col text-uppercase d-flex {{ $type === 'platform' ? 'active btn-outline-primary' : 'bg-light' }}"
+                        href="{{ route('dashboard.business.platform.payout', [$business->getKey(),]) }}">
+                        <span class="w-100 align-self-center">Platform Payouts</span>
+                    </a>
                 </div>
             @endif
             <div class="card border-0 shadow-sm mb-3">

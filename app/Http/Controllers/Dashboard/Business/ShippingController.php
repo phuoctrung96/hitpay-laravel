@@ -58,7 +58,7 @@ class ShippingController extends Controller
             else {
                 $countries[] = [
                         'code' => 'global',
-                        'name' => @lang('misc.global'),
+                        'name' => Lang::get('misc.global'),
                     ];
             }
         }

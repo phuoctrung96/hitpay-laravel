@@ -83,6 +83,7 @@ class ChargeController extends BaseController
         } catch (BadRequest $exception) {
             return Response::json([
                 'error_message' => 'Transaction Failed. Please complete card payments setup under Settings > Payment Methods in your hitpay dashboard.',
+                'message' => 'Transaction Failed. Please complete card payments setup under Settings > Payment Methods in your hitpay dashboard.',
             ], 400);
         }
 

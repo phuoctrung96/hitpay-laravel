@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
@@ -145,6 +146,7 @@ class OrderController extends Controller
         $order->messages = $messages;
         $order->save();
         $order->notifyAboutStatusChanged($data['message'] ?? '', $order->status === OrderStatus::COMPLETED);
+        Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $order->id);
 
         return Response::json($this->getOrderObject($order, $business));
     }
@@ -295,6 +297,7 @@ class OrderController extends Controller
                 $order->save();
                 $order->updateProductsQuantities();
                 $order->notifyAboutNewOrder();
+                Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $order->id);
 
                 return $order;
             }

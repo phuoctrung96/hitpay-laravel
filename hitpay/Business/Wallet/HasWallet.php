@@ -14,6 +14,7 @@ use App\Enumerations\Business\Wallet as WalletEnums;
 use App\Exceptions\InsufficientFund;
 use App\Exceptions\WalletException;
 use App\Jobs;
+use App\Jobs\SubmitChargeForMonitoring;
 use App\Models\Business\BankAccount;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
@@ -752,6 +753,7 @@ trait HasWallet
         }
 
         Jobs\Wallet\Refund::dispatch($refund);
+        SubmitChargeForMonitoring::dispatch($charge, $charge->business, $refund);
 
         return $refund;
     }
@@ -895,6 +897,7 @@ trait HasWallet
         }
 
         Jobs\Wallet\Refund::dispatch($refund);
+        SubmitChargeForMonitoring::dispatch($charge, $charge->business, $refund);
 
         return $refund;
     }
@@ -917,17 +920,19 @@ trait HasWallet
     {
         switch ($charge->payment_provider) {
           case Enumerations\PaymentProvider::DBS_SINGAPORE:
-            if (!Str::startsWith($charge->payment_provider_charge_id, 'DICN')) {
-              return false;
-            }
-
             if ($charge->payment_provider_charge_type === 'inward_credit_notification') {
                 return $charge->payment_provider_charge_method === PaymentMethodType::PAYNOW;
             } elseif ($charge->payment_provider_charge_type === PaymentMethodType::COLLECTION) {
                 return $charge->payment_provider_charge_method === 'direct_debit';
+            } elseif (Str::startsWith($charge->payment_provider_charge_id, 'DICN')) {
+                // By Bankorh:
+                // I remembered there's a mistake that if the charge is paid using PayNow, but the charge type is not
+                // `inward_credit_notification`, hence if "DICN" prefix detected, I will treat it as PayNow.
+                //
+                return true;
             }
 
-            break;
+            return false;
 
           case Enumerations\PaymentProvider::SHOPEE_PAY:
           case Enumerations\PaymentProvider::GRABPAY:

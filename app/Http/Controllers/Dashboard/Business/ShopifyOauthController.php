@@ -120,6 +120,9 @@ class ShopifyOauthController extends Controller
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     public function doAuthorizationRedirection(Request $request)
     {
         $request->session()->remove('shopify_app_' . $request->get('shop'));
@@ -141,6 +144,13 @@ class ShopifyOauthController extends Controller
             }
 
             throw $exception;
+        } catch (InvalidStateException $exception) {
+            Log::critical("[Shopify InvalidStateException] There is issue when user want to authorize \n
+                this shop {$request->get('shop')} \n
+                with params " . json_encode($request->all()) . " \n
+                and message error tracing " . $exception->getTraceAsString());
+
+            return Response::redirectToRoute('dashboard.payment.integration.shopify.invalid.state', $request->all());
         }
 
         $request->session()->put('shopify_app_' . $shopifyUser->nickname, [
@@ -156,6 +166,35 @@ class ShopifyOauthController extends Controller
         ];
 
         return redirect($redirectUrl)->withHeaders($headers);
+    }
+
+    public function invalidState(Request $request)
+    {
+        $domain = $request->get('shop');
+
+        $shopify = '.myshopify.com';
+
+        if (Str::endsWith($domain, $shopify)) {
+            $domain = str_replace($shopify, '', $domain);
+        }
+
+        $config = new SocialiteConfig(
+            Config::get('services.shopify.client_id_v2'),
+            Config::get('services.shopify.client_secret_v2'),
+            URL::route('dashboard.payment.integration.shopify.authorize'),
+            [
+                'subdomain' => $domain,
+            ]
+        );
+
+        $url = Socialite::with('shopify')->setConfig($config)->scopes([
+            'write_payment_gateways',
+            'write_payment_sessions',
+            'read_payment_gateways',
+            'read_payment_sessions',
+        ])->redirect()->getTargetUrl();
+
+        return Response::view('dashboard.shopify.invalidstate', compact("url"));
     }
 }
 

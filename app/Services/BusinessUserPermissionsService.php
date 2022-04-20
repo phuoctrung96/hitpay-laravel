@@ -26,6 +26,7 @@ class BusinessUserPermissionsService
         'canOperateOnlineShopCoupons',
         'canOperateOnlineShopShipping',
         'canOperateOnlineShopStoreSettings',
+        'canOperateOnlineShopHotglueIntegration',
         'canOperateOnlineShopDisableEnableStore',
         'canOperateInvoicing',
         'canOperatePaymentLinks',
@@ -224,6 +225,11 @@ class BusinessUserPermissionsService
     private function canOperateOnlineShopStoreSettings(BusinessUser $businessUser): bool
     {
         return !$businessUser->isCashier();
+    }
+
+    private function canOperateOnlineShopHotglueIntegration(BusinessUser  $businessUser): bool
+    {
+        return $businessUser->isOwner() || $businessUser->isAdmin() || $businessUser->isManager();
     }
 
     private function canOperateOnlineShopDisableEnableStore(BusinessUser $businessUser): bool

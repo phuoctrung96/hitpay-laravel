@@ -1299,7 +1299,7 @@ import CardReader from './CardReader'
 
                     return axios.post(this.base_url + 'charge/' + this.charges.charge_object.id + '/payment-intent', {
                         method: this.charges.chosen_method,
-                        terminal_id: terminal_id
+                        terminal_id: this.terminals.connected ? this.terminals.connected.serial_number : null,
                     }).then(({data}) => {
                         this.existing_charge = data;
 

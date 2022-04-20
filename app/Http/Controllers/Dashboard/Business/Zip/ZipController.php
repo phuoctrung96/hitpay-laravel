@@ -70,42 +70,47 @@ class ZipController extends Controller
     ) {
       Gate::inspect('update', $business)->authorize();
 
-      $data = $this->validate($request, [
-        'password' => ['required', 'password'],
-        'store_name' => ['required'],
-        'company_uen' => ['required'],
-        'city' => ['required'],
-        'address' => ['required'],
-        'postal_code' => ['required'],
-        'mcc' => 'required|regex:/^[0-9]{4}$/'
-      ], [
-        'mcc.regex' => 'The MCC field should be a four digit number'
-      ]);  
+      // Only allow setup/change Zip for verified businesses
+      if ($business->businessVerified()) {
+        $data = $this->validate($request, [
+          'password' => ['required', 'password'],
+          'store_name' => ['required'],
+          'company_uen' => ['required'],
+          'city' => ['required'],
+          'address' => ['required'],
+          'postal_code' => ['required'],
+          'mcc' => 'required|regex:/^[0-9]{4}$/'
+        ], [
+          'mcc.regex' => 'The MCC field should be a four digit number'
+        ]);  
 
-      unset($data['password']);
+        unset($data['password']);
 
-      $provider = $business->paymentProviders()->where('payment_provider', PaymentProviderEnum::ZIP)->first();
+        $provider = $business->paymentProviders()->where('payment_provider', PaymentProviderEnum::ZIP)->first();
 
-      $isExisting = $provider instanceof PaymentProvider;
+        $isExisting = $provider instanceof PaymentProvider;
 
-      if (!$isExisting) {
-        $provider = new PaymentProvider;
-        $provider->business_id = $business->id;
-        $provider->payment_provider = PaymentProviderEnum::ZIP;
-        $provider->payment_provider_account_id = '';
-        $provider->onboarding_status = 'success';
-      }
+        if (!$isExisting) {
+          $provider = new PaymentProvider;
+          $provider->business_id = $business->id;
+          $provider->payment_provider = PaymentProviderEnum::ZIP;
+          $provider->payment_provider_account_id = '';
+          $provider->onboarding_status = 'success';
+        }
 
-      $provider->data = $data;
+        $provider->data = $data;
 
-      if ($isExisting) {
-        $provider->reported = false;
-        $provider->save();
+        if ($isExisting) {
+          $provider->reported = false;
+          $provider->save();
+        } else {
+          $business->paymentProviders()->save($provider);
+        }
+
+        return compact(['business', 'provider']);
       } else {
-        $business->paymentProviders()->save($provider);
+        App::abort(400, 'Zip is not available for individual sellers. Please check your account verification.');
       }
-
-      return compact(['business', 'provider']);  
     }
 
     public function deauthorizeAccount (

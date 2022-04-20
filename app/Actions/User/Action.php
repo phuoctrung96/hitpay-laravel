@@ -6,6 +6,7 @@ use App\Actions\Action as BaseAction;
 use App\Enumerations\CountryCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Lang;
 
 abstract class Action extends BaseAction
 {
@@ -26,20 +27,17 @@ abstract class Action extends BaseAction
     /**
      * @return Collection
      */
-    protected function getDefaultCountries(bool $setActiveFalse = false): Collection
+    protected function getDefaultCountries(): Collection
     {
-        return Collection::make([
-            [
-                'id' => CountryCode::SINGAPORE,
-                'name' => 'Singapore',
-                'active' => !$setActiveFalse,
-            ],
-            [
-                'id' => CountryCode::MALAYSIA,
-                'name' => 'Malaysia',
-                'active' => false,
-            ]
-        ]);
+        $countries = array_map(function($country_code) {
+            return [
+                'id' => $country_code,
+                'name' => Lang::has('misc.country.'.$country_code) ? Lang::get('misc.country.'.$country_code) : $country_code,
+                'active' => false
+            ];
+        }, CountryCode::listConstants());
+
+        return Collection::make(array_values($countries));
     }
 
     /**

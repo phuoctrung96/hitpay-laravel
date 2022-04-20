@@ -220,18 +220,16 @@ abstract class CustomAccount extends Core
                 'sofort_payments',
                 'transfers'
             ];
-        }
-
-        if ($this->business->country == CountryCode::MALAYSIA) {
-            // The `fpx_payments` capability is not requestable for Individual or Sole Proprietor accounts. Not sure
-            // how does it affect us collect the payment on behalf. Have to test.
-            //
+        } elseif ($this->business->country == CountryCode::MALAYSIA) {
             $capabilities = [
                 'card_payments',
-                // 'fpx_payments',
                 'grabpay_payments',
                 'transfers'
             ];
+
+            if ($this->business->business_type === 'company') {
+                $capabilities[] = 'fpx_payments';
+            }
         }
 
         return Collection::make($capabilities)->mapWithKeys(function (string $value) {

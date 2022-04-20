@@ -37,7 +37,7 @@
                     </template>
                     <div class="media-body">
                         <span class="font-weight-bold text-dark float-right">{{ product.showPrice }}</span>
-                        <p class="font-weight-bold mb-2">{{ product.name }}</p>
+                        <p class="font-weight-bold mb-2">{{ product.name }} <span v-if="product.isShopify">( <img width="65px" src="/images/shopify.svg" alt="shopify"> )</span></p>
                         <p class="text-dark small mb-2">
                             <span class="text-muted"># {{ product.id }}</span></p>
                         <p v-if="product.description" class="text-dark small mb-0">
@@ -115,6 +115,7 @@ export default {
             product.showPrice = productAttrs['price'][i];
             product.manageable = productAttrs['manageable'][i];
             product.quantity = productAttrs['quantity'][i];
+            product.isShopify = productAttrs['is_shopify'][i];
             productsWithAttrs.push(product);
             i++;
         });
@@ -165,6 +166,7 @@ export default {
                     product.showPrice = productAttrs['price'][i];
                     product.manageable = productAttrs['manageable'][i];
                     product.quantity = productAttrs['quantity'][i];
+                    product.isShopify = productAttrs['is_shopify'][i];
                     productsWithAttrs.push(product);
                     i++;
                 });

@@ -1097,7 +1097,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function businessUsers(): HasMany
     {
-        return $this->hasMany(BusinessUser::class);
+        return $this->hasMany(BusinessUser::class)->whereHas('business');
     }
 
     public function getBusinessUsersListAttribute(): Collection

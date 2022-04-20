@@ -487,8 +487,12 @@ class PaymentRequestCheckoutController extends Controller
             'order_id' => $paymentRequest->reference_number,
             'commission_rate' => $paymentRequest->commission_rate,
             'platform_business_id' => $paymentRequest->platform_business_id,
-            'channel' => $paymentRequest->channel,
+            'channel' => $paymentRequest->channel
         ];
+
+        $expire_date = !$paymentRequest->is_default && $paymentRequest->expiry_date
+          ? $paymentRequest->expiry_date->jsonSerialize()
+          : null;
 
         $provider = PluginProvider::getProviderByChanel($data['channel']);
 
@@ -552,7 +556,7 @@ class PaymentRequestCheckoutController extends Controller
             'paymentMethods', 'amount', 'data', 'referer',
             'defaultUrlCompleted', 'symbol', 'mode',
             'defaultMethod', 'cashback',
-            'campaignRule', 'zeroDecimal', 'stripePublishableKey'
+            'campaignRule', 'zeroDecimal', 'stripePublishableKey', 'expire_date'
         );
     }
 }

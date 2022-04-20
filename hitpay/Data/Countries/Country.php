@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\App;
 
 abstract class Country
 {
+    const skip_verification = false;
+
     private static array $rawData = [];
 
     private static array $processedData = [];

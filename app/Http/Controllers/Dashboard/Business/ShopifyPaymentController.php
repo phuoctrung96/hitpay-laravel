@@ -164,10 +164,13 @@ class ShopifyPaymentController extends Controller
 
         $shopifyApp = $request->session()->pull('shopify_app');
 
-        $shopifyUser = $shopifyApp['shopifyUser'];
+        if (!$shopifyApp) {
+            Log::critical("There is issue when confirming shopify flow with session null data with request:" . json_encode($request->all()));
 
-        Log::info('shopify users install ---------');
-        Log::info(json_encode($shopifyUser));
+            return Redirect::route('dashboard.home');
+        }
+
+        $shopifyUser = $shopifyApp['shopifyUser'];
 
         // install app
         $urlCallback = ShopifyApp::installApp($business, $shopifyUser);

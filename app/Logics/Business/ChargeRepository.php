@@ -12,6 +12,7 @@ use App\Business\Transfer as TransferModel;
 use App\Enumerations\Business\ChargeStatus;
 use App\Enumerations\Business\Event;
 use App\Exceptions\HitPayLogicException;
+use App\Jobs\SubmitChargeForMonitoring;
 use App\Logics\ConfigurationRepository;
 use App\Notifications\NotifyOrderVoided;
 use App\Notifications\NotifyOrderConfirmation;
@@ -383,6 +384,8 @@ class ChargeRepository
                 } catch (InvalidRequestException $exception) {
                     throw $exception;
                 }
+
+                SubmitChargeForMonitoring::dispatch($chargeModel, $chargeModel->business, $refund);
 
                 return static::createRefund($chargeModel, $refund, $amount);
             }

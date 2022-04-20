@@ -199,7 +199,11 @@ final class Processor
                     ];
                 }
 
-                Storage::disk($storageDefaultDisk)->put($path, $streamed);
+                if ($this->group === ImageGroup::PRODUCT) {
+                    Storage::disk($storageDefaultDisk)->put($path, $streamed, 'public');
+                } else {
+                    Storage::disk($storageDefaultDisk)->put($path, $streamed);
+                }
 
                 $storageSize += $fileSize;
 

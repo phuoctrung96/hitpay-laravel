@@ -75,6 +75,12 @@ class ProductFeedImport implements ToCollection
                     $errors[$row[0]][] = "The Image of product SKU $row[0]: need to be the valid URL";
                 }
             }
+
+            if (!$row[8] || $row[8] !== $this->business->currency) {
+                $errors[$row[0]][] = "Sync failed for product SKU $row[0] due to ($row[8]) currency mismatch. Please ensure that the Shopify store currency is the same as the Hitpay store currency.";
+                continue;
+            }
+
             $existProduct = Product::withoutGlobalScopes()->where('business_id', $this->business->getKey())->where('stock_keeping_unit', $row[0])->whereNotNull('stock_keeping_unit')->first();
             if (isset($existProduct->id)) {
                 $errors[$row[0]][] = "The Product SKU $row[0]: already exist";

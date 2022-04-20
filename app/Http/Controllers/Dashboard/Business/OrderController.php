@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response;
@@ -284,6 +285,7 @@ class OrderController extends Controller
                 $order->save();
 
                 $order->notifyAboutStatusChanged('', $order->isCompleted());
+                Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $order->id);
             }
         }
 
@@ -387,6 +389,7 @@ class OrderController extends Controller
 
         $order->messages = $messages;
         $order->save();
+        Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $order->id);
 
         if (isset($message)) {
             $order->notifyAboutStatusChanged($data['message'], $order->isCompleted());

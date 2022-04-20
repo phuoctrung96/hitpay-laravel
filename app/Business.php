@@ -18,6 +18,7 @@ use App\Business\Coupon;
 use App\Business\Customer;
 use App\Business\Discount;
 use App\Business\GatewayProvider;
+use App\Business\HotglueIntegration;
 use App\Business\Image;
 use App\Business\Invoice;
 use App\Business\Log;
@@ -1542,6 +1543,10 @@ class Business extends Model implements OwnableContract
         return $this->belongsTo(BusinessReferral::class, 'referred_by_id');
     }
 
+    public function hotglueIntegration(): HasMany
+    {
+        return $this->hasMany(HotglueIntegration::class);
+    }
     /**
      * @return HasMany
      */

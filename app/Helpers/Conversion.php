@@ -16,6 +16,7 @@ class Conversion
     {
         $exchangeRate = json_decode('
         {
+            "USD": 1,
 			"JPY": 114.81794,
 			"PGK": 3.50934,
 			"TJS": 11.27029,

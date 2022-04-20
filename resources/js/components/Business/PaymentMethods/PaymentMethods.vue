@@ -175,9 +175,8 @@
               </div>
             </div>
           </div>
-              <span class="text-primary"> View Details > </span>
-           
-             </div>
+          <div>
+            <span class="text-primary"> View Details > </span>
           </div>
         </div>
       </div>
@@ -311,7 +310,7 @@ export default {
       this.getPaymentProviders();
     },
 
-    prepareSupportedPaymentProviders() {
+    mounted() {
       // set stripe to each country, better later on backend
       if (this.business.country === "sg") {
         this.supportedPaymentProviders.push(
@@ -702,7 +701,6 @@ export default {
       font-size: 14px;
       color: #4a4a4a;
     }
-
     .method {
       height: 22px;
       border: 1px solid lightgrey;
@@ -710,24 +708,19 @@ export default {
       padding: 2px 4px;
       border-radius: 2px;
       margin: 1px 0;
-
       &.full {
         border: none;
         padding: 0px;
-
         img {
           height: 100%;
         }
       }
-
       &.full-border {
         padding: 0px;
-
         img {
           height: 100%;
         }
       }
-
       img {
         height: calc(100% - 4px);
       }
@@ -745,7 +738,6 @@ export default {
     text-transform: uppercase;
     text-align: center;
   }
-
   .not-available {
     width: 250px;
     font-size: 13px;

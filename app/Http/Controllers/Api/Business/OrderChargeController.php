@@ -21,6 +21,7 @@ use App\Manager\FactoryPaymentIntentManagerInterface as PaymentIntentManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response;
@@ -93,6 +94,7 @@ class OrderChargeController extends Controller
             $order->save();
             $order->updateProductsQuantities();
             $order->notifyAboutNewOrder();
+            Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $order->id);
 
             return $business->charges()->save($charge);
         });

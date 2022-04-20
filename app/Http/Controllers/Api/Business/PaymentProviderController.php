@@ -75,7 +75,7 @@ class PaymentProviderController extends Controller
     {
         Gate::inspect('view', $business)->authorize();
 
-        $banks = $businessManager->getAvailableBanks($business);
+        $banks = $business->banksAvailable();
 
         return compact('banks');
     }

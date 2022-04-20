@@ -37,6 +37,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -475,6 +476,7 @@ class PointOfSaleController extends Controller
                 $target->save();
                 $target->updateProductsQuantities();
                 $target->notifyAboutNewOrder();
+                Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $target->id);
             }
         });
 

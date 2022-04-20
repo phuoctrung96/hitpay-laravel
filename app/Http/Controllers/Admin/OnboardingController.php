@@ -43,13 +43,13 @@ class OnboardingController extends Controller
             'onboarding_status' => OnboardingStatus::PENDING_SUBMISSION
           ])->count();
 
-          $data[$slug] = $count; 
+          $data[$slug] = $count;
         }
 
         return Response::view('admin.onboarding.index', compact('data'));
     }
 
-    public function provider (Request $request, $slug) {        
+    public function provider (Request $request, $slug) {
         $requestData = Validator::make(['slug' => $slug], [
           'slug' => [
             'required',
@@ -138,15 +138,15 @@ class OnboardingController extends Controller
             'business_registration',
             'country_of_registration',
             'address',
-            'SSIC',            
-            'merchant_category_code',            
+            'SSIC',
+            'merchant_category_code',
             'submitted_date',
             'updated_date',
             'status',
             'merchant_id',
             'has_grabpay'
           ]);
-    
+
           break;
 
         case PaymentProviderEnum::SHOPEE_PAY:
@@ -161,16 +161,17 @@ class OnboardingController extends Controller
             'business_registration',
             'country_of_registration',
             'address',
-            'mcc',            
+            'mcc',
             'submitted_date',
             'updated_date',
             'status'
           ]);
-                    
+
           break;
       }
 
       $dbData = PaymentProvider::with('business')
+                ->whereHas('business')
                 ->where('payment_provider', $slug)
                 ->where('onboarding_status', '!=', OnboardingStatus::SUCCESS)
                 ->get()->toArray();
@@ -180,7 +181,7 @@ class OnboardingController extends Controller
 
       foreach ($dbData as $rec) {
         switch ($slug) {
-          case PaymentProviderEnum::GRABPAY:  
+          case PaymentProviderEnum::GRABPAY:
             $data[] = [
               's_no' => $i++,
               'merchant_ref' => $rec['payment_provider_account_id'],
@@ -191,8 +192,8 @@ class OnboardingController extends Controller
               'business_registration' => $rec['data']['company_uen'],
               'country_of_registration' => 'SG',
               'address' => $rec['data']['city'] . ', ' . $rec['data']['postal_code'] . ', ' . $rec['data']['address'],
-              'SSIC' => '',            
-              'merchant_category_code' => $rec['data']['merchant_category_code'], 
+              'SSIC' => '',
+              'merchant_category_code' => $rec['data']['merchant_category_code'],
               'submitted_date' => date('d-m-Y H:i:s'),
               'updated_date' => '',
               'status' => $rec['onboarding_status'],
@@ -214,7 +215,7 @@ class OnboardingController extends Controller
               'business_registration' => $rec['data']['company_uen'],
               'country_of_registration' => 'SG',
               'address' => $rec['data']['city'] . ', ' . $rec['data']['postal_code'] . ', ' . $rec['data']['address'],
-              'mcc' => $rec['data']['mcc'], 
+              'mcc' => $rec['data']['mcc'],
               'submitted_date' => date('d-m-Y H:i:s'),
               'updated_date' => '',
               'status' => $rec['onboarding_status']
@@ -224,7 +225,7 @@ class OnboardingController extends Controller
         }
       }
 
-      $csv->insertAll($data);      
+      $csv->insertAll($data);
 
       return Response::streamDownload(function () use ($csv) {
         echo $csv->getContent();
@@ -274,7 +275,7 @@ class OnboardingController extends Controller
                 $data['merchant_id'] = rtrim($record['merchant_id']);
                 break;
             }
-            
+
             $provider->data = $data;
 
             DB::beginTransaction();
@@ -283,7 +284,7 @@ class OnboardingController extends Controller
               $provider->save();
 
               switch ($slug) {
-                case PaymentProviderEnum::GRABPAY:              
+                case PaymentProviderEnum::GRABPAY:
                   // process Gateway providers and remove old GrabPay
                   $gatewayProviders = GatewayProvider::where('business_id', $provider->business_id)->get();
 
@@ -297,7 +298,7 @@ class OnboardingController extends Controller
 
                       // only enable GrabPay Direct
                       $methods[] = PaymentMethodType::GRABPAY_DIRECT;
-            
+
                       $gp->methods = json_encode($methods);
                       $gp->save();
                     }
@@ -314,7 +315,7 @@ class OnboardingController extends Controller
               DB::rollBack();
               throw $exception;
             }
-  
+
           } else {
             $failed[] = $record;
           }

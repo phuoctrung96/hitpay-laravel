@@ -10,6 +10,7 @@ use App\Enumerations\Business\ChargeStatus;
 use App\Enumerations\Business\OrderStatus;
 use App\Enumerations\PaymentProvider;
 use App\Jobs\RefundForPaymentIntent;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -259,6 +260,7 @@ class ForCharge extends Action
                     $targetModel->save();
                     $targetModel->updateProductsQuantities();
                     $targetModel->notifyAboutNewOrder();
+                    Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $targetModel->id);
                 }
             }, 3);
         } catch (Throwable $exception) {

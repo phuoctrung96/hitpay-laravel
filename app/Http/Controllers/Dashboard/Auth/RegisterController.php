@@ -40,11 +40,9 @@ class RegisterController extends Controller
 
         $registerData = RegisterForm::withRequest($request)->process();
 
-        $countries = $registerData['countries'];
-
         return Response::view('dashboard.register', compact(
             'userData', 'partnerReferral',
-            'businessReferral', 'countries'
+            'businessReferral'
         ));
     }
 
@@ -68,10 +66,6 @@ class RegisterController extends Controller
                 'required',
                 'string',
                 'max:255',
-            ],
-            'country' => [
-                'required',
-                'string'
             ],
             'email' => [
                 'required',
@@ -115,10 +109,6 @@ class RegisterController extends Controller
 
         if($request->has('business_referral')) {
             $request->session()->put('business_referral', $request->get('business_referral'));
-        }
-
-        if($request->has('country')) {
-            $request->session()->put('country', $request->get('country'));
         }
 
         if ($request->expectsJson()) {

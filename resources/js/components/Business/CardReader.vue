@@ -5,7 +5,7 @@
 
     <div class="d-flex justify-content-between">
       <img src="/icons/reader/reader.png"/>
-      <a href="http://hitpayapp.com/terminal" target="_blank" class="align-self-end">
+      <a href="https://myshop.sg/hitpayterminal" target="_blank" class="align-self-end">
         <button class="btn btn-primary">
           Order Now
         </button>

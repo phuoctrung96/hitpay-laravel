@@ -1,4 +1,4 @@
-@php($title = __('Commission Payouts'))
+@php($title = __('Platform Payouts'))
 @php($type = 'platform')
 @extends('layouts.business')
 
@@ -7,24 +7,37 @@
         <div class="col-md-9 col-lg-8 main-content">
             @if ($business->paymentProviders->where('payment_provider', $business->payment_provider)->count())
                 <div class="btn-group btn-group-sm mb-3 w-100 shadow-sm">
+                    @if(
+                       $business->country === \App\Enumerations\CountryCode::SINGAPORE
+                    )
                     <a class="btn col text-uppercase d-flex {{ $type === 'paynow' ? 'active btn-outline-primary' : 'btn-light' }}"
                        href="{{ route('dashboard.business.payment-provider.paynow.payout', [$business->getKey()]) }}">
                         <span class="w-100 align-self-center">HitPay Payouts</span>
                     </a>
+                    @endif
+
+                    @if(
+                       $business->country === \App\Enumerations\CountryCode::MALAYSIA
+                    )
+                        <a class="btn col text-uppercase d-flex {{ $type === 'stripe' ? 'active btn-outline-primary' : 'btn-light' }}"
+                           href="{{ route('dashboard.business.payment-provider.stripe.payout', [$business->getKey()]) }}">
+                            <span class="w-100 align-self-center">HitPay Payouts</span>
+                        </a>
+                    @endif
 
                     @if(
                         $business->payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE &&
-                        $provider->payment_provider_account_type == 'standard'
+                        $provider->payment_provider_account_type === 'standard'
                     )
                         <a class="btn col text-uppercase d-flex {{ $type === 'stripe' ? 'active btn-outline-primary' : 'bg-light' }}"
-                           href="{{ route('dashboard.business.payment-provider.stripe.payout', [$business->getKey()]) }}">
+                           href="{{ route('dashboard.business.payment-provider.stripe.payout.standard', [$business->getKey()]) }}">
                             <span class="w-100 align-self-center">Stripe Payouts</span>
                         </a>
                     @endif
 
                     @if(
                         $business->payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE &&
-                        $provider->payment_provider_account_type == 'custom'
+                        $provider->payment_provider_account_type === 'custom'
                     )
                         <a class="btn col text-uppercase d-flex {{ $type === 'stripe' ? 'active btn-outline-primary' : 'bg-light' }}"
                            href="{{ route('dashboard.business.payment-provider.stripe.payout.custom', [$business->getKey()]) }}">

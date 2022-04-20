@@ -23,9 +23,18 @@ class PaymentIntentManager implements PaymentIntentManagerInterface
 
     public function create(Charge $charge, Business $business) : PaymentIntentResource
     {
-        $paymentIntent = Create::withBusiness($business)->businessCharge($charge)->data([
+        $paymentIntent = DB::transaction(function () use (
+          $business,
+          $charge
+        ) {
+          // Save charge object because it may have some changes (like email) and if
+          // we do not save this changes they will be lost
+          $charge->save();
+
+          return Create::withBusiness($business)->businessCharge($charge)->data([
             'method' => $this->method,
-        ])->process();
+          ])->process();
+        });
 
         return new PaymentIntentResource($paymentIntent);
     }

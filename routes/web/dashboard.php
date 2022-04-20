@@ -344,16 +344,27 @@ Route::namespace('Dashboard')->group(function () {
                         Route::get('disconnect', 'QuickbooksController@disconnect')->name('disconnect');
                     });
 
+                    Route::prefix('integration/hotglue')->middleware('auth')->name('integration.hotglue.')->group(function () {
+                        Route::get('home', 'HotglueController@index')->name('home');
+                        Route::post('source-connected', 'HotglueController@sourceConnected')->name('connected');
+                        Route::put('source-disconnected', 'HotglueController@sourceDisconnected')->name('disconnected');
+                        Route::post('target-linked', 'HotglueController@targetLinked')->name('target-linked');
+                        Route::put('product-periodic-sync', 'HotglueController@productPeriodicSync')->name('product-periodic-sync');
+                        Route::put('sync-all-hitpay-orders', 'HotglueController@syncAllHitpayOrders')->name('sync-all-hitpay-orders');
+                        Route::post('sync-now', 'HotglueController@syncNow')->name('sync-now');
+                    });
+
                     Route::namespace('Stripe')->prefix('payment-provider/stripe')->name('payment-provider.stripe.')
                         ->group(function () {
                             Route::get('/', 'PaymentProviderController@showHomepage')->name('home');
                             Route::delete('/', 'PaymentProviderController@deauthorizeAccount')->name('deauthorize');
                             Route::get('authorize', 'PaymentProviderController@authorizeAccount')->name('authorize');
                             Route::get('redirect', 'PaymentProviderController@doRedirection')->name('redirect');
-                            Route::get('payout', 'PayoutController')->name('payout');
-                            Route::get('payout-custom', 'PayoutCustomController@showPage')->name('payout.custom');
+                            Route::get('payout', 'PayoutController')->name('payout'); // to hit-pay payouts for MY
+                            Route::get('payout-custom', 'PayoutCustomController@showPage')->name('payout.custom'); // for SG
                             Route::get('payout-custom/{b_transfer}/download', 'PayoutCustomController@download')
                                 ->name('payout.custom.download');
+                            Route::get('payout-standard', 'PayoutStandardController@index')->name('payout.standard');
 
                             Route::get('onboard-verification', 'OnboardVerificationController@show')
                                 ->name('onboard-verification');
@@ -529,6 +540,10 @@ Route::namespace('Dashboard')->group(function () {
                             Route::post('/', 'PaynowController@store')->name('store');
                         });
                     });
+
+                    Route::prefix('payouts')->name('payouts.')->group(function () {
+                        Route::get('/', 'PayoutController@index')->name('index');
+                    });
                 });
             });
 
@@ -552,6 +567,7 @@ Route::namespace('Dashboard')->group(function () {
             Route::get('/', 'ShopifyPaymentController@index')->name('index');
             Route::get('redirect', 'ShopifyOauthController@redirect')->name('redirect');
             Route::get('authorize', 'ShopifyOauthController@doAuthorizationRedirection')->name('authorize');
+            Route::get('invalid-state', 'ShopifyOauthController@invalidState')->name('invalid.state');
         });
 
         Route::prefix('integration/xero')->namespace('Business')->name('integration.xero.')->group(function () {

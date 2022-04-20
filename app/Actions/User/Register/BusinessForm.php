@@ -2,18 +2,21 @@
 
 namespace App\Actions\User\Register;
 
+use App\Actions\User\UserInfoByIp;
 use App\Business\BusinessCategory;
 use App\Enumerations\CountryCode;
 use Illuminate\Support\Collection;
 
 class BusinessForm extends Action
 {
+    use UserInfoByIp;
+
     /**
      * @return array
      */
     public function process(): array
     {
-        $selectedCountry = $this->request->session()->get('country', CountryCode::SINGAPORE);
+        $selectedCountry = $this->getUserInformationByIp('countrycode') ?? CountryCode::SINGAPORE;
 
         return [
             'countries' => $this->getCountries($selectedCountry),
@@ -28,18 +31,7 @@ class BusinessForm extends Action
      */
     private function getCountries(string $selectedCountry): Collection
     {
-        $countries = Collection::make([
-            [
-                'id' => CountryCode::SINGAPORE,
-                'name' => 'Singapore',
-                'active' => false,
-            ],
-            [
-                'id' => CountryCode::MALAYSIA,
-                'name' => 'Malaysia',
-                'active' => false,
-            ]
-        ]);
+        $countries = $this->getDefaultCountries();
 
         return $countries->map(function($item) use ($selectedCountry) {
             if ($item['id'] === $selectedCountry) {

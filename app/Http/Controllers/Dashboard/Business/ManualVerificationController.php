@@ -63,7 +63,6 @@ class ManualVerificationController extends Controller
             Store::withBusiness($business)
                 ->data($request->all())
                 ->withRequestFile($request)
-                ->setPaymentProvider()
                 ->process();
 
             return route('dashboard.business.verification.home', $business->getKey());

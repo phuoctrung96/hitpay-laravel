@@ -94,6 +94,12 @@ class Kernel extends ConsoleKernel
 
         $schedule->job(new GrabPayCheckRemittance)->daily('02:00');
         $schedule->job(new ZipCheckRemittance)->daily('02:30');
+
+        // The commands below are related to hoglue integrations
+        //
+        $schedule->command('hotglue:check-job-status')->everyFifteenMinutes();
+        $schedule->command('hitpay-to-hotglue:periodic-sync')->everyFifteenMinutes();
+        $schedule->command('hotglue:pull-scheduled-jobs')->everyFifteenMinutes();
     }
 
     /**

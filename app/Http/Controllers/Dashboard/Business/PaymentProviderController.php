@@ -101,7 +101,7 @@ class PaymentProviderController extends Controller
                 );
             }
         }
-// dd($business);die;
+
         return Facades\Response::view('dashboard.business.payment-providers.index', [
             'business' => $business,
             'providers' => $paymentProvidersEnabled,

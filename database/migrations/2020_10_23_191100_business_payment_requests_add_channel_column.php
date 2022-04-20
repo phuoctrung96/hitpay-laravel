@@ -14,7 +14,7 @@ class BusinessPaymentRequestsAddChannelColumn extends Migration
     public function up()
     {
         Schema::table('business_payment_requests', function (Blueprint $table) {
-            $table->string('channel')->nullable();
+            $table->string('channel')->default(\App\Business\PaymentRequest::DEFAULT_CHANNEL)->nullable();
         });
     }
 

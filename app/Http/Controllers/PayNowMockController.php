@@ -18,6 +18,7 @@ use Exception;
 use HitPay\PayNow\Generator;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -220,6 +221,7 @@ class PayNowMockController extends Controller
                     $targetModel->save();
                     $targetModel->updateProductsQuantities();
                     $targetModel->notifyAboutNewOrder();
+                    Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $targetModel->id);
                 }
 
             }, 3);

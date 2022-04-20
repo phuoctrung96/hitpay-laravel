@@ -34,7 +34,8 @@
     <div>
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-body p-4">
-                <h3 class="font-weight-bold mb-4">{{ product.name }}</h3>
+                <h3 class="font-weight-bold mb-4">{{ product.name }} <span v-if="product.is_shopify" class="float-right"><img src="/images/shopify.svg" alt="shopify"></span></h3>
+
                 <div class="mb-4">
                     <p class="mb-2">Product Checkout URL</p>
                     <div class="input-group mb-1">

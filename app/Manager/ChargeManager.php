@@ -21,6 +21,7 @@ use Stripe\Stripe;
 use Stripe\Terminal\ConnectionToken;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\QrCode;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Business\PaymentRequest;
@@ -133,6 +134,7 @@ class ChargeManager extends AbstractManager implements ManagerInterface, ChargeM
             if ($target instanceof Order) {
                 $target->save();
                 $target->updateProductsQuantities();
+                Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $target->id);
             }
         });
 

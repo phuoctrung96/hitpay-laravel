@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard\Business;
 
 use App\Business;
+use App\Business\HotglueProductTracker;
 use App\Business\Image;
 use App\Business\Product;
 use App\Business\ProductVariation;
@@ -117,10 +118,17 @@ class ProductController extends Controller
         $product_attrs = [];
 
         foreach ($products as $product) {
+            $isShopify = false;
+            if ($sku = $product->stock_keeping_unit) {
+                if (HotglueProductTracker::whereStockKeepingUnit($sku)->whereIsShopify(true)->first()) {
+                    $isShopify = true;
+                }
+            }
             $product_attrs['image'][] = $product->display('image');
             $product_attrs['price'][] = $product->display('price');
             $product_attrs['manageable'][] = $product->isManageable();
             $product_attrs['quantity'][] = $product->variations->sum('quantity');
+            $product_attrs['is_shopify'][] = $isShopify;
         }
 
         $currentBusinessUser = resolve(\App\Services\BusinessUserPermissionsService::class)->getBusinessUser(Auth::user(), $business);
@@ -351,6 +359,13 @@ class ProductController extends Controller
         $categories = $business->productCategories()->where('active', 1)->get();
 
         if (!isset($product['image'])) $product['image'] = [];
+
+        $product['is_shopify'] = false;
+        if ($sku = $product['stock_keeping_unit']) {
+            if (HotglueProductTracker::whereStockKeepingUnit($sku)->whereIsShopify(true)->first()) {
+                $product['is_shopify'] = true;
+            }
+        }
 
         return Response::view('dashboard.business.product.form', compact('business', 'product', 'categories'));
     }

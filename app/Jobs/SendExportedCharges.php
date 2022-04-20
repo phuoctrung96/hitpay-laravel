@@ -223,9 +223,6 @@ class SendExportedCharges implements ShouldQueue
 
             $cashback_amount = $charge->refunds->where('is_cashback',1)->first()->amount ?? 0;
 
-            $paymentIntents = $charge->paymentIntents()->get();
-            $terminal = $paymentIntents->where('status', 'succeeded');
-
             $singleData = collect([
                 '#' => $i++,
                 'ID' => $charge->getKey(),
@@ -264,7 +261,7 @@ class SendExportedCharges implements ShouldQueue
                 'Payment Details' => $charge->getChargeDetails(),
                 'Completed Date' => $charge->closed_at->toDateTimeString(),
                 'Store URL' => $charge->getStoreURL(),
-                'Terminal ID' => !is_null($terminal->hitpay) ? $terminal->hitpay->terminal->serial_number ?? null : null
+                'Terminal ID' => $charge->data['hitpay']['terminal']['serial_number'] ?? null,
             ])->filter(function ($field, $index) {
                 return !in_array($index, $this->fieldsToBeIgnored);
             })->toArray();

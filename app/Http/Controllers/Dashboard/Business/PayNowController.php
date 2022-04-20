@@ -148,13 +148,7 @@ class PayNowController extends Controller
             throw new \Exception("country {$business->country} not yet support for payouts");
         }
 
-        if ($business->country == CountryCode::SINGAPORE) {
-            $actionData = Retrieve::withBusiness($business)->setPerPage($perPage)->process();
-        }
-
-        if ($business->country == CountryCode::MALAYSIA) {
-            $actionData = RetrieveCustomConnect::withBusiness($business)->setPerPage($perPage)->process();
-        }
+        $actionData = Retrieve::withBusiness($business)->setPerPage($perPage)->process();
 
         $transfers = $actionData['transfers'] ?? null;
 

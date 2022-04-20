@@ -18,8 +18,7 @@
                         <div class="bg-white text-center mb-5">
                             <p class="mb-3"><img src="/hitpay/logo-000036.png" height="50" alt="HitPay"></p>
                             <p><img :src="loadImage('icons/sentiment.png')" height="100" alt=""></p>
-                            <h5>Checkout page timed out. Please retry completing order from merchant website and ensure
-                                you complete payment within 3 minutes.</h5>
+                            <h5>{{ timeoutText }}</h5>
                             <a :href="referer" class="btn btn-success mt-5">Back to Merchant Page</a>
                         </div>
                     </div>
@@ -640,6 +639,10 @@ export default {
         zero_decimal: {
             type: Boolean,
             default: false
+        },
+        expire_date: {
+            type: String,
+            default: null
         }
     },
     data() {
@@ -787,6 +790,7 @@ export default {
             deepLinkRedirect: false,
             timeoutValue: 0,
             timeoutTimer: null,
+            expireDateTimer: false,
             lazyPaynowQR: false,
             changingMethod: false,
             suppressBeforeUnload: false,
@@ -795,7 +799,8 @@ export default {
             hoolahRedirect: '',
             shopeeQrUrl: '',
             orderStatusPoll: null,
-            fpxBankOk: false
+            fpxBankOk: false,
+            timeoutText: 'Checkout page timed out.'
         }
     },
     async created() {
@@ -815,89 +820,105 @@ export default {
         }
     },
     mounted() {
-        // timeout is in msec
-        this.timeoutValue = parseInt(this.getPaymentGatewayValue('timeout')) * 1000
+        // PR expire date
+        if (this.expire_date) {
+          const now = new Date()
+          const exp = new Date(this.expire_date)
+          const msec = exp.getTime() - now.getTime()
 
-        this.provider_callback_url = this.getDomain('payment-request/' + this.charge.id + '/callback', 'securecheckout')
-        this.provider_callback_url_without_payment_request = this.getDomain(
-            'payment-gateway/' + this.data.plugin_provider + '/callback/' + this.business.id,
-            'securecheckout'
-        )
-        this.currency = this.data.currency.toUpperCase()
-        this.charges.charge_object = this.charge
-
-        // set email
-        this.checkout.email = this.data.customer_email
-
-        // if email provided, disable its edit in payment request mode
-        if (this.mode === 'payment-request' && this.checkout.email) {
-            this.show_email_input = false
+          if (msec <= 0) {
+            // Already expire, this should not happen
+            this.isTimedOut = true
+          } else {
+            this.expireDateTimer = window.setTimeout(this.timeoutHandler, msec, 'Payment request timed out. Please retry completing order from merchant website.')
+          }
         }
 
-        this.checkout.description = this.data.description
+        if (!this.isTimedOut) {
+          // Select the lowest value for timeout if any
+          this.timeoutValue = parseInt(this.getPaymentGatewayValue('timeout')) * 1000
+           
+          this.provider_callback_url = this.getDomain('payment-request/' + this.charge.id + '/callback', 'securecheckout')
+          this.provider_callback_url_without_payment_request = this.getDomain(
+              'payment-gateway/' + this.data.plugin_provider + '/callback/' + this.business.id,
+              'securecheckout'
+          )
+          this.currency = this.data.currency.toUpperCase()
+          this.charges.charge_object = this.charge
 
-        this.checkout.charge_amount = this.amount
-        this.show_amount_input = this.checkout.charge_amount === '0.00' || this.checkout.charge_amount === 0 ? true : false
+          // set email
+          this.checkout.email = this.data.customer_email
 
-        // Only select first method if there are no errors in data
-        this.charges.chosen_method = !this.checkAmount() && !this.checkEmail() && !(this.isMobileOS && this.orderedMethods.length > 1)
-            ? this.defaultMethod
-            : ''
+          // if email provided, disable its edit in payment request mode
+          if (this.mode === 'payment-request' && this.checkout.email) {
+              this.show_email_input = false
+          }
 
-        this.terminals.stripe = StripeTerminal.create({
-            onFetchConnectionToken: async () => {
-                return axios.post(this.base_url_business + 'token').then(({data}) => data.secret)
-            },
-            onUnexpectedReaderDisconnect: () => {
-                try {
-                    this.terminals.stripe.disconnectReader();
-                } catch (e) {
-                    //
-                }
+          this.checkout.description = this.data.description
 
-                // todo fix this, use modal to display
-                this.terminals.connected = null
-                this.terminal_status = 'The reader is disconnected.'
-            },
-        })
+          this.checkout.charge_amount = this.amount
+          this.show_amount_input = this.checkout.charge_amount === '0.00' || this.checkout.charge_amount === 0 ? true : false
 
-        this.cards.stripe = Stripe(StripePublishableKey, {
-            betas: [
-                'payment_intent_beta_3',
-                'grabpay_pm_beta_1'
-            ],
-        })
+          // Only select first method if there are no errors in data
+          this.charges.chosen_method = !this.checkAmount() && !this.checkEmail() && !(this.isMobileOS && this.orderedMethods.length > 1)
+              ? this.defaultMethod
+              : ''
 
-        this.cards.elements = this.cards.stripe.elements();
+          this.terminals.stripe = StripeTerminal.create({
+              onFetchConnectionToken: async () => {
+                  return axios.post(this.base_url_business + 'token').then(({data}) => data.secret)
+              },
+              onUnexpectedReaderDisconnect: () => {
+                  try {
+                      this.terminals.stripe.disconnectReader();
+                  } catch (e) {
+                      //
+                  }
 
-        if (this.methods.includes('card') && this.show_amount_input === false) {
-            this.createStripePaymentRequest(this.getStripeAmount())
-        } else {
-            this.show_payment_request_button = false
+                  // todo fix this, use modal to display
+                  this.terminals.connected = null
+                  this.terminal_status = 'The reader is disconnected.'
+              },
+          })
+
+          this.cards.stripe = Stripe(StripePublishableKey, {
+              betas: [
+                  'payment_intent_beta_3',
+                  'grabpay_pm_beta_1'
+              ],
+          })
+
+          this.cards.elements = this.cards.stripe.elements();
+
+          if (this.methods.includes('card') && this.show_amount_input === false) {
+              this.createStripePaymentRequest(this.getStripeAmount())
+          } else {
+              this.show_payment_request_button = false
+          }
+
+          window.onbeforeunload = () => {
+              if (this.charges.charge_status === 'succeeded' || this.deepLinkRedirect || this.suppressBeforeUnload || this.isTimedOut) {
+                  return null
+              } else {
+                  return true
+              }
+          }
+
+          if (!this.show_amount_input) {
+              this.disabled_payment_method_buttons = false
+          }
+
+          if (this.charges.chosen_method) {
+              this.changeMethod(this.charges.chosen_method, false)
+          }
+
+          $('body').tooltip({selector: '[data-toggle=tooltip]'})
+
+          window.document.addEventListener('scroll', this.handleScroll);
         }
-
-        window.onbeforeunload = () => {
-            if (this.charges.charge_status === 'succeeded' || this.deepLinkRedirect || this.suppressBeforeUnload) {
-                return null
-            } else {
-                return true
-            }
-        }
-
-        if (!this.show_amount_input) {
-            this.disabled_payment_method_buttons = false
-        }
-
-        if (this.charges.chosen_method) {
-            this.changeMethod(this.charges.chosen_method, false)
-        }
-
-        $('body').tooltip({selector: '[data-toggle=tooltip]'})
-
-        window.document.addEventListener('scroll', this.handleScroll);
     },
     beforeDestroy() {
-        this.clearTimeoutTimer()
+        this.clearTimeoutTimer(true)
     },
     computed: {
         amountStyle() {
@@ -1240,6 +1261,7 @@ export default {
                     if (method === 'paynow_online' || method === 'wechat' || method === 'shopee_pay') {
                         await this.pay(scroll)
                     } else {
+                        this.runTimeoutTimer()
                         await this.updateStripePaymentRequest();
                     }
                 } finally {
@@ -1858,7 +1880,7 @@ export default {
 
         redirectComplete() {
             this.charges.charge_status = 'succeeded'
-            this.clearTimeoutTimer()
+            this.clearTimeoutTimer(true)
 
             // Do not block other code in case something goes wrong with umami
             try {
@@ -1963,20 +1985,9 @@ export default {
             this.clearTimeoutTimer()
 
             if (this.timeoutValue > 0) {
-                this.timeoutTimer = window.setTimeout(async () => {
-                    try {
-                      const res = await axios.get(`${this.base_url}charge/${this.charge.id}/charge-completed`)
-
-                      if (res.data.completed) {
-                          this.alreadyPaid()
-                      } else {
-                        this.isTimedOut = true  
-                      }
-
-                    } catch (error) {
-                      this.isTimedOut = true
-                    }
-                }, this.timeoutValue)
+                this.timeoutTimer = window.setTimeout(this.timeoutHandler,
+                  this.timeoutValue,
+                  `Checkout page timed out. Please retry completing order from merchant website and ensure you complete payment within ${Math.round(this.timeoutValue / 1000 / 60)} minutes.`)
             }
         },
         runStatusCheckTimer () {
@@ -1995,7 +2006,7 @@ export default {
 
           }
         },
-        clearTimeoutTimer () {
+        clearTimeoutTimer (prExpire = false) {
             if (this.orderStatusPoll) {
               window.clearTimeout(this.orderStatusPoll)
               this.orderStatusPoll = null
@@ -2004,6 +2015,11 @@ export default {
             if (this.timeoutTimer) {
               window.clearTimeout(this.timeoutTimer)
               this.timeoutTimer = null
+            }
+
+            if (prExpire && this.expireDateTimer) {
+              window.clearTimeout(this.expireDateTimer)
+              this.expireDateTimer = null
             }
         },
         generatePayNowQR() {
@@ -2044,6 +2060,25 @@ export default {
         getCampaign(payment_method){
             return payment_method === 'paynow_online' ? this.campaign_rule : null;
         },
+
+        async timeoutHandler (message) {
+          this.clearTimeoutTimer(true)
+
+          try {
+            const res = await axios.get(`${this.base_url}charge/${this.charge.id}/charge-completed`)
+
+            if (res.data.completed) {
+              this.alreadyPaid()
+            } else {
+              this.isTimedOut = true
+              this.timeoutText = message
+            }
+
+          } catch (error) {
+            this.isTimedOut = true
+            this.timeoutText = message
+          }          
+        }
     }
 }
 </script>

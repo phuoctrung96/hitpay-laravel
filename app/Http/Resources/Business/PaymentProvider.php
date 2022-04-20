@@ -41,7 +41,7 @@ class PaymentProvider extends JsonResource
                 'type' => $accountData['type'] ?? null,
                 'name' => $accountData['business_name'] ?? null,
                 'display_name' => $accountData['display_name'] ?? null,
-                'business_logo' => $accountData['business_logo_large'] ?? null,
+                'business_logo' => $accountData['business_logo_large'] ?? ($accountData['business_logo'] ?? null),
                 'support' => [
                     'email' => $accountData['support_email'] ?? null,
                     'phone_number' => $accountData['support_phone'] ?? null,

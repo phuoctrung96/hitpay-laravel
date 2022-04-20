@@ -19,13 +19,16 @@ class SubmitChargeForMonitoring implements ShouldQueue
 
     public $business;
 
+    public $refund;
+
     /**
      * Create a new job instance.
      */
-    public function __construct(Charge $charge, Business $business)
+    public function __construct(Charge $charge, Business $business, Business\Refund $refund = null)
     {
         $this->charge = $charge;
         $this->business = $business;
+        $this->refund = $refund;
     }
 
     /**
@@ -35,6 +38,6 @@ class SubmitChargeForMonitoring implements ShouldQueue
      */
     public function handle(TransactionMonitoringService $service)
     {
-        $service->submitTransaction($this->business, $this->charge);
+        $service->submitTransaction($this->business, $this->charge, $this->refund);
     }
 }

@@ -51,19 +51,16 @@
             <div class="input-group">
                 <div class="input-group-prepend">
                     <div class="form-control flat-icon" id="flat-icon">
-                      <div class="icon" v-if="form.country == 'sg'">
-                        <img src="" src="../images/vendor/flag-icon-css/flags/4x3/sg.svg" alt="">
-                      </div>
-                      <div class="icon" v-if="form.country == 'my'">
-                        <img src="" src="../images/vendor/flag-icon-css/flags/4x3/my.svg" alt="">
-                      </div>
+                        <div class="icon">
+                            <img src="" v-bind:src="'../images/vendor/flag-icon-css/flags/4x3/' + form.country + '.svg'" alt="">
+                        </div>
                     </div>
-                </div> 
+                </div>
                 <select id="country"
-                    class="form-control"
-                    v-model="form.country"
-                    :class="{'is-invalid' : errors.country}"
-                    :disabled="is_processing">
+                        class="form-control"
+                        v-model="form.country"
+                        :class="{'is-invalid' : errors.country}"
+                        :disabled="is_processing">
                     <option
                         v-for="country in countries"
                         :value="country.id"
@@ -74,6 +71,26 @@
                 </select>
             </div>
             <span class="invalid-feedback" role="alert">{{ errors.country }}</span>
+        </div>
+
+        <div class="notice mb-4" v-if="form.country=='' || form.country=='sg'">
+            <p>
+                By registering your account, you agree to our <a href="https://www.hitpayapp.com/termsofservice" target="_blank">
+                Terms of Service</a>, <a href="https://www.hitpayapp.com/privacypolicy" target="_blank">Privacy Policy</a>,
+                <a href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> and the
+                <a href="https://stripe.com/connect-account/legal">Stripe Connected Account Agreement.</a>
+                You may receive email from us and can opt out at any time.
+            </p>
+        </div>
+
+        <div class="notice mb-4" v-if="form.country=='my'">
+            <p>
+                By registering your account, you agree to our <a href="https://hitpayapp.com/my/termsofservice" target="_blank">
+                Terms of Service</a>, <a href="https://hitpayapp.com/my/privacypolicy" target="_blank">Privacy Policy</a>,
+                <a href="https://hitpayapp.com/my/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> and the
+                <a href="https://stripe.com/connect-account/legal">Stripe Connected Account Agreement.</a>
+                You may receive email from us and can opt out at any time.
+            </p>
         </div>
 
         <PhoneInput
@@ -259,7 +276,7 @@ export default {
             if (!/(^[A-Za-z0-9.\-\&\$ ]+$)+/.test(this.form.name)) {
                 this.errors.name = 'Chars, digits, spaces and dots are allowed in name';
             }
-            
+
             if (!/^\+(?:[\d]*)$/.test(this.form.phone_number)) {
                 this.errors.phone_number = 'Phone number should contain country code (ex. +65)';
             }
@@ -348,7 +365,7 @@ export default {
             })
 
             this.is_processing = false;
-            
+
             window.location.href = this.getDomain('', 'dashboard')
         }
     },

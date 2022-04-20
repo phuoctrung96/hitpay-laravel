@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response;
@@ -246,6 +247,7 @@ class OrderController extends Controller
         $order->messages = $messages;
         $order->save();
         $order->notifyAboutStatusChanged($data['message'] ?? '', $order->status === OrderStatus::COMPLETED);
+        Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $order->id);
 
         $order->load(static::$relationships);
 

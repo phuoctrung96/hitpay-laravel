@@ -155,6 +155,15 @@ return [
         'tm_password' => env('COMPLY_ADVANTAGE_TM_PASSWORD'),
     ],
 
+    'hotglue' => [
+        'public_api_key' => env('HOTGLUE_PUBLIC_API_KEY'),
+        'secret_api_key' => env('HOTGLUE_SECRET_API_KEY'),
+        'env_id' => env('HOTGLUE_ENV_ID'),
+        'api_host' => env('HOTGLUE_API_HOST'),
+        'product_flow_id' => env('HOTGLUE_PRODUCT_FLOW_ID'),
+        'ecommerce_flow_id' => env('HOTGLUE_ECOMMERCE_FLOW_ID')
+    ],
+
     'cognito' => [
         'publishable_key' => env('COGNITO_PUBLISHABLE_KEY'),
         'key' => env('COGNITO_KEY'),

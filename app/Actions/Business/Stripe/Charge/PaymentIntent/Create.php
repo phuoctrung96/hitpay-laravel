@@ -72,11 +72,16 @@ class Create extends Action
             $statementDescriptor = $this->data['remark'];
         }
 
-        if (key_exists('terminal_id', $this->data) && $this->data['terminal_id']) {
+        if (
+            $businessPaymentIntent->payment_provider_method === 'card_present'
+            && key_exists('terminal_id', $this->data)
+            && is_string($this->data['terminal_id'])
+            && !blank($this->data['terminal_id'])
+        ) {
             $hitpayPaymentIntentParameters = [
                 'terminal' => [
                     'serial_number' => $this->data['terminal_id']
-                ]
+                ],
             ];
         }
 
