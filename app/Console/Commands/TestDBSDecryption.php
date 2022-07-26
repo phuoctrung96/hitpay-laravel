@@ -95,7 +95,7 @@ rlAGKTro7PxLMoQr8h24CEuhu5NszS2zig==
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $data = App::environment('production') ? $this->productionData : $this->stagingData;
 
@@ -121,5 +121,7 @@ rlAGKTro7PxLMoQr8h24CEuhu5NszS2zig==
         } catch (Throwable $exception) {
             $this->error('Decryption failed, error message: '.$exception->getMessage());
         }
+
+        return 0;
     }
 }

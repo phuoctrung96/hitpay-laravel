@@ -68,7 +68,7 @@ class UserRepository
             ],
             'phone_number' => [
                 'nullable',
-                'mobile_phone_number',
+                'phone_number',
                 Rule::unique('users'),
             ],
             'password' => [
@@ -186,7 +186,7 @@ class UserRepository
             'phone_number' => [
                 'nullable',
                 'string',
-                'mobile_phone_number',
+                'phone_number',
                 Rule::unique('users')->ignore($user->getKey()),
             ],
         ]);

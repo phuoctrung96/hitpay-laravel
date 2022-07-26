@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Business;
 use App\Business\Charge;
+use App\Enumerations\Business\PaymentMethodType;
 use App\Services\ComplyAdvantage\TransactionMonitoringService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,6 +39,8 @@ class SubmitChargeForMonitoring implements ShouldQueue
      */
     public function handle(TransactionMonitoringService $service)
     {
-        $service->submitTransaction($this->business, $this->charge, $this->refund);
+        if ($this->charge->payment_provider_charge_method !== PaymentMethodType::CASH) {  
+            $service->submitTransaction($this->business, $this->charge, $this->refund);
+        }
     }
 }

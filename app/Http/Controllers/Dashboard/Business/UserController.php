@@ -23,17 +23,6 @@ class UserController extends Controller
 
         $currentBusinessUser = $businessUserPermissionsService->getBusinessUser(\Auth::user(), $business);
 
-        $businessUsers = $business->businessUsers()
-            ->orderBy('created_at')
-            ->with('user.role', 'role')
-            ->withoutGlobalScope('active')
-            ->get()
-            ->filter(function(BusinessUser $businessUser) use ($business) {
-                $isSuperAdmin = $businessUser->user->isSuperAdmin();
-                return !$isSuperAdmin || ($isSuperAdmin && $business->user_id == $businessUser->user_id);
-            });
-
-
         $roles = Role::business()->forInvitedUsers()
             ->when($currentBusinessUser->isAdmin(), function($query) {
                 return $query->whereNotIn('id', [Role::owner()->id, Role::admin()->id]);
@@ -43,10 +32,27 @@ class UserController extends Controller
         $restrictions = $business->rolesRestrictions;
 
         if($request->wantsJson()) {
-            return Response::json(compact('business', 'roles', 'businessUsers'));
+            $businessUsers = $business->businessUsers()
+                ->orderBy('created_at')
+                ->with('user.role', 'role')
+                ->withoutGlobalScope('active')
+                ->get()
+                ->filter(function(BusinessUser $businessUser) use ($business) {
+                    $isSuperAdmin = $businessUser->user->isSuperAdmin();
+                    return !$isSuperAdmin || ($isSuperAdmin && $business->user_id == $businessUser->user_id);
+                });
+
+            $businessUsers = $businessUsers->map(function(BusinessUser $businessUser) {
+                $attributes = $businessUser->only(['id', 'user_id', 'invite_accepted_at', 'permissions']);
+                $attributes['user'] = $businessUser->user->only(['id', 'email', 'display_name']);
+                $attributes['role'] = $businessUser->role->only(['id', 'title']);
+                return $attributes;
+            });
+
+            return Response::json(compact('businessUsers'));
         }
 
-        return Response::view('dashboard.business.users', compact('business', 'roles', 'businessUsers', 'currentBusinessUser', 'restrictions'));
+        return Response::view('dashboard.business.users', compact('business', 'roles', 'currentBusinessUser', 'restrictions'));
     }
 
     public function invite(Request $request, Business $business)

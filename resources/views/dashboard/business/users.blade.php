@@ -8,14 +8,13 @@
             <div class="card border-0 shadow-sm mx-auto mb-5 mb-xs-6">
                 <div class="card-body p-4">
                     <business-users
-                        :business="{{ json_encode($business) }}"
                         :roles="{{json_encode($roles)}}"
-                        :current_business_user="{{ json_encode($currentBusinessUser) }}"
-                        :users="{{json_encode($businessUsers)}}"
+                        :current_business_user_id="'{{ $currentBusinessUser->user_id }}'"
                     />
                 </div>
             </div>
             <business-role-restrictions></business-role-restrictions>
+            <business-settings></business-settings>
             <business-help-guide :page_type="'user_management'"></business-help-guide>
         </div>
     </div>
@@ -23,7 +22,7 @@
 @endsection
 @push('body-stack')
     <script>
-        window.Business = @json($business->toArray());
+        window.Business = @json($business->toBladeModel());
         window.Restrictions = @json($restrictions);
     </script>
 @endpush

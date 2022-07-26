@@ -180,6 +180,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * The "booting" method of the model.
+     *
+     * @todo: Review logging part
      */
     protected static function boot() : void
     {
@@ -203,6 +205,8 @@ class User extends Authenticatable implements MustVerifyEmail
             }
 
             foreach ($model->verifiableAttributes as $key) {
+                if ($key === 'email') continue; // email_verified_at is set manually
+
                 if (empty($dirties[$key])) {
                     $model->setAttribute($key.'_verified_at', null);
                 }
@@ -354,6 +358,8 @@ class User extends Authenticatable implements MustVerifyEmail
                 $addedRemovedChangedEvent($key);
 
                 if (array_key_exists($key.'_verified_at', $changes)) {
+                    if (!isset($changes['email'])) continue; // in case email_verified_at was set manually
+
                     if (empty($original[$key.'_verified_at'])) {
                         $model->createLog('security', $key.'_verified', $model->getAttribute($key.'_verified_at'), [
                             $key => $changes[$key],
@@ -1152,5 +1158,22 @@ class User extends Authenticatable implements MustVerifyEmail
                         ->where('referral_code', 'like', $searchQuery . '%');
                 });
         });
+    }
+
+    public function toBladeModel() : array
+    {
+        return array_merge($this->only([
+            'id',
+            'display_name',
+            'business_partner',
+        ]), [
+            'businessUsersList' => $this->businessUsersList->map(function(BusinessUser $businessUser) {
+                return $businessUser->only([
+                    'user_id',
+                    'business_id',
+                    'permissions'
+                ]);
+            })
+        ]);
     }
 }

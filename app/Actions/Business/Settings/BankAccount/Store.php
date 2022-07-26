@@ -11,6 +11,8 @@ use HitPay\Stripe\CustomAccount\Exceptions\InvalidStateException;
 use HitPay\Stripe\CustomAccount\ExternalAccount\Create;
 use Illuminate\Support\Facades;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Stripe\Exception\InvalidRequestException;
 use Throwable;
 
 class Store extends Action
@@ -32,24 +34,34 @@ class Store extends Action
      */
     public function process() : BankAccount
     {
-        // TODO - WARNING
-        //   -------------->>>
-        //   We DO NOT ALLOW users to have same currency bank account in the same country for the time being. Because
-        //   it will take time to create this feature in Stripe and our dashboard. Keep this in view.
-        //   -
-        //   For now, the bank account will be always country Singapore + currency SGD, so if the business already
-        //   have a bank account, we will return error. We will have to update this later when multi currency bank
-        //   account is introduced.
-
-        if (!in_array($this->business->country, [CountryCode::SINGAPORE, CountryCode::MALAYSIA])) {
-            throw new BadRequest('Setting up bank account for non-Singapore and non-Malaysia based businesses is currently not supported.');
-        }
-
         $currencyCodesData = $this->business->currenciesAvailable();
         $banksData = $this->business->banksAvailable();
 
+        $shouldUseBanksList = in_array($this->business->country, [CountryCode::SINGAPORE, CountryCode::MALAYSIA]);
+
         $rules['currency'] = [ 'required', Rule::in($currencyCodesData) ];
-        $rules['bank_id'] = [ 'required', Rule::in($banksData->pluck('id')) ];
+
+        /**
+         * We have list of the banks only for Malaysia and Singapore
+         * everyone should enter the data manually
+         */
+        if ($shouldUseBanksList) {
+            $rules['bank_id'] = ['required', Rule::in($banksData->pluck('id'))];
+        } else {
+            /**
+             * Countries that use Routing Number
+             */
+            if (in_array($this->business->country, self::ROUTING_NUMBER_COUNTRIES)) {
+                $rules['bank_routing_number'] = 'required|string|max:15';
+            }
+
+            /**
+             * Countries that use SWIFT code
+             */
+            if (in_array($this->business->country, self::SWIFT_CODE_COUNTRIES)) {
+                $rules['bank_swift_code'] = 'required|string|min:8|max:11';
+            }
+        }
 
         // Not all country requires branch code. E.g. Malaysia, Malaysia is using swift code only.
         //
@@ -73,10 +85,13 @@ class Store extends Action
             }
         }
 
-        // We should validate the account number from different banks in the future.
-        //
-        $rules['number'] = 'required|digits_between:4,32';
-        $rules['holder_name'] = 'required|string';
+        if (in_array($this->business->country, self::IBAN_COUNTRIES)) {
+            $rules['number'] = 'required|regex:/(^[A-Z]{2}\w{4,32}$)/u';
+        } else {
+            $rules['number'] = 'required|digits_between:4,32';
+        }
+
+        $rules['holder_name'] = 'required|string|max:160';
         $rules['holder_type'] = [ 'required', Rule::in([ BusinessType::COMPANY, BusinessType::INDIVIDUAL, BusinessType::PARTNER ]) ];
         $rules['use_in_hitpay'] = 'required|bool';
         $rules['use_in_stripe'] = 'required|bool';
@@ -84,19 +99,26 @@ class Store extends Action
 
         $data = Facades\Validator::validate($this->data, $rules);
 
-        /** @var \HitPay\Data\Countries\Objects\Bank $bank */
-        $bank = $banksData->where('id', $data['bank_id'])->first();
+        if ($shouldUseBanksList) {
+            /** @var \HitPay\Data\Countries\Objects\Bank $bank */
+            $bank = $banksData->where('id', $data['bank_id'])->first();
 
-        if ($bank->useBranch) {
-            if (array_key_exists('branch_code', $data) && !is_null($data['branch_code'])) {
-                $branch = $bank->branches->where('code', $data['branch_code'])->first();
+            if ($bank->useBranch) {
+                if (array_key_exists('branch_code', $data) && !is_null($data['branch_code'])) {
+                    $branch = $bank->branches->where('code', $data['branch_code'])->first();
 
-                $bankRoutingNumber = $branch->routing_number;
+                    $bankRoutingNumber = $branch->routing_number;
+                } else {
+                    $bankRoutingNumber = null;
+                }
             } else {
-                $bankRoutingNumber = null;
+                $bankRoutingNumber = $bank->swift_code;
             }
+
+            $bankSwiftCode = $bank->swift_code;
         } else {
-            $bankRoutingNumber = $bank->swift_code;
+            $bankSwiftCode = $data['bank_swift_code'] ?? null;
+            $bankRoutingNumber = $data['bank_routing_number'] ?? null;
         }
 
         $bankAccount = new BankAccount;
@@ -104,21 +126,23 @@ class Store extends Action
         // Currently, we allow bank account from the same country of the business only.
         //
         $bankAccount->country = $this->business->country;
-
         $bankAccount->currency = $data['currency'];
-        $bankAccount->bank_swift_code = $bank->swift_code;
+        $bankAccount->bank_swift_code = $bankSwiftCode;
         $bankAccount->bank_routing_number = $bankRoutingNumber;
         $bankAccount->number = $data['number'];
 
-        $bankData = $bank->toArray();
+        if ($shouldUseBanksList) {
+            $bankData = $bank->toArray();
 
-        unset($bankData['branches']);
+            unset($bankData['branches']);
 
-        $bankAccount->data = [
-            'data' => [
-                'bank' => $bankData,
-            ],
-        ];
+            $bankAccount->data = [
+                'data' => [
+                    'bank' => $bankData,
+                ],
+            ];
+        }
+
         $bankAccount->holder_name = $data['holder_name'];
         $bankAccount->holder_type = $data['holder_type'];
         $bankAccount->remark = $data['remark'] ?? null;
@@ -168,6 +192,24 @@ class Store extends Action
                         ->handle($bankAccount, $useInStripe);
                 } catch (InvalidStateException | AccountNotFoundException $exception) {
                     Facades\Log::info($exception->getMessage());
+                } catch (InvalidRequestException $exception) {
+                    $response = $exception->getJsonBody();
+
+                    if (isset($response['error']['code'])) {
+                        if ($response['error']['code'] === 'account_number_invalid') {
+                            throw ValidationException::withMessages([
+                                'number' => $response['error']['message'],
+                            ]);
+                        }
+
+                        if ($response['error']['code'] === 'routing_number_invalid') {
+                            throw ValidationException::withMessages([
+                                'bank_routing_number' => $response['error']['message'],
+                            ]);
+                        }
+                    }
+
+                    throw $exception;
                 }
             }
         }

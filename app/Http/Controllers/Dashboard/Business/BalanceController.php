@@ -14,6 +14,7 @@ use App\Helpers\Topup;
 use App\Http\Controllers\Controller;
 use App\Jobs\Wallet\PayoutToBank;
 use App\Models\Business\BankAccount;
+use App\Models\Business\SpecialPrivilege;
 use HitPay\PayNow\Generator;
 use HitPay\Stripe\CustomAccount\Balance\Retrieve;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -65,7 +66,7 @@ class BalanceController extends Controller
     {
         Gate::inspect('canManageWallets', $business)->authorize();
 
-        if (!Business\Wallet::isSupportingType($type) || !Business\Wallet::isSupportingCurrency($currency)) {
+        if (!Business\Wallet::isSupportingType($type) || !Business\Wallet::isSupportingCurrency($business, $currency)) {
             App::abort(404);
         }
 
@@ -117,7 +118,7 @@ class BalanceController extends Controller
 
         Gate::inspect('canManageWallets', $business)->authorize();
 
-        if (!Business\Wallet::isSupportingCurrency($currency)) {
+        if (!Business\Wallet::isSupportingCurrency($business, $currency)) {
             App::abort(404);
         }
 
@@ -217,7 +218,7 @@ class BalanceController extends Controller
     {
         Gate::inspect('canSendBalanceToBank', $business)->authorize();
 
-        if (!Business\Wallet::isSupportingCurrency($currency)) {
+        if (!Business\Wallet::isSupportingCurrency($business, $currency)) {
             App::abort(404);
         }
 
@@ -271,7 +272,14 @@ class BalanceController extends Controller
 
         $transfer = $business->payoutToBank($business->paymentProviders->first(), $currency, $bankAccount);
 
-        PayoutToBank::dispatch($transfer);
+        $transferPaused = $business
+            ->specialPrivileges()
+            ->where('special_privilege', SpecialPrivilege::TRANSFER_PAUSED)
+            ->exists();
+
+        if (!$transferPaused) {
+            PayoutToBank::dispatch($transfer)->onQueue('main-server');
+        }
 
         return Response::json([
             'message' => 'Your payout is on the way to your bank.',

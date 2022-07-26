@@ -1230,6 +1230,23 @@ export default {
                 this.setDobShareholder();
             }
 
+            if (this.$refs.supporting_documents && this.$refs.supporting_documents.files.length > 0) {
+                if (this.$refs.supporting_documents && this.$refs.supporting_documents.files.length > 2) {
+                    this.errors.supporting_documents = "Maximum 2 files are allowed";
+                }
+
+                for (var i = 0; i < this.$refs.supporting_documents.files.length; i++) {
+                    let file = this.$refs.supporting_documents.files[i];
+                    if (file.size > 1024 * 1024 * 2) {
+                        this.errors.supporting_documents = "Files should not be greater than 2 MB.";
+                    }
+
+                    if (!this.isValidFile(file.name)) {
+                        this.errors.supporting_documents = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
+                    }
+                }
+            }
+
             if (this.verification.business_description && this.verification.business_description.length > 1000) {
                 this.errors.business_description = "Max length is 1000 characters";
             }
@@ -1241,17 +1258,8 @@ export default {
             }
 
             if (this.type === 'individual') {
-                if (this.$refs.supporting_documents) {
-                    for (var i = 0; i < this.$refs.supporting_documents.files.length; i++) {
-                        let file = this.$refs.supporting_documents.files[i];
-                        if (file.size > 1024 * 1024 * 2) {
-                            this.errors.supporting_documents = "Files should not be greater than 2 MB.";
-                        }
-
-                        if (!this.isValidFile(file.name)) {
-                            this.errors.supporting_documents = "File with extension *.py, *.sh, *.exe, *.php, *.sql not allowed";
-                        }
-                    }
+                if (this.$refs.supporting_documents && this.$refs.supporting_documents.files.length === 0) {
+                    this.errors.supporting_documents = "Please upload supporting documents";
                 }
 
                 if (this.$refs.identity_front) {

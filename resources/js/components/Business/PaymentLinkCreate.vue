@@ -64,6 +64,16 @@
                                       v-if="errors.email">{{ errors.email }}</span>
                             </div>
                             <div class="px-4 mb-3 border-top pt-3">
+                                <PhoneInput
+                                    id="phone_number"
+                                    @phoneInput="savePhone"
+                                    label="Phone Number (optional)"
+                                    ref="phoneInput"
+                                    :error="errors.phone_number"
+                                    :disabled="is_processing"
+                                />
+                            </div>
+                            <div class="px-4 mb-3 border-top pt-3">
                                 <label>Reference</label>
                                 <input type="text" v-model="payment_link.reference_number"
                                        :class="{ 'is-invalid' : errors.reference_number }"
@@ -133,9 +143,10 @@
 
 <script>
 import Datepicker from "vuejs-datepicker";
-import CustomisationCheckBox from '../Admin/CheckoutCustomisation/CustomisationCheckBox'
-import MethodsSelector from '../Admin/CheckoutCustomisation/MethodsSelector'
+import CustomisationCheckBox from '../Dashboard/CheckoutCustomization/CustomisationCheckBox'
+import MethodsSelector from '../Dashboard/CheckoutCustomization/MethodsSelector'
 import CheckoutButton from '../Shop/CheckoutButton'
+import PhoneInput from '../Authentication/PhoneInput'
 
 
 export default {
@@ -144,7 +155,8 @@ export default {
         Datepicker,
         CustomisationCheckBox,
         MethodsSelector,
-        CheckoutButton
+        CheckoutButton,
+        PhoneInput,
     },
     props: {
         currency_list: {
@@ -165,16 +177,19 @@ export default {
                 currency: 'SGD',
                 amount: 0,
                 email: '',
+                full_phone_number: '',
+                phone_number: '',
+                phone_dial_code: '',
                 reference_number: '',
                 expiry_date: '',
-                repeated: false,
+                repeated: false
             },
         }
-        
+
     },
     methods: {
         checkDecimal() {
-            if (this.payment_link.amount != '' && this.zero_decimal_list.includes(this.payment_link.currency)) {
+            if (this.payment_link.amount !== '' && this.zero_decimal_list.includes(this.payment_link.currency)) {
                 if (/.*\.|,.*/.test(this.payment_link.amount)) {
                     this.errors = {
                         amount: this.payment_link.currency + ' is zero-decimal currency',
@@ -230,13 +245,23 @@ export default {
                 this.errors.amount = "Invalid amount, must be more than 0 and less than 9999999.";
             }
 
+            if (this.payment_link.phone_number.length > 15) {
+                this.errors.phone_number = 'The phone number may not be greater than 15 characters.';
+            }
+
+            if (this.payment_link.phone_number.length > 0 && this.payment_link.phone_number.length < 8) {
+                this.errors.phone_number = 'The phone number may not be less than 8 characters.';
+            }
+
             if (Object.keys(this.errors).length > 0) {
                 this.showError(_.first(Object.keys(this.errors)));
                 return;
             }
 
-            if (this.payment_link.expiry_date != '')
+            if (this.payment_link.expiry_date !== '')
                 this.payment_link.expiry_date = this.getTime(this.payment_link.expiry_date);
+
+            this.payment_link.full_phone_number = this.phoneNumber;
 
             axios.post(this.getDomain('business/' + Business.id + '/payment-links', 'dashboard'), this.payment_link)
                 .then(({data}) => {
@@ -248,8 +273,13 @@ export default {
                 }).catch(({response}) => {
                 if (response.status === 422) {
                     _.forEach(response.data.errors, (value, key) => {
-                        this.errors[key] = _.first(value);
+                        if (key === 'full_phone_number') {
+                            this.errors['phone_number'] = _.first(value);
+                        } else {
+                            this.errors[key] = _.first(value);
+                        }
                     });
+
                     this.showError(_.first(Object.keys(this.errors)));
                 }
             });
@@ -299,14 +329,22 @@ export default {
         },
         clearData(){
             this.payment_link = {
-                currency: 'SGD',
+                currency: window.Business.currency.toUpperCase(),
                 amount: 0,
                 email: '',
+                phone_number: '',
+                phone_dial_code: '',
+                full_phone_number: '',
                 reference_number: '',
                 expiry_date: '',
                 repeated: false,
             };
-        }
+        },
+
+        savePhone(event, phone, phone_dial_code) {
+            this.payment_link.phone_number = phone;
+            this.payment_link.phone_dial_code = phone_dial_code;
+        },
     },
     computed: {
         disableDates() {
@@ -315,12 +353,18 @@ export default {
             return {
                 to: date
             }
+        },
+
+        phoneNumber() {
+            return this.payment_link.phone_dial_code + this.payment_link.phone_number;
         }
     },
 
     mounted() {
         if (window.Business) {
             this.payment_link.currency = window.Business.currency.toUpperCase();
+
+            this.$refs.phoneInput.applyCountry(window.Business.country);
         }
     }
 }

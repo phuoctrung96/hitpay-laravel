@@ -52,6 +52,15 @@
                         <option v-for="(theme, index) in xero_branding_themes" :value="index">{{theme}}</option>
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label for="channels">Select Sales Channel Data for Data Import <span class="text-danger">*</span></label>
+                    <select v-model="setting.channels" id="channels" multiple size="6" class="form-control">
+                        <option :value="'all'" :selected="'all' === setting.channels || setting.channels.indexOf('all') >= 0">All Sales Channels</option>
+                        <option v-for="channel in channels" :value="channel.key" :selected="setting.channels.indexOf(channel.key) >= 0">{{channel.label}}</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label for="bank_xero_account"> Select Xero Bank Account For Payout <span class="text-danger">*</span></label>
                     <select id="bank_xero_account" class="form-control" v-model="setting.xero_payout_account_id">
@@ -96,12 +105,6 @@
                         <option v-for="(account) in xero_accounts" :value="account.id">{{account.name}}</option>
                     </select>
                 </div>
-                <div class="form-group d-none">
-                    <label for="invoice_grouping">Create sales invoice per<span class="text-danger">*</span></label>
-                    <select id="invoice_grouping" class="form-control" v-model="setting.invoice_grouping">
-                        <option v-for="(group, index) in invoice_grouping_variants" :value="index">{{group}}</option>
-                    </select>
-                </div>
                 <div class="form-group">
                     <label for="disable_sales_feed">Allow HitPay to Automatically Create Invoices for HitPay Sales and Fees<span class="text-danger">*</span></label>
                     <select id="disable_sales_feed" class="form-control" v-model="setting.disable_sales_feed">
@@ -109,6 +112,12 @@
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label for="group_invoices">How do you want to import data?<span class="text-danger">*</span></label>
+                    <select id="group_invoices" class="form-control" v-model="setting.invoice_grouping">
+                        <option v-for="(group, index) in invoice_grouping_variants" :value="index">{{group}}</option>
+                    </select>
+                </div>
 
                 <button id="createBtn" class="btn btn-success btn-lg btn-block mb-3 shadow-sm" @click="saveSettings()" :disabled="is_updating">
                     {{isUpdate?'Update': 'Save'}}
@@ -137,12 +146,13 @@
                     sales_account_type: 4,
                     refund_account_type: 4,
                     fee_account_type: 4,
-                    invoice_grouping: 'INDIVIDUAL',
+                    invoice_grouping: 'BULK',
                     xero_sales_account_id: null,
                     xero_refund_account_id: null,
                     xero_fee_account_id: null,
                     xero_payout_account_id: null,
                     disable_sales_feed: 0,
+                    channels: []
                 },
                 errors: {},
                 email: null,
@@ -154,6 +164,7 @@
                 invoice_grouping_variants: [],
                 enable_sales_feed_variants: ['Yes', 'No'],
                 isUpdate: false,
+                channels: []
             }
         },
         mounted() {
@@ -181,10 +192,10 @@
             }
             this.email = window.Business.xero_email;
             this.organization = window.Business.xero_organization_name;
+            this.channels = window.pluginProviders;
 
             if (window.Business.xero_sync_date)
             {
-
                 this.setting = {
                     sync_date: window.Business.xero_sync_date,
                     paynow_btn_text: window.Business.paynow_btn_text,
@@ -197,8 +208,10 @@
                     xero_payout_account_id: window.Business.xero_payout_account_id,
                     xero_sales_account_id: window.Business.xero_sales_account_id,
                     xero_refund_account_id: window.Business.xero_refund_account_id,
-                    xero_fee_account_id: window.Business.xero_fee_account_id
+                    xero_fee_account_id: window.Business.xero_fee_account_id,
+                    channels: window.Business.xero_channels,
                 }
+
                 this.isUpdate = true;
 
                 if(!window.Business.hasXeroPaymentGateway) {

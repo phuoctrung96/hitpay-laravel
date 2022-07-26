@@ -94,6 +94,9 @@ export default {
 
   mounted() {
     this.reset_password_url = this.getDomain('password/reset', 'dashboard');
+    window.addEventListener('keyup', event => {
+      event.key === 'Enter' && this.login();
+    });
   },
 
   methods: {

@@ -28,30 +28,45 @@
               title="Enable PayNow"
               text="Complete your PayNow setup to start accepting PayNow in your checkout page"
               button="Setup PayNow"
-              :link="`/business/${business_id}/payment-provider?tab=paynow`"/>
+              :link="`/business/${business.id}/payment-provider?tab=paynow`"/>
 
             <PaymentMethodCard
               v-else-if="showStripePanel"
               title="Accept Cards"
               text="Connect your stripe account to start accepting credit and debit card in your checkout page"
               button="Setup Now"
-              :link="`/business/${business_id}/payment-provider?tab=stripe`"/>
+              :link="`/business/${business.id}/payment-provider?tab=stripe`"/>
 
             <PaymentMethodCard
               v-else
               title="PayNow integration with Xero"
               text="Integrate HitPay with xero to start accepting paynow payments on your invoices with instant confirmation"
               button="Connect Now"
-              :link="`/business/${business_id}/integration/xero/home`"/>
+              :link="`/business/${business.id}/integration/xero/home`"/>
           </div>
       </div>
+      <!-- <div class="insigts-widgets">
+        <h4>Insigts</h4>
+        <div class="row">
+          <PaymentMethodsChart
+            class="col-12 col-lg-4"
+            :business_id="business_id"/>
 
+          <SaleVolume
+            class="col-12 col-lg-4"
+            :business_id="business_id"/>
+
+          <PaymentChannel
+            class="col-12 col-lg-4"
+            :business_id="business_id"/>
+        </div>
+      </div> -->
       <!-- Transactions & payouts -->
       <div class="d-flex flex-column flex-xl-row dash-row">
         <TableCard
           class="mr-xl-4 flex-grow-1"
           title="Recent Transactions"
-          :link="`/business/${business_id}/charge`">
+          :link="`/business/${business.id}/charge`">
           <table
             v-if="lastTransactions.length > 0"
             class="dash-table w-100">
@@ -70,7 +85,7 @@
             </tr>
           </table>
           <div v-else class="no-data h-100 p-4 d-flex align-items-center justify-content-center">
-            There are no transactions yet
+            This widget is currently not available. Please click on "View All"
           </div>
         </TableCard>
 
@@ -125,7 +140,7 @@
       <VerificationWarning
           v-if="country_code == 'sg'"
           v-model="is_show_modal_verification"
-          :businessId="business_id"
+          :businessId="business.id"
           :business="business"
       />
   </div>
@@ -136,6 +151,9 @@ import moment from 'moment'
 import TableCard from './TableCard'
 import PaymentMethodCard from './PaymentMethodCard'
 import VerificationWarning from './VerificationWarning'
+import PaymentMethodsChart from '../Business/PaymentMethodsChart'
+import SaleVolume from '../Business/SaleVolume'
+import PaymentChannel from '../Business/PaymentChannel'
 
 const lastCheckItem = 'verified_wit_my_info_sg_warning'
 
@@ -144,15 +162,15 @@ export default {
   components: {
     TableCard,
     PaymentMethodCard,
-    VerificationWarning
+    VerificationWarning,
+    PaymentMethodsChart,
+    SaleVolume,
+    PaymentChannel
   },
   props: {
-    business: Object,
-    business_id: String,
     is_show_modal_verification: Boolean,
     country_code: String,
-    daily_data: Object,
-    user: Object
+    daily_data: Object
   },
 
     /**
@@ -171,7 +189,9 @@ export default {
 
   data () {
     return {
-        partner: this.user.business_partner,
+      business: window.Business,
+      user: window.User,
+      partner: window.User.business_partner,
       quickLinks: [
         {
           text: 'Add HitPay to Shopify',
@@ -231,7 +251,7 @@ export default {
             return null;
         }
 
-        return `/business/${this.business_id}/payment-provider/paynow/payout`;
+        return `/business/${this.business.id}/payment-provider/paynow/payout`;
     },
     hasProviders () {
       return this.daily_data.providers
@@ -269,7 +289,7 @@ export default {
       },
     hasPermission(permission) {
       return this.user.businessUsersList.filter((businessUser) => {
-        return businessUser.business_id == this.business_id && businessUser.permissions[permission];
+        return businessUser.business_id == this.business.id && businessUser.permissions[permission];
       }).length;
     },
     getPayoutType (type) {
@@ -294,13 +314,11 @@ export default {
       }
     },
     getLastTransactions() {
-        axios.get(this.getDomain(`v1/business/${this.business_id}/charge?per_page=5`, 'api'), {
+        axios.get(this.getDomain(`v1/business/${this.business.id}/charge?per_page=5`, 'api'), {
             withCredentials: true
         })
           .then(response => {
               this.lastTransactions = response.data.data;
-              console.log('last transactions');
-              console.log(this.lastTransactions);
           });
     }
   },

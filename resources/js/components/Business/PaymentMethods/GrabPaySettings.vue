@@ -41,10 +41,10 @@
     <div class="form-group">
       <label for="postal_code" class="small text-secondary">Merchant category</label>
 
-      <select 
+      <select
         v-model="form.merchant_category_code"
         :disabled="disabled"
-        class="custom-select">          
+        class="custom-select">
         <option
           v-for="opt in business_categories"
           :key="opt.id"
@@ -81,7 +81,7 @@
       @click="onSave(true)">
       {{ saveButtonTitle }} <i v-if="isProcessing" class="fas fa-circle-notch fa-spin"></i>
     </button>
-  
+
     <template v-if="grabpayConnected">
       <div class="hr"/>
 
@@ -113,8 +113,8 @@
 
 <script>
 import axios from 'axios'
-import Alert from '../../Admin/CheckoutCustomisation/Alert'
-import CustomisationCheckBox from '../../Admin/CheckoutCustomisation/CustomisationCheckBox'
+import Alert from '../../Dashboard/CheckoutCustomization/Alert'
+import CustomisationCheckBox from '../../Dashboard/CheckoutCustomization/CustomisationCheckBox'
 
 export default {
   name: 'GrabPaySettings',
@@ -123,12 +123,12 @@ export default {
     CustomisationCheckBox
   },
   props: {
-    business: Object,
     provider: Object,
     business_categories: Array
   },
   data () {
     return {
+      business: window.Business,
       status: '',
       pageTitles: {
         pending_submission: 'Application to GrabPay awaiting delivery',
@@ -240,7 +240,7 @@ export default {
             this.error = true
           }
         }
-        
+
         this.isProcessing = false
       } else {
         this.edit = true

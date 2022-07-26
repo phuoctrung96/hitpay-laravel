@@ -13,7 +13,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         window.Type = "{{$type}}"
     </script>
 @endpush

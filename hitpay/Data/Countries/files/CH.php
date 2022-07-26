@@ -2,15 +2,36 @@
 
 use App\Enumerations\CurrencyCode;
 
+$banks = [];
+
+$pathBanks = base_path('hitpay/Data/Countries/files/CH/banks');
+
+$files = is_dir($pathBanks) ? File::files($pathBanks) : [];
+
+foreach ($files as $file) {
+    $banks[] = require $file->getPathname();
+}
+
+$paymentProviders = [];
+
+$pathPaymentProviders = base_path('hitpay/Data/Countries/files/CH/payment_providers');
+
+$files = File::files($pathPaymentProviders);
+
+foreach ($files as $file) {
+    $paymentProviders[] = require $file->getPathname();
+}
+
 return [
     'id' => 'ch',
     'alpha_2' => 'ch',
     'alpha_3' => 'che',
     'name' => 'Switzerland',
+    'default_currency' => CurrencyCode::EUR,
     'currencies' => [
-        CurrencyCode::CHF,
         CurrencyCode::EUR,
         CurrencyCode::USD,
+        CurrencyCode::CHF,
         CurrencyCode::SEK,
         CurrencyCode::NOK,
         CurrencyCode::DKK,
@@ -27,6 +48,6 @@ return [
         CurrencyCode::RON,
         CurrencyCode::CZK
     ],
-    'banks' => \HitPay\Data\Countries\CH::banks()->toArray(),
-    'payment_providers' => \HitPay\Data\Countries\CH::paymentProviders()->toArray(),
+    'banks' => $banks,
+    'payment_providers' => $paymentProviders,
 ];

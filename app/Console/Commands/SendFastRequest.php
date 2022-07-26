@@ -8,6 +8,7 @@ use App\Business\Transfer;
 use App\Enumerations\Business\ChargeStatus;
 use App\Enumerations\Business\SupportedCurrencyCode;
 use App\Enumerations\PaymentProvider;
+use App\Models\Business\SpecialPrivilege;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class SendFastRequest extends Command
      *
      * @throws \Exception
      */
-    public function handle() : void
+    public function handle() : int
     {
         $date = $this->option('date');
 
@@ -183,7 +184,14 @@ class SendFastRequest extends Command
 
                 DB::commit();
 
-                $transferModel->doFastTransfer();
+                $transferPaused = $business
+                    ->specialPrivileges()
+                    ->where('special_privilege', SpecialPrivilege::TRANSFER_PAUSED)
+                    ->exists();
+
+                if (!$transferPaused) {
+                    $transferModel->doFastTransfer();
+                }
 
                 Log::info('A '.getFormattedAmount($transferModel->currency, $transferModel->amount).' transfer was made'
                     .' to business '.$business->getName().'.');
@@ -191,5 +199,7 @@ class SendFastRequest extends Command
                 Log::error('Fast Payment Failed: '.$exception->getMessage());
             }
         }
+
+        return 0;
     }
 }

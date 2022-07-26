@@ -37,7 +37,7 @@ class DisableAllShopifySync extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
         $businesses = Business::whereNotNull('shopify_id')->get();
 
@@ -79,5 +79,7 @@ class DisableAllShopifySync extends Command
                 $this->error('');
             }
         });
+
+        return 0;
     }
 }

@@ -78,6 +78,7 @@ class TransactionMonitoringService
             } elseif(in_array($charge->payment_provider, [
                     PaymentProvider::STRIPE_MALAYSIA,
                     PaymentProvider::STRIPE_SINGAPORE,
+                    PaymentProvider::STRIPE_US,
                 ]) && ($card = $charge->card()) instanceof \HitPay\Data\Objects\PaymentMethods\Card){
                 $issuerId = $card->issuer;
                 $issuerName = $card->issuer;
@@ -93,7 +94,7 @@ class TransactionMonitoringService
                     'source_format' => '4',
                     'data' => [
                         'tx_id' => $refund ? $refund->getKey() : $charge->getKey(),
-                        'tx_date_time' => gmdate('Y-m-d H:i:s',$charge->closed_at->getTimestamp()),
+                        'tx_date_time' => gmdate('Y-m-d H:i:s', $charge->created_at->getTimestamp()),
                         'tx_direction' => 'Inbound',
                         'tx_type' => $refund ? 'Refund' : 'Payment',
                         'tx_base_currency' => SupportedCurrencyCode::USD,

@@ -130,7 +130,7 @@ class StripeWebhookController extends Controller
                 ->where('payment_provider_object_type', $event->data->object->object)
                 ->where('payment_provider_object_id', $event->data->object->id)
                 ->first();
- 
+
             if ($businessPaymentIntent instanceof PaymentIntent) {
                 $businessPaymentIntent->status = $event->data->object->status;
 

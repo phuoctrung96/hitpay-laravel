@@ -213,24 +213,13 @@ class ForCharge extends Action
         $charge->closed_at = $charge->freshTimestamp();
 
         if ($paymentProviderModel) {
-            [
-                $fixedAmount,
-                $percentage,
-            ] = $paymentProviderModel->getRateFor(
-                $business->country, $business->currency, $charge->currency, $charge->channel,
-                $charge->payment_provider_charge_method, null, null, $charge->amount
-            );
-
             if ($cashback) {
-                $fixedAmount += $cashback->cashback_admin_fee;
+              $charge->fixed_fee = $charge->fixed_fee + $cashback->cashback_admin_fee;
             }
 
             $charge->home_currency = $charge->currency;
             $charge->home_currency_amount = $charge->amount;
             $charge->exchange_rate = 1;
-            $charge->fixed_fee = $fixedAmount;
-            $charge->discount_fee_rate = $percentage;
-            $charge->discount_fee = bcmul($charge->discount_fee_rate, $charge->home_currency_amount);
 
             if ($hasPlatformProvider ?? false) {
                 $charge->commission_amount = bcmul($charge->commission_rate, $charge->amount);
@@ -331,7 +320,9 @@ class ForCharge extends Action
         // We will refund after 10 minutes. Because sometimes the bank side is not yet updated and can't find the
         // payment.
         //
-        RefundForPaymentIntent::dispatch($paymentIntent, $content, $filename)->delay(Date::now()->addMinutes(10));
+        RefundForPaymentIntent::dispatch($paymentIntent, $content, $filename)
+            ->delay(Date::now()->addMinutes(10))
+            ->onQueue('main-server');
 
         Log::critical($logMessage ?: $message);
     }

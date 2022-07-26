@@ -4,15 +4,25 @@ namespace App\Enumerations;
 
 class CountryCode extends Enumeration
 {
+    CONST UNITED_ARAB_EMIRATES = 'ae';
+
     const AUSTRALIA = 'au';
 
     const AUSTRIA = 'at';
 
     const BELGIUM = 'be';
 
+    CONST BULGARIA = 'bg';
+
     const BRAZIL = 'br';
 
     const CANADA = 'ca';
+
+    CONST CYPRUS = 'cy';
+
+    CONST CROATIA = 'hr';
+
+    CONST CZECHIA = 'cz';
 
     const DENMARK = 'dk';
 
@@ -28,6 +38,8 @@ class CountryCode extends Enumeration
 
     const HONG_KONG = 'hk';
 
+    CONST HUNGARY = 'hu';
+
     const INDIA = 'in';
 
     const IRELAND = 'ie';
@@ -36,6 +48,8 @@ class CountryCode extends Enumeration
 
     const JAPAN = 'jp';
 
+    const LIECHTENSTEIN = 'li';
+
     const LATVIA = 'lv';
 
     const LITHUANIA = 'lt';
@@ -43,6 +57,8 @@ class CountryCode extends Enumeration
     const LUXEMBOURG = 'lu';
 
     const MALAYSIA = 'my';
+
+    CONST MALTA = 'mt';
 
     const MEXICO = 'mx';
 
@@ -55,6 +71,8 @@ class CountryCode extends Enumeration
     const POLAND = 'pl';
 
     const PORTUGAL = 'pt';
+
+    CONST ROMANIA = 'ro';
 
     const SINGAPORE = 'sg';
 

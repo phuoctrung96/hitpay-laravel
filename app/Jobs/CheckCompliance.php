@@ -44,8 +44,10 @@ class CheckCompliance implements ShouldQueue
 
             if ($this->verification->type === 'business') {
                 $search_terms = [$this->verification->submitted_data['name'], $this->verification->submitted_data['entity_name']];
-                foreach ($shareholders = $this->verification->submitted_data['shareholders'] as $shareholder) {
-                    $search_terms[] = $shareholder;
+                if (isset($this->verification->submitted_data['shareholders'])) {
+                    foreach ($shareholders = $this->verification->submitted_data['shareholders'] as $shareholder) {
+                        $search_terms[] = $shareholder;
+                    }
                 }
 
                 $client_ref = $this->verification->business_id;

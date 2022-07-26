@@ -16,13 +16,12 @@ use App\Enumerations\Business\SupportedCurrencyCode;
 use App\Exceptions\HitPayLogicException;
 use App\Http\Controllers\Api\Business\ChargeController as BaseController;
 use App\Http\Resources\Business\PaymentIntent;
+use App\Manager\BusinessManagerInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response;
 use Stripe\Exception\CardException;
-use Stripe\Stripe;
-use Stripe\Terminal\ConnectionToken;
 
 class ChargeController extends BaseController
 {
@@ -160,44 +159,18 @@ class ChargeController extends BaseController
     }
 
     /**
-     * @param \App\Business $business
+     * Generate connection token for Stripe terminal.
+     *
+     * @param  \App\Business  $business
+     * @param  \App\Manager\BusinessManagerInterface  $businessManager
      *
      * @return \Illuminate\Http\JsonResponse
-     * @throws \App\Exceptions\HitPayLogicException
-     * @throws \Stripe\Exception\ApiErrorException
      */
-    public function getConnectionToken(Business $business)
+    public function getConnectionToken(Business $business, BusinessManagerInterface $businessManager) : JsonResponse
     {
-        $provider = $business->paymentProviders()->where('payment_provider', $business->payment_provider)->first();
+        $secret = $businessManager->createStripeConnectionToken($business);
 
-        if (!$provider) {
-            // should fail la.
-        }
-
-        $locations = $business->stripeTerminalLocations;
-
-        $location = $locations->first();
-
-        // Set your secret key. Remember to switch to your live secret key in production!
-        // See your keys here: https://dashboard.stripe.com/account/apikeys
-        Stripe::setApiKey(Config::get('services.stripe.sg.secret'));
-        if (!$location) {
-            // BT reader do NOT need locations
-            $token = ConnectionToken::create([]);
-            return Response::json([
-                'secret' => $token->secret,
-            ]);
-        }
-
-        // In a new endpoint on your server, create a ConnectionToken and return the
-        // `secret` to your app. The SDK needs the `secret` to connect to a reader.
-        $token = ConnectionToken::create([
-            'location' => $location->stripe_terminal_location_id,
-        ]);
-
-        return Response::json([
-            'secret' => $token->secret,
-        ]);
+        return Response::json(compact('secret'));
     }
 
     /**

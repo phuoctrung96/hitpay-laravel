@@ -1,6 +1,14 @@
 <?php
 
+use App\Business;
 use App\Services\Quickbooks\HitpaySalesExportService;
+use App\Services\XeroSalesService;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\QrCode;
+use HitPay\Shopify\Shopify;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Log;
 
 Route::get('quickbooks-test', function(HitpaySalesExportService $exportService) {
     return $exportService->export();
@@ -39,6 +47,11 @@ Route::namespace('Dashboard')->group(function () {
 
         Route::get('register-partner', 'RegisterPartnerController@showRegistrationForm')->name('register-partner');
         Route::post('register-partner', 'RegisterPartnerController@register')->name('register-partner.process');
+
+        Route::get('email/verify', 'VerificationController@show')->name('verification.notice');
+        Route::get('email/verify/{id}/{hash}', 'VerificationController@verify')->name('verification.verify');
+        Route::get('email/resend', 'VerificationController@resend')->name('verification.resend');
+
     });
 
     Route::name('dashboard.')->group(function () {
@@ -165,12 +178,12 @@ Route::namespace('Dashboard')->group(function () {
 
                     Route::prefix('order')->name('order.')->group(function () {
                         Route::get('/', 'OrderController@index')->name('index');
-                        Route::post('search', 'OrderController@search')->name('search');
+                        // Route::get('/{pending}', 'OrderController@index')->name('index');
                         Route::post('export', 'OrderController@export')->name('export');
                         Route::post('delivery-report', 'OrderController@deliveryReportExport')->name('delivery.export');
                         Route::post('update', 'OrderController@markAsCompleted')->name('update-orders');
-                        Route::post('get', 'OrderController@getOrdersWithFilters')->name('get-orders');
                         Route::get('cancel/{b_order}/{refund}', 'OrderController@cancel')->name('cancel');
+                        Route::post('cancel-order-requires-customer-action/{b_order}', 'CancelOrderRequiresCustomerActionController')->name('cancel.requires_customer_action');
                         Route::get('{b_order}', 'OrderController@show')->name('show');
                         Route::put('{b_order}', 'OrderController@update')->name('update');
                         Route::put('{b_order}/reference', 'OrderController@updateReference')->name('update.reference');
@@ -180,26 +193,25 @@ Route::namespace('Dashboard')->group(function () {
                         Route::resource('/', 'DiscountController', [
                             'names' => [
                                 'index' => 'home',
-                                'store' => 'store',
                                 'create' => 'create',
                             ]
                         ]);
                         Route::get('{discount}/edit', 'DiscountController@edit')->name('edit');
-                        Route::get('{discount}/delete', 'DiscountController@delete')->name('delete');
                     });
                     Route::prefix('coupon')->name('coupon.')->group(function () {
                         Route::resource('/', 'CouponController', [
                             'names' => [
                                 'index' => 'home',
-                                'store' => 'store',
                                 'create' => 'create',
                             ]
                         ]);
                         Route::get('{coupon}/edit', 'CouponController@edit')->name('edit');
-                        Route::get('{coupon}/delete', 'CouponController@delete')->name('delete');
                     });
 
                     Route::prefix('setting')->name('setting.')->group(function () {
+                        Route::get('/', 'BusinessSettingsController@index')->name('index');
+                        Route::post('/', 'BusinessSettingsController@store')->name('store');
+                        Route::put('/{b_setting}', 'BusinessSettingsController@update')->name('update');
 
                         Route::prefix('shipping')->name('shipping.')->group(function () {
                             Route::post('discount', 'ShippingController@storeDiscount')->name('create-discount');
@@ -220,6 +232,7 @@ Route::namespace('Dashboard')->group(function () {
                             Route::delete('cover-image', 'StoreSettingsController@removeCoverImage')->name('cover-image.remove');
                         });
                     });
+
                     Route::prefix('basic-details')->name('basic-details.')->group(function () {
                         Route::get('/', 'BasicDetailController@index')->name('home');
                         Route::put('identifier', 'BasicDetailController@updateIdentifier')->name('identifier');
@@ -344,6 +357,11 @@ Route::namespace('Dashboard')->group(function () {
                         Route::get('disconnect', 'QuickbooksController@disconnect')->name('disconnect');
                     });
 
+
+                    Route::prefix('email-templates')->middleware('auth')->name('email-templates')->group(function () {
+                        Route::get('/', 'EmailTemplateController@index')->name('home');
+                    });
+
                     Route::prefix('integration/hotglue')->middleware('auth')->name('integration.hotglue.')->group(function () {
                         Route::get('home', 'HotglueController@index')->name('home');
                         Route::post('source-connected', 'HotglueController@sourceConnected')->name('connected');
@@ -352,6 +370,7 @@ Route::namespace('Dashboard')->group(function () {
                         Route::put('product-periodic-sync', 'HotglueController@productPeriodicSync')->name('product-periodic-sync');
                         Route::put('sync-all-hitpay-orders', 'HotglueController@syncAllHitpayOrders')->name('sync-all-hitpay-orders');
                         Route::post('sync-now', 'HotglueController@syncNow')->name('sync-now');
+                        Route::put('inventory-location', 'HotglueController@inventoryLocation')->name('inventory-location');
                     });
 
                     Route::namespace('Stripe')->prefix('payment-provider/stripe')->name('payment-provider.stripe.')
@@ -447,6 +466,14 @@ Route::namespace('Dashboard')->group(function () {
                         Route::post('category/{category_id}', 'PointOfSaleController@getProductWithCategory')->name('.getProductCategory');
                     });
 
+                    Route::prefix('dashboard')->name('dashboard.')->group(function () {
+                        Route::get('/', 'ShopDashboardController@index')->name('index');
+                    });
+
+                    Route::prefix('insight')->name('insight.')->group(function () {
+                        Route::get('/', 'ShopDashboardController@insight')->name('insight.index');
+                    });
+
                     Route::prefix('product')->name('product.')->group(function () {
                         Route::get('/', 'ProductController@index')->name('index');
                         Route::post('/', 'ProductController@store')->name('store');
@@ -514,6 +541,7 @@ Route::namespace('Dashboard')->group(function () {
                     Route::prefix('customisation')->name('customisation.')->group(function () {
                       Route::get('/', 'CustomisationController@index')->name('index');
                       Route::patch('/', 'CustomisationController@patch')->name('patch');
+                      Route::get('/rates', 'CustomisationController@getRateForAmount')->name('getRateForAmount');
                     });
 
                     Route::prefix('verification')->name('verification.')->group(function () {

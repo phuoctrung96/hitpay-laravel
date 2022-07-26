@@ -6,10 +6,10 @@ $banks = [];
 
 $pathBanks = base_path('hitpay/Data/Countries/files/SG/banks');
 
-$files = File::files($pathBanks);
+$files = is_dir($pathBanks) ? File::files($pathBanks) : [];
 
 foreach ($files as $file) {
-    $banks[] = require_once $file->getPathname();
+    $banks[] = require $file->getPathname();
 }
 
 $paymentProviders = [];
@@ -19,7 +19,7 @@ $pathPaymentProviders = base_path('hitpay/Data/Countries/files/SG/payment_provid
 $files = File::files($pathPaymentProviders);
 
 foreach ($files as $file) {
-    $paymentProviders[] = require_once $file->getPathname();
+    $paymentProviders[] = require $file->getPathname();
 }
 
 return [
@@ -27,8 +27,10 @@ return [
     'alpha_2' => 'sg',
     'alpha_3' => 'sgp',
     'name' => 'Singapore',
+    'default_currency' => CurrencyCode::SGD,
     'currencies' => [
         CurrencyCode::SGD,
+        CurrencyCode::USD
     ],
     'banks' => $banks,
     'payment_providers' => $paymentProviders,

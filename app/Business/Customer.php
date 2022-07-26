@@ -7,11 +7,12 @@ use HitPay\Business\Ownable;
 use HitPay\Model\UsesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
 class Customer extends Model implements OwnableContract
 {
-    use Ownable, UsesUuid;
+    use Ownable, UsesUuid, Notifiable;
 
     /**
      * The database table used by the model.

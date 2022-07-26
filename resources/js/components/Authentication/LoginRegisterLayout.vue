@@ -22,16 +22,16 @@
     <div class="main-content d-flex flex-column justify-content-center align-items-center flex-grow-1 p-2 p-md-5">
       <div class="account-verification">
         <div class="inner">
-          <template v-if="title == 'Create Account' || title == 'Create Business' || title == 'Bank Setup' || title == 'Account Verification'">
+          <template v-if="['Create Account', 'Create Business', 'Bank Setup', 'Account Verification', 'Confirm your email address'].includes(title)">
             <div class="process-create">
               <div class="register-progress">
                 <div class="progress enable">
                 </div>
-                <div class="progress" :class="(title == 'Create Business' || title == 'Bank Setup' || title == 'Account Verification')? 'enable': 'disable'">
+                <div class="progress" :class="(['Create Business', 'Bank Setup', 'Account Verification', 'Confirm your email address'].includes(title))? 'enable': 'disable'">
                 </div>
-                <div class="progress" :class="(title == 'Bank Setup' || title == 'Account Verification')? 'enable': 'disable'">
+                <div class="progress" :class="(['Create Business', 'Bank Setup', 'Account Verification'].includes(title)) ? 'enable': 'disable'">
                 </div>
-                <div class="progress" :class="(title == 'Account Verification')? 'enable': 'disable'">
+                <div class="progress" :class="(title === 'Account Verification')? 'enable': 'disable'">
                 </div>
               </div>
             </div>
@@ -74,7 +74,7 @@ $topPanelHeight: 60px;
       padding: 8px;
     }
 
-    @media (min-width: 768px) {    
+    @media (min-width: 768px) {
       padding: 80px 24px;
       width: $leftPanelWidth;
       box-shadow: rgba(0, 0, 0, .2) 0px 5px 10px 0px;
@@ -104,12 +104,12 @@ $topPanelHeight: 60px;
     }
 
     .inner {
-      @media (max-width: 768px) {      
+      @media (max-width: 768px) {
         width: 320px;
       }
 
       @media (min-width: 768px) {
-        min-height: 570px;  
+        min-height: 570px;
         width: 364px;
       }
 
@@ -122,7 +122,7 @@ $topPanelHeight: 60px;
         width: 22%;
         height: 5px;
         float: left;
-        border-radius: 15px; 
+        border-radius: 15px;
         margin-right: 5px;
       }
 

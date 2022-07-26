@@ -31,14 +31,14 @@ class ProcessICNForCharge extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
         $filename = $this->argument('filename');
 
         if (!is_string($filename)) {
             $this->error('The filename is invalid.');
 
-            return;
+            return 1;
         }
 
         $filepath = "dbs-icn-files/{$filename}.csv";
@@ -46,7 +46,7 @@ class ProcessICNForCharge extends Command
         if (!Storage::disk('local')->exists($filepath)) {
             $this->error("The file doesn't exist. Please make sure the filepath is '{$filepath}'.");
 
-            return;
+            return 1;
         }
 
         $file = Storage::disk('local')->get($filepath);
@@ -67,7 +67,7 @@ class ProcessICNForCharge extends Command
             if (!is_array($data) || !$this->isValid($data)) {
                 $this->error("The JSON payload in line {$line} is invalid.");
 
-                return;
+                return 1;
             }
 
             $records->push($data);
@@ -76,7 +76,7 @@ class ProcessICNForCharge extends Command
         if ($records->count() > $this->limit) {
             $this->error("Please do not include more than {$this->limit} records at once.");
 
-            return;
+            return 1;
         }
 
         $records = $records->unique('txnInfo.txnRefId');
@@ -90,6 +90,8 @@ class ProcessICNForCharge extends Command
 
             ForCharge::withReference($reference)->filepath($filename)->data($record)->process();
         }
+
+        return 0;
     }
 
     private function isValid(array $data) : bool

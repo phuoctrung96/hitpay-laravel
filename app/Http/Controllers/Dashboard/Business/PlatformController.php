@@ -219,16 +219,16 @@ class PlatformController extends Controller
     {
         Gate::inspect('view', $business)->authorize();
 
-        if (!in_array($business->country, [CountryCode::SINGAPORE, CountryCode::MALAYSIA])) {
+        if (!in_array($business->country, CountryCode::listConstants())) {
             throw new \Exception("country {$business->country} not yet support for payouts");
         }
 
         if ($business->country == CountryCode::SINGAPORE) {
             $actionData = RetrieveForPlatform::withBusiness($business)->process();
-        }
-
-        if ($business->country == CountryCode::MALAYSIA) {
-            $actionData = \App\Actions\Business\Payout\Stripe\RetrieveForPlatform::withBusiness($business)->process();
+        } else {
+            if (in_array($business->country, CountryCode::listConstants())) {
+                $actionData = \App\Actions\Business\Payout\Stripe\RetrieveForPlatform::withBusiness($business)->process();
+            }
         }
 
         $commissions = $actionData['commissions'] ?? null;

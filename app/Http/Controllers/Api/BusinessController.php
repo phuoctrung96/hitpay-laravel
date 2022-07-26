@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use HitPay\Image\Processor as ImageProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Response;
@@ -96,9 +97,9 @@ class BusinessController extends Controller
 
     public function getDailyReport(Request $request, BusinessModel $business)
     {
-        $today = Carbon::today();
+        $date = Date::now()->toDateString();
 
-        $charge = $business->charges()->where('status', ChargeStatus::SUCCEEDED)
+        $charge = $business->setConnection('mysql_read')->charges()->where('status', ChargeStatus::SUCCEEDED)
             ->orderByDesc('closed_at')->first();
 
         if ($charge instanceof Charge) {
@@ -106,11 +107,16 @@ class BusinessController extends Controller
         }
 
         $cache = [
-            'collection' => $business->charges()->selectRaw('currency, sum(amount) as sum')
+            'collection' => $business->setConnection('mysql_read')
+                ->charges()
+                ->selectRaw('currency, sum(amount) as sum')
                 ->where('status', ChargeStatus::SUCCEEDED)
-                ->whereDate('closed_at', $today)
+                ->whereBetween('closed_at', [
+                    "{$date} 00:00:00",
+                    "{$date} 23:59:59",
+                ])
                 ->groupBy('currency')
-                ->pluck('sum', 'currency', 'business_id')
+                ->pluck('sum', 'currency')
                 ->toArray(),
             'last_transaction' => $charge,
         ];

@@ -15,15 +15,15 @@ class Xero
     public const INVOICE_STATUS_PAID = 'PAID';
     public const PAYMENT_STATUS = 'AUTHORISED';
     public const INVOICE_GROUPING_INDIVIDUAL = 'INDIVIDUAL';
-    public const INVOICE_GROUPING_TOTAL = 'TOTAL';
+    public const INVOICE_GROUPING_BULK = 'BULK';
 
     public const XERO_ACCOUT_TYPES = [
         'ASSET', 'EQUITY', 'EXPENSE', 'LIABILITY', 'REVENUE'
     ];
 
     public const INVOICE_GROUPING_VARIANTS = [
-        self::INVOICE_GROUPING_INDIVIDUAL => 'Individual Transaction',
-        self::INVOICE_GROUPING_TOTAL => 'Payment Method',
+        self::INVOICE_GROUPING_BULK => 'Lumpsum for each day',
+        self::INVOICE_GROUPING_INDIVIDUAL => 'By individual transaction',
     ];
 
     public const SALES_ACCOUNT_CODE = 200;

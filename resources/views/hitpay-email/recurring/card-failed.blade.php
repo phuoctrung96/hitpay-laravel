@@ -218,7 +218,11 @@
                                                 <td style="{{ $style['outer_td'] }}" valign="top">&nbsp;</td>
                                                 <td class="receipt-container" style="{{ $style['outer_td'] }} width: 80%;"
                                                     width="80%" valign="top">
-                                                    @if ($plan_payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE || $plan_payment_provider === \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA)
+                                                    @if (in_array($plan_payment_provider, [
+                                                        \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE,
+                                                        \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA,
+                                                        \App\Enumerations\PaymentProvider::STRIPE_US,
+                                                    ]))
                                                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">The customer’s attached card for the below plan has failed to charge. The customer has been notified about the failed charged by email. The email notification to the customer contains a link to update the customer’s card details.</p>
                                                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Please contact the customer directly to update the card details from the link in the email sent to them. Alternatively, please send the customer the link to the plan which can be found in the HitPay Dashboard under Recurring Plans.</p>
                                                     @else
@@ -279,7 +283,11 @@
                                                                 valign="top" align="right">{{ $plan_price }}</td>
                                                         </tr>
                                                     </table>
-                                                    @if ($plan_payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE || $plan_payment_provider === \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA)
+                                                    @if (in_array($plan_payment_provider, [
+                                                        \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE,
+                                                        \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA,
+                                                        \App\Enumerations\PaymentProvider::STRIPE_US,
+                                                    ]))
                                                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Please note that the customer has to update the card details within 7 days of the original charge date. Failure to do so, will result in the plan getting automatically cancelled.</p>
                                                     @endif
                                                 </td>

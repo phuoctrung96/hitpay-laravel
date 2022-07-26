@@ -18,6 +18,7 @@ use App\Http\Resources\Business\Charge;
 use App\Http\Resources\Business\PaymentIntent;
 use App\Logics\Business\ChargeRepository;
 use App\Manager\FactoryPaymentIntentManagerInterface as PaymentIntentManager;
+use HitPay\Data\FeeCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
@@ -94,7 +95,7 @@ class OrderChargeController extends Controller
             $order->save();
             $order->updateProductsQuantities();
             $order->notifyAboutNewOrder();
-            Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $order->id);
+            Artisan::call('sync:hitpay-order-to-ecommerce --order_id=' . $order->id);
 
             return $business->charges()->save($charge);
         });
@@ -244,13 +245,28 @@ class OrderChargeController extends Controller
 
         $charge->payment_provider = $paymentProvider->payment_provider;
         $charge->payment_provider_account_id = $paymentProvider->payment_provider_account_id;
-        $charge->payment_provider_charge_method = 'wechat';
+        $charge->payment_provider_charge_method = PaymentMethodType::PAYNOW;
+
         $charge->status = ChargeStatus::REQUIRES_PAYMENT_METHOD;
 
         $charge->setChargeable($order);
 
         try {
-            return $paymentIntentManager->create(PaymentMethodType::PAYNOW)->create($charge, $business);
+            $paymentIntent = $paymentIntentManager->create(PaymentMethodType::PAYNOW)->create($charge, $business);
+
+            $charge = $paymentIntent->charge;
+
+            $fees = FeeCalculator::forBusinessCharge($charge, $paymentProvider, $charge->payment_provider_charge_method)
+                ->calculate();
+
+            $charge->exchange_rate = $fees->exchange_rate;
+            $charge->discount_fee_rate = $fees->discount_fee_rate;
+            $charge->fixed_fee = $fees->home_currency_fixed_fee_amount;
+            $charge->discount_fee = $fees->home_currency_discount_fee_amount;
+
+            $charge->save();
+
+            return $paymentIntent;
         } catch (BadRequest $exception) {
             return Response::json([
                 'error_message' => $exception->getMessage(),

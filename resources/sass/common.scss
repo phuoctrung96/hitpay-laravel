@@ -24,3 +24,13 @@
 .text-underline {
   text-decoration: underline;
 }
+
+.quillWrapper .ql-snow.ql-toolbar {
+  background-color: #F5F5F5 !important;
+  border-color: #E4E4E4;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+}
+.ql-container.ql-snow {
+  border-color: #E4E4E4 !important;
+}

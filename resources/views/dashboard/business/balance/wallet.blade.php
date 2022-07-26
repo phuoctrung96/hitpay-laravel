@@ -169,7 +169,6 @@ Current Reserve Balance   : <span class="font-weight-bold{{ $reserveWalletBalanc
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         document.addEventListener("DOMContentLoaded", () => {
             @if($wallet->type === \App\Enumerations\Business\Wallet\Type::AVAILABLE)
                 let autoPayToBank = $('input[name=auto_pay_to_bank]');

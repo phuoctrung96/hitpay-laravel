@@ -38,6 +38,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades;
 use Illuminate\Support\Str;
 use Throwable;
+use App\Helpers\Currency;
 
 /**
  * Class Charge
@@ -53,6 +54,12 @@ use Throwable;
  * @property Business business
  * @property string currency
  * @property mixed closed_at
+ * @property Model target
+ * @property int discount_fee
+ * @property string stock_keeping_unit
+ * @property string customer_email
+ * @property string customer_name
+ * @property int fixed_fee
  */
 class Charge extends Model implements HasCustomerContract, OwnableContract
 {
@@ -160,6 +167,11 @@ class Charge extends Model implements HasCustomerContract, OwnableContract
 
                 try {
                     $model->business->notify(new NotifySuccessfulPayment($model));
+                    $model->business->businessUsers()->each(function($businessUser) use ($model) {
+                        if ($businessUser->isAdmin()) {
+                            $businessUser->user->notify(new NotifySuccessfulPayment($model));
+                        }
+                    });
                 } catch (Throwable $exception) {
                     Facades\Log::critical("Notifying '{$model->business->name}' failed for successful charge #{$model->getKey()}: {$exception->getMessage()} ({$exception->getFile()}:{$exception->getLine()})");
                 }
@@ -201,7 +213,11 @@ class Charge extends Model implements HasCustomerContract, OwnableContract
                         }
                     }
                 }
-                SubmitChargeForMonitoring::dispatch($model, $model->business);
+                try {
+                     SubmitChargeForMonitoring::dispatch($model, $model->business);
+                }catch (Throwable $exception){
+                    Facades\Log::critical("Dispatch job to submit charge for monitoring #{$model->getKey()} failed. Error: {$exception->getMessage()} ({$exception->getFile()}:{$exception->getLine()})");
+                }
             }
         });
     }
@@ -421,6 +437,14 @@ class Charge extends Model implements HasCustomerContract, OwnableContract
                 return $this->plugin_data['shop_name'] ?? null;
             case 'store_url':
                 return $this->getStoreURL() ?? null;
+            case 'payment_request_amount':
+                $paymentRequest = $this->paymentRequest()->first();
+
+                if (!$paymentRequest || $paymentRequest->is_default === 1) {
+                  return $this->display('amount');
+                } else {
+                  return getFormattedAmount($this->currency , Currency::isZeroDecimal($this->currency) ? $paymentRequest->amount : $paymentRequest->amount * 100);
+                }
         }
 
         throw new Exception('Invalid attribute.');
@@ -432,7 +456,19 @@ class Charge extends Model implements HasCustomerContract, OwnableContract
 
         if (!$paymentRequest) return null;
 
-        $redirectUrl = $paymentRequest->redirect_url;
+        if ($paymentRequest->channel === PluginProvider::APISHOPIFY) {
+            $shopifyPayment = $this->business->shopifyPayments()
+                ->where('invoice_id', $paymentRequest->reference_number)
+                ->first();
+
+            if (!$shopifyPayment) return null;
+
+            if (!isset($shopifyPayment->request_data['shopify_domain_real'])) return null;
+
+            return $shopifyPayment->request_data['shopify_domain_real'];
+        } else {
+            $redirectUrl = $paymentRequest->redirect_url;
+        }
 
         if ($redirectUrl == "") return null;
 
@@ -511,7 +547,7 @@ class Charge extends Model implements HasCustomerContract, OwnableContract
         } elseif ($this->payment_provider === \App\Enumerations\PaymentProvider::DBS_SINGAPORE) {
             if ($this->payment_provider_charge_method === 'paynow_online') {
                 $method = 'PayNow Online';
-            } elseif ($this->payment_provider_charge_method === 'direc_debit') {
+            } elseif ($this->payment_provider_charge_method === 'direct_debit') {
                 $method = 'Direct Debit';
             } else {
                 $method = $this->payment_provider_charge_method;
@@ -536,6 +572,8 @@ class Charge extends Model implements HasCustomerContract, OwnableContract
             $method = 'GrabPay PayLater';
         } elseif ($this->payment_provider_charge_method === PaymentMethodType::HOOLAH) {
             $method = 'Hoolah';
+        } elseif ($this->payment_provider_charge_method === PaymentMethodType::FPX) {
+            $method = 'FPX';
         } else {
             $method = 'Unknown';
         }
@@ -745,6 +783,7 @@ class Charge extends Model implements HasCustomerContract, OwnableContract
         $isPaymentProviderStripe = in_array($this->payment_provider, [
             PaymentProviderEnum::STRIPE_MALAYSIA,
             PaymentProviderEnum::STRIPE_SINGAPORE,
+            PaymentProviderEnum::STRIPE_US
         ]);
 
         if (!$isPaymentProviderStripe) {

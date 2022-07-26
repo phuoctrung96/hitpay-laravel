@@ -36,8 +36,10 @@ class XeroRefreshTokens extends Command
      *
      * @return mixed
      */
-    public function handle(RefreshTokensService $refreshTokensService)
+    public function handle(RefreshTokensService $refreshTokensService) : int
     {
         $refreshTokensService->handle();
+
+        return 0;
     }
 }

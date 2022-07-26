@@ -13,10 +13,10 @@ class ProductFeedTemplate implements FromArray, WithHeadings, WithEvents
         // TODO: Implement array() method.
         return  [
             array(
-               123, 'example product title', 'product description', 50.00, 15,'https://shop.staging.hit-pay.com/storage/products/medium/902a240a69ed4a7f99f949381f282e9d.jpg', true, true
+               123, 'example product title', 'product description', 50.00, 15,'https://shop.staging.hit-pay.com/storage/products/medium/902a240a69ed4a7f99f949381f282e9d.jpg', true, true, 'General'
             ),
             array(
-                124, 'example child product title', 'child product description', 30.00, 15, 'https://shop.staging.hit-pay.com/storage/products/medium/902a240a69ed4a7f99f949381f282e9d.jpg', true, true
+                124, 'example child product title', 'child product description', 30.00, 15, 'https://shop.staging.hit-pay.com/storage/products/medium/902a240a69ed4a7f99f949381f282e9d.jpg', true, true, 'General;Shoes'
             ),
         ];
     }
@@ -32,6 +32,7 @@ class ProductFeedTemplate implements FromArray, WithHeadings, WithEvents
             'Image',
             'Publish',
             'Manage Inventory',
+            'Category (set multiple by semicolon. ex: General;Shoes;Shirt'
         ];
     }
     public function registerEvents(): array

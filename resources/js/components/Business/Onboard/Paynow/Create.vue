@@ -20,7 +20,7 @@
             </div>
             <div class="form-group">
                 <label for="company_uen">
-                    {{ business.country == 'sg' ? form_names.sg.company_identity : form_names.my.company_identity }}
+                    {{ business.country === 'sg' ? form_names.sg.company_identity : form_names.my.company_identity }}
                 </label>
                 <input
                     id="company_uen"
@@ -36,7 +36,7 @@
 
             <div class="form-group">
                 <label for="company_name">
-                    {{ business.country == 'sg' ? form_names.sg.company_name : form_names.my.company_name }}
+                    {{ business.country === 'sg' ? form_names.sg.company_name : form_names.my.company_name }}
                 </label>
                 <input
                     id="company_name"
@@ -54,7 +54,7 @@
                 <label for="bank_account_name">
                     Bank Account Name
                 </label>
-                <input
+                <input maxlength="160"
                     id="bank_account_name"
                     v-model="form.bank_account_name"
                     class="form-control"
@@ -66,41 +66,73 @@
                 </span>
             </div>
 
-            <div class="form-group">
-                <label for="bank_swift_code">
-                    Select Bank
-                </label>
-                <select
-                    id="bank_swift_code"
-                    class="custom-select"
-                    v-model="form.bank_id"
-                    :class="{'is-invalid' : errors.bank_id}"
-                    :disabled="is_processing">
-                    <option value="" disabled>Select Bank</option>
-                    <option
-                        v-for="bank in banks_list"
-                        :value="bank.id">
-                        {{ bank.name }}
-                    </option>
-                </select>
-                <span class="invalid-feedback" role="alert">
-                    {{ errors.bank_id }}
-                </span>
-            </div>
+            <template v-if="select_bank_visible">
+              <div class="form-group">
+                  <label for="bank_swift_code">
+                      Select Bank
+                  </label>
+                  <select
+                      id="bank_swift_code"
+                      class="custom-select"
+                      v-model="form.bank_id"
+                      :class="{'is-invalid' : errors.bank_id}"
+                      :disabled="is_processing">
+                      <option value="" disabled>Select Bank</option>
+                      <option
+                          v-for="bank in banks_list"
+                          :value="bank.id">
+                          {{ bank.name }}
+                      </option>
+                  </select>
+                  <span class="invalid-feedback" role="alert">
+                      {{ errors.bank_id }}
+                  </span>
+              </div>
 
-            <div v-if="branches.length > 0" id="group_branch" class="form-group">
-                <label class="col-form-label">Select Branch</label>
-                <div class="input-group">
-                    <select
-                        v-model="form.bank_branch_code"
-                        :class="getSelectClasses('branch_code')"
-                        :disabled="is_processing || !form.bank_id || branches.length <= 0">
-                        <option value="" disabled>Please select a branch</option>
-                        <option v-for="branch in branches" :value="branch.code" :key="branch.code">[{{ branch.code }}] {{ branch.name }}</option>
-                    </select>
-                </div>
-                <span class="text-danger small" role="alert" v-if="errors.bank_branch_code">{{ errors.bank_branch_code }}</span>
-            </div>
+              <div v-if="branches.length > 0" id="group_branch" class="form-group">
+                  <label class="col-form-label">Select Branch</label>
+                  <div class="input-group">
+                      <select
+                          v-model="form.bank_branch_code"
+                          :class="getSelectClasses('branch_code')"
+                          :disabled="is_processing || !form.bank_id || branches.length <= 0">
+                          <option value="" disabled>Please select a branch</option>
+                          <option v-for="branch in branches" :value="branch.code" :key="branch.code">[{{ branch.code }}] {{ branch.name }}</option>
+                      </select>
+                  </div>
+                  <span class="text-danger small" role="alert" v-if="errors.bank_branch_code">{{ errors.bank_branch_code }}</span>
+              </div>
+            </template>
+            <template v-else>
+              <div class="form-group" v-if="routing_number_visible">
+                <label for="bank_routing_number">
+                  Routing number
+                </label>
+                <input
+                  id="bank_routing_number"
+                  v-model="form.bank_routing_number"
+                  class="form-control" :class="{'is-invalid': errors.bank_routing_number}"
+                  autocomplete="off"
+                />
+                <span class="invalid-feedback" role="alert">
+                    {{ errors.bank_routing_number }}
+                </span>
+              </div>
+              <div class="form-group" v-if="swift_visible">
+                <label for="bank_swift_code">
+                  SWIFT code
+                </label>
+                <input
+                  id="bank_swift_code"
+                  v-model="form.bank_swift_code"
+                  class="form-control" :class="{'is-invalid': errors.bank_swift_code}"
+                  autocomplete="off"
+                />
+                <span class="invalid-feedback" role="alert">
+                    {{ errors.bank_swift_code }}
+                </span>
+              </div>
+            </template>
 
             <div class="form-group">
                 <label for="bank_account_no">
@@ -138,16 +170,17 @@ export default {
         CheckoutButton,
     },
     props: {
-        business: Object,
         provider: Object,
         banks_list: Array,
         success_message: {
             type: String,
             default: ''
-        }
+        },
+        bank_fields : Object
     },
     data () {
         return {
+            business: window.Business,
             errors: {
                 //
             },
@@ -162,6 +195,8 @@ export default {
                 bank_account_no: '',
                 bank_account_no_confirmation: '',
                 password: '',
+                bank_routing_number: '',
+                bank_swift_code: ''
             },
             is_processing: false,
             branches : [],
@@ -175,12 +210,15 @@ export default {
                     'company_name': 'Company Name',
                 }
             },
-            is_staging_env: false, 
+            is_staging_env: false,
+            select_bank_visible : ['sg', 'my'].includes(window.Business.country),
+            routing_number_visible : this.bank_fields.routing_number.includes(window.Business.country),
+            swift_visible : this.bank_fields.swift.includes(window.Business.country)
         }
     },
     mounted() {
         let domain = this.getDomain();
-        if(domain.includes('staging')){
+        if(domain.includes('staging') || domain.includes('sandbox') || domain.includes('src.test')){
             this.is_staging_env = true;
         }
     },
@@ -205,12 +243,22 @@ export default {
                     this.errors.bank_account_name = "Please input bank account name.";
                 }
 
-                if (!this.form.bank_id) {
+                if (this.select_bank_visible) {
+                  if (!this.form.bank_id) {
                     this.errors.bank_id = "Please select a bank.";
-                }
+                  }
 
-                if (this.branches.length > 0 && !this.form.bank_branch_code) {
+                  if (this.branches.length > 0 && !this.form.bank_branch_code) {
                     this.errors.bank_branch_code = "Please select the branch of the bank.";
+                  }
+                } else {
+                  if (this.routing_number_visible && !this.form.bank_routing_number) {
+                    this.errors.bank_routing_number = "Please fill this input.";
+                  }
+
+                  if (this.swift_visible && !this.form.bank_swift_code) {
+                    this.errors.bank_swift_code = "Please fill this input.";
+                  }
                 }
 
                 if (!this.form.bank_account_no) {
@@ -285,25 +333,190 @@ export default {
             for ( var i = 0; i < 8; i++ ) {
                 result += characters.charAt(Math.floor(Math.random() * charactersLength));
             }
-            
+
             this.form.company_uen = result;
             this.form.company_name = this.business.name;
             this.form.bank_account_name = this.business.name;
-            this.form.bank_id = this.banks_list[Math.floor(Math.random()*this.banks_list.length)].id;
             this.form.company_name = this.business.name;
-            this.form.bank_account_no = '000123456';
 
-            if(this.business.country != 'sg'){
-                this.form.bank_account_no = '000123456000';
+            let test_bank = this.getTestBankAccounts(this.business.country);
+
+            if (test_bank) {
+              // bank from the list
+              if (test_bank['bank_id'] !== undefined) {
+                this.form.bank_id = test_bank['bank_id'];
+
+                let bank = _.first(_.filter(this.banks_list, ({ id }) => {
+                  return id === this.form.bank_id;
+                }));
+
+                this.branches = bank.branches;
+                if(bank.branches.length > 0){
+                  this.form.bank_branch_code = bank.branches[Math.floor(Math.random()*bank.branches.length)].code;
+                }
+              }
+
+              // routing number
+              if (test_bank['routing_number'] !== undefined) {
+                this.form.bank_routing_number = test_bank['routing_number'];
+              }
+
+              // bank account number
+              if (test_bank['bank_account'] !== undefined) {
+                this.form.bank_account_no = test_bank['bank_account'];
+              }
             }
-            let bank = _.first(_.filter(this.banks_list, ({ id }) => {
-                return id === this.form.bank_id;
-            }));
-            
-            this.branches = bank.branches;
-            if(bank.branches.length > 0){
-                this.form.bank_branch_code = bank.branches[Math.floor(Math.random()*bank.branches.length)].code;
-            }
+        },
+
+        getTestBankAccounts(country) {
+          let test_bank_accounts = {
+            // routing number countries
+            'au': {
+              'routing_number': '110000',
+              'bank_account': '000123456'
+            },
+            'us': {
+              'routing_number': '110000000',
+              'bank_account': '000123456789'
+            },
+            'gb': {
+              'routing_number': '108800',
+              'bank_account': 'GB82WEST12345698765432'
+            },
+            'ca': {
+              'routing_number': '11000-000',
+              'bank_account': '000123456789'
+            },
+            'br': {
+              'routing_number': '110-0000',
+              'bank_account': '0001234'
+            },
+            'hk': {
+              'routing_number': '110-000',
+              'bank_account': '000123-456'
+            },
+            'jp': {
+              'routing_number': '1100000',
+              'bank_account': '0001234'
+            },
+            'in': {
+              'routing_number': 'HDFC0000261',
+              'bank_account': '000123456789'
+            },
+            // countries with banks list
+            'sg': {
+              'bank_id': this.banks_list[Math.floor(Math.random()*this.banks_list.length)].id,
+              'bank_account': '000123456'
+            },
+            'my': {
+              'bank_id': this.banks_list[Math.floor(Math.random()*this.banks_list.length)].id,
+              'bank_account': '000123456000'
+            },
+            // only bank account numer
+            'nz': {
+              'bank_account': '1100000000000010'
+            },
+            'mx': {
+              'bank_account': '000000001234567897'
+            },
+            // iban countries
+            'ae': {
+              'bank_account': 'AE070331234567890123456'
+            },
+            'at': {
+              'bank_account': 'AT611904300234573201'
+            },
+            'be': {
+              'bank_account': 'BE62510007547061'
+            },
+            'bg': {
+              'bank_account': 'BG80BNBG96611020345678'
+            },
+            'ch': {
+              'bank_account': 'CH9300762011623852957'
+            },
+            'cy': {
+              'bank_account': 'CY17002001280000001200527600'
+            },
+            'cz': {
+              'bank_account': 'CZ6508000000192000145399'
+            },
+            'de': {
+              'bank_account': 'DE55370400440532014000'
+            },
+            'dk': {
+              'bank_account': 'DK5000400440116243'
+            },
+            'ee': {
+              'bank_account': 'EE382200221020145685'
+            },
+            'es': {
+              'bank_account': 'ES0700120345030000067890'
+            },
+            'fi': {
+              'bank_account': 'FI2112345600000785'
+            },
+            'fr': {
+              'bank_account': 'FR1420041010050500013M02606'
+            },
+            'gr': {
+              'bank_account': 'GR1601101250000000012300695'
+            },
+            'hu': {
+              'bank_account': 'HU42117730161111101800000000'
+            },
+            'ie': {
+              'bank_account': 'IE29AIBK93115212345678'
+            },
+            'it': {
+              'bank_account': 'IT40S0542811101000000123456'
+            },
+            'li': {
+              'bank_account': 'LI21088100002324013AA'
+            },
+            'lt': {
+              'bank_account': 'LT121000011101001000'
+            },
+            'lu': {
+              'bank_account': 'LU280019400644750000'
+            },
+            'lv': {
+              'bank_account': 'LV80BANK0000435195001'
+            },
+            'mt': {
+              'bank_account': 'MT84MALT011000012345MTLCAST001S'
+            },
+            'nl': {
+              'bank_account': 'NL39RABO0300065264'
+            },
+            'no': {
+              'bank_account': 'NO9386011117947'
+            },
+            'pl': {
+              'bank_account': 'PL61109010140000071219812874'
+            },
+            'pt': {
+              'bank_account': 'PT50000201231234567890154'
+            },
+            'ro': {
+              'bank_account': 'RO49AAAA1B31007593840000'
+            },
+            'se': {
+              'bank_account': 'SE3550000000054910000003'
+            },
+            'si': {
+              'bank_account': 'SI56263300012039086'
+            },
+            'sk': {
+              'bank_account': 'SK3112000000198742637541'
+            },
+          };
+
+          if (test_bank_accounts[country] === undefined) {
+            console.log('Missing test bank account details for ' + country);
+          }
+
+          return test_bank_accounts[country];
         }
     },
 

@@ -70,7 +70,7 @@
       @click="onSave(true)">
       {{ saveButtonTitle }} <i v-if="isProcessing" class="fas fa-circle-notch fa-spin"></i>
     </button>
-  
+
     <template v-if="hoolahConnected">
       <div class="hr"/>
 
@@ -102,7 +102,7 @@
 
 <script>
 import axios from 'axios'
-import Alert from '../../Admin/CheckoutCustomisation/Alert'
+import Alert from '../../Dashboard/CheckoutCustomization/Alert'
 
 export default {
   name: 'ShopeeSettings',
@@ -110,16 +110,16 @@ export default {
     Alert
   },
   props: {
-    business: Object,
     provider: Object
   },
   data () {
     return {
+      business: window.Business,
       // Shopee data if any
       hoolahConnected: false,
       edit: false,
       form: {
-        store_name: '',        
+        store_name: '',
         company_uen: '',
         address: '',
         postal_code: '',
@@ -193,7 +193,7 @@ export default {
             this.error = true
           }
         }
-        
+
         this.isProcessing = false
       } else {
         this.edit = true
@@ -227,7 +227,7 @@ export default {
     },
     clearForm () {
       this.form = {
-        store_name: '',        
+        store_name: '',
         company_uen: '',
         address: '',
         postal_code: '',

@@ -40,7 +40,10 @@ class Product extends JsonResource
         $data['price_stored'] = $this->price;
         $data['tax_id'] = $this->business_tax_id;
         $data['is_manageable'] = $this->isManageable();
+        $data['is_pinned'] = $this->is_pinned;
+        $data['status'] = $this->status;
         $data['has_variations'] = $this->hasVariations();
+        $data['is_shopify'] = $this->isShopify();
 
         $data['product_url'] = $this->shortcut_id
             ? URL::route('shortcut', $this->shortcut_id)

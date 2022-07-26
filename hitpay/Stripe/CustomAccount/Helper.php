@@ -56,8 +56,8 @@ trait Helper
 
         // Custom connect is only available for the countries which HitPay has the licences.
         //
-        if (!array_key_exists($business->country, static::$countries)) {
-            $countries = Collection::make(static::$countries)->map(function (array $config, string $country) : string {
+        if (!array_key_exists($business->country, static::getCountries())) {
+            $countries = Collection::make(static::getCountries())->map(function (array $config, string $country) : string {
                 return get_country_name($country) ?: '"'.strtoupper($country).'"';
             })->join(', ', ' or ');
 

@@ -28,7 +28,7 @@ class CheckFastPayoutStatus extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
         $transfers = Transfer::with('business')
             ->whereHas('business')
@@ -38,7 +38,7 @@ class CheckFastPayoutStatus extends Command
             ->get();
 
         if ($transfers->count() === 0) {
-            return;
+            return 0;
         }
 
         $data = [];
@@ -61,5 +61,7 @@ class CheckFastPayoutStatus extends Command
 
         Notification::route('slack', Config::get('services.slack.pending_payouts'))
             ->notify(new NotifyAdminAboutPendingPayout($data));
+
+        return 0;
     }
 }

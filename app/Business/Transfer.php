@@ -2,18 +2,25 @@
 
 namespace App\Business;
 
+use App\Actions\UseLogViaStorage;
 use App\Business;
+use App\Enumerations;
 use App\Enumerations\Business\Event;
 use App\Enumerations\BusinessRole;
+use App\Enumerations\CurrencyCode;
 use App\Enumerations\PaymentProvider;
 use App\Exceptions\HitPayLogicException;
+use App\Logics\ConfigurationRepository;
+use App\Models\Business\SpecialPrivilege;
 use App\Notifications\Business\NotifySuccessfulPaynowPayout;
+use App\Notifications\Business\Stripe\NotifySuccessfulWalletPayout;
 use App\Role;
 use ErrorException;
 use GuzzleHttp\Exception\ClientException;
 use HitPay\Agent\LogHelpers;
 use HitPay\Business\Contracts\Ownable as OwnableContract;
 use HitPay\Business\Ownable;
+use HitPay\Data\ExchangeRate;
 use HitPay\Model\UsesUuid;
 use HitPay\PayNow\DecryptException;
 use HitPay\PayNow\EncryptException;
@@ -31,7 +38,7 @@ use Throwable;
 
 class Transfer extends Model implements OwnableContract
 {
-    use LogHelpers, Ownable, UsesUuid;
+    use LogHelpers, Ownable, UsesUuid, UseLogViaStorage;
 
     /**
      * The database table used by the model.
@@ -280,22 +287,200 @@ class Transfer extends Model implements OwnableContract
         }
     }
 
+    /**
+     * @throws \App\Exceptions\HitPayLogicException
+     * @throws \Crypt_GPG_BadPassphraseException
+     * @throws \Crypt_GPG_Exception
+     * @throws \Crypt_GPG_FileException
+     * @throws \Crypt_GPG_KeyNotFoundException
+     * @throws \Crypt_GPG_NoDataException
+     * @throws \PEAR_Exception
+     * @throws \ReflectionException
+     */
+    public function doStripeConnectTransfer()
+    {
+        switch (false) {
+            case $this->exists:
+                throw new HitPayLogicException('The transfer is not exist');
+            case in_array($this->payment_provider, [PaymentProvider::STRIPE_MALAYSIA, PaymentProvider::STRIPE_US]):
+                throw new HitPayLogicException('The transfer is not a Stripe (Malaysia/US) transfer');
+            case $this->status === 'request_pending';
+                throw new HitPayLogicException('The transfer status is not `request_pending`');
+            case $this->amount !== 0:
+                throw new HitPayLogicException('The transfer has zero amount!');
+        }
+
+        $business = $this->business;
+
+        $stripe_account_no = $this->payment_provider_account_id;
+
+        $data = $this->data;
+
+        $cacheKey = "trying_transfer_{$this->getKey()}";
+
+        if (Cache::get($cacheKey)) {
+            Log::channel('available-balance-payouts')
+                ->info("The transfer '{$this->getKey()}' might having an in progress payment, but a new request received.");
+
+            return;
+        }
+
+        Cache::set($cacheKey, true, Date::now()->addMinutes(15));
+
+        try {
+            if ($this->payment_provider === PaymentProvider::STRIPE_US) {
+                $currency = CurrencyCode::USD;
+
+                if ($this->currency !== $currency) {
+                    $commissionRate = (float)ConfigurationRepository::get('stripe_us_fx_fee', 0.02);
+                    $exchangeRate = ExchangeRate::new($this->currency, $currency)->get();
+
+                    $convertedAmount = (int)bcmul(
+                        $exchangeRate,
+                        $this->amount,
+                    );
+
+                    $commissionAmount = (int)bcmul(
+                        $commissionRate,
+                        $convertedAmount,
+                    );
+
+                    $amount = $convertedAmount-$commissionAmount;
+                } else {
+                    $amount = $this->amount;
+                }
+            } else {
+                $amount = $this->amount;
+                $currency = $this->currency;
+            }
+
+            $transferBody = [
+                'amount' => $amount,
+                'currency' => $currency,
+                'destination' => $stripe_account_no,
+                'description' => $this->remark,
+                'metadata' => [
+                    'platform' => \Config::get('app.name'),
+                    'version' => ConfigurationRepository::get('platform_version'),
+                    'environment' => \Config::get('app.env'),
+                    'business_id' => $business->id,
+                    'transfer_id' => $this->id
+                ],
+            ];
+
+            if ($this->payment_provider === PaymentProvider::STRIPE_MALAYSIA) {
+                $stripe = new \Stripe\StripeClient(config('services.stripe.my.secret'));
+            } elseif ($this->payment_provider === PaymentProvider::STRIPE_US) {
+                $stripe = new \Stripe\StripeClient(config('services.stripe.us.secret'));
+            }
+
+            $transfer = $stripe->transfers->create($transferBody);
+        } catch (\Stripe\Exception\ApiErrorException $exception) {
+            Log::channel('available-balance-payouts')->critical((string)$exception);
+
+            $message = 'API returned exception? The API is actually called, better to check the log file.';
+
+            $exception = [
+                'timestamp' => Date::now()->toDateTimeString('microsecond'),
+                'message' => $message ?? 'If you see this, we have to check the code.',
+                'exception' => [
+                    'class' => get_class($exception),
+                    'message' => $exception->getMessage(),
+                    'location' => "{$exception->getFile()}:{$exception->getLine()}",
+                ],
+            ];
+        } catch (Throwable $throwable) {
+            Cache::forget($cacheKey);
+
+            throw $throwable;
+        }
+
+        if (isset($exception)) {
+            $data['activities'][] = $exception;
+        } else {
+            $this->payment_provider_transfer_id = $transfer->id;
+            $this->payment_provider_transfer_type = $this->payment_provider;
+            $this->status = 'succeeded';
+            $this->transferred_at = $this->freshTimestamp();
+
+            $data['requests'][] = [
+                'body' => $transferBody,
+                'response' => $transfer->getLastResponse(),
+            ];
+        }
+
+        $this->data = $data;
+
+        $this->save();
+
+        Cache::forget($cacheKey);
+
+        $this->now = \Illuminate\Support\Facades\Date::now();
+        $this->setLogDirectories('payment_providers', $this->payment_provider, 'connect-wallet-payouts');
+        $this->setLogFilename("{$business->getKey()}-{$transfer->id}.txt");
+        $this->log($transfer->toJSON());
+
+        if ($this->status === 'succeeded') {
+            try {
+                $notification = new NotifySuccessfulWalletPayout($this);
+
+                if ($this->business->subscribedEvents()->where('event', Event::DAILY_PAYOUT)->first() != null)
+                    $this->business->notify($notification);
+
+                $role = Role::where('title', BusinessRole::ADMIN)->first();
+
+                if ($role) {
+                    $businessUsers = $this->business->businessUsers()->with('user')->where('role_id', $role->id)->get();
+
+                    foreach ($businessUsers as $user) {
+                        Notification::route('mail', $user->user->email)->notify($notification);
+                    }
+                }
+            } catch (\Exception $exception) {
+                Log::channel('available-balance-payouts')
+                    ->critical("'Stripe Payout email for business ID [{$this->business_id}], date [{$this->created_at->toDateString()}] sending failed.'");
+            }
+        }
+    }
+
     public function generateCsv()
     {
-        $this->load('transactions');
+        $includeChargeId = $this->business
+            ->specialPrivileges()
+            ->where('special_privilege', SpecialPrivilege::TRANSFER_CSV_WITH_CHARGE_ID)
+            ->exists();
+
+        $this->load([
+            'transactions' => function (BelongsToMany $query) use ($includeChargeId) {
+                if ($includeChargeId) {
+                    $query->with('relatable');
+                }
+
+                return $query;
+            },
+        ]);
 
         $transactions = $this->transactions->merge($this->walletTransactions);
 
         $csv = Writer::createFromString();
 
-        $csv->insertOne([
+        $header = [
             '#',
             'Datetime',
             'Description',
+        ];
+
+        if ($includeChargeId) {
+            $header[] = 'Charge ID';
+        }
+
+        $header = array_merge($header, [
             'Debit',
             'Credit',
             'Balance',
         ]);
+
+        $csv->insertOne($header);
 
         $i = 1;
 
@@ -303,16 +488,36 @@ class Transfer extends Model implements OwnableContract
 
         /* @var \App\Business\Wallet\Transaction $transaction */
         foreach ($transactions as $transaction) {
-            $data[] = [
+            $content = [
                 '#' => $i++,
                 'Datetime' => $transaction->created_at->toDateTimeString(),
                 'Description' => $transaction->description,
+            ];
+
+            if ($includeChargeId) {
+                switch (false) {
+                    case $transaction->event === Enumerations\Business\Wallet\Event::CONFIRMED_CHARGE:
+                    case $transaction->relatable instanceof Business\Wallet\Transaction:
+                    case $transaction->relatable->event === Enumerations\Business\Wallet\Event::RECEIVED_FROM_CHARGE:
+                    case $transaction->relatable->relatable_type === 'business_charge':
+
+                        $content['Charge Id'] = '-';
+                        break;
+
+                    default:
+                        $content['Charge Id'] = $transaction->relatable->relatable_id;
+                }
+            }
+
+            $content = array_merge($content, [
                 'Debit' => $transaction->amount < 0
                     ? getReadableAmountByCurrency($this->currency, $transaction->amount) : '-',
                 'Credit' => $transaction->amount > 0
                     ? getReadableAmountByCurrency($this->currency, $transaction->amount) : '-',
                 'Balance' => getReadableAmountByCurrency($this->currency, $transaction->balance_after),
-            ];
+            ]);
+
+            $data[] = $content;
         }
 
         $csv->insertAll($data);

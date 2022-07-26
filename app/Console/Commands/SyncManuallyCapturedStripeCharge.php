@@ -13,6 +13,7 @@ use Exception;
 use HitPay\Data\PaymentProviders;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades;
+use Illuminate\Support\Facades\Artisan;
 use Stripe;
 use Throwable;
 
@@ -37,7 +38,7 @@ class SyncManuallyCapturedStripeCharge extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $chargeId = $this->argument('charge_id');
 
@@ -215,6 +216,7 @@ class SyncManuallyCapturedStripeCharge extends Command
                 $targetModel->save();
                 $targetModel->updateProductsQuantities();
                 $targetModel->notifyAboutNewOrder();
+                Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $targetModel->id);
             }
         }, 3);
 
@@ -251,13 +253,13 @@ class SyncManuallyCapturedStripeCharge extends Command
 
         $this->info('DONE');
 
-        return true;
+        return 0;
     }
 
     protected function returnError(string $message) : bool
     {
         $this->error($message);
 
-        return false;
+        return 1;
     }
 }

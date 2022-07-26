@@ -117,7 +117,7 @@
         .navbar .cart{
             position: relative;
         }
-        
+
         .cart img {
             width: 32px;
             height: auto;
@@ -229,7 +229,7 @@
             font-size: 15px;
         }
 
-        .modal .modal-body .btn-continue-shipping{
+        .modal .modal-body .btn-continue-shopping{
             cursor: pointer;
         }
 
@@ -300,14 +300,14 @@
 
                     <div class="modal-body">
                         <div id="dl-add-to-cart-body" class="clearfix">
-                        
+
                         </div>
 
                         <div class="dl-view-cart">
                             <a href="{{ route('shop.cart', $business->getKey()) }}">View cart (1)</a>
                         </div>
                         <div class="dl-continue-shipping">
-                            <span class="btn-continue-shipping" data-dismiss="modal">Continue shipping</span>
+                            <span class="btn-continue-shopping" data-dismiss="modal">Continue shopping</span>
                         </div>
                     </div>
                 </div>
@@ -397,7 +397,7 @@
         <div class="app-content">
             @yield('app-content')
         </div>
-        
+
         <div class="footer-shop border-top">
             <div class="container container-md small">
                 <div class="row">
@@ -410,7 +410,7 @@
                             </a>
                         </div>
                     </div>
-                    <div class="col-md-6    ">
+                    <div class="col-md-5    ">
                         <h3>{{$business->name}}</h3>
                         <div class="footer-logo d-md-none d-lg-none">
                             <a href="{{ route('shop.business', $business->identifier ?? $business->getKey()) }}">
@@ -425,20 +425,14 @@
                             . All rights reserved.
                         </p>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-5">
                         <ul class="list-inline">
                             <li class="list-inline-item">
                                 <a href="{{ url('https://www.hitpayapp.com/termsofservice') }}" target="_blank">Terms of
                                     Service</a>
                             </li>
                         </ul>
-                        <div class="accepted-payment">
-                            <p>
-                                <span><img src="{{asset('/images/paynow_icon.svg')}}" width="55px"></span>
-                                <span><img src="{{asset('/images/applepay_icon.svg')}}" width="55px"></span>
-                                <span><img src="{{asset('/images/googlepay_icon.svg')}}" width="55px"></span>
-                            </p>
-                        </div>
+                        <shop-gateway-provider></shop-gateway-provider>
                         <div class="social-network">
                             <p class="title">Social network</p>
                             <div class="accepted-payment social-network">
@@ -490,7 +484,7 @@
                                         </span>
                                     @endif
                                 @endif
-                                </p>                             
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -516,11 +510,13 @@
             if ( event.target.matches(".btn-close-add-to-cart") || !event.target.closest("#dialog-add-cart")) {
                 document.getElementById('dialog-add-cart').style.display = "none";
                 return;
-            } else if ( event.target.matches(".btn-continue-shipping") || !event.target.closest("#dialog-add-cart")) {
+            } else if ( event.target.matches(".btn-continue-shopping") || !event.target.closest("#dialog-add-cart")) {
                 document.getElementById('dialog-add-cart').style.display = "none";
             }
-            
+
         }
+
+        window.BusinessId = "{{ $business->getKey() }}";
     </script>
     @stack('body-stack')
     </body>

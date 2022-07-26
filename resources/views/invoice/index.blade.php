@@ -71,7 +71,7 @@ foreach($invoice->products as $item){
                                                             Invoice date:
                                                         </p>
                                                         <p class="date fw-500">
-                                                            {{\Carbon\Carbon::parse($invoice->invoice_date)->format('d.m.Y')}}
+                                                            {{\Carbon\Carbon::parse($invoice->invoice_date)->format('d/m/Y')}}
                                                         </p>
                                                     </div>
                                                     <div class="col-6">
@@ -79,7 +79,7 @@ foreach($invoice->products as $item){
                                                             Due date:
                                                         </p>
                                                         <p class="date fw-500">
-                                                            {{\Carbon\Carbon::parse($invoice->due_date)->format('d.m.Y')}}
+                                                            {{\Carbon\Carbon::parse($invoice->due_date)->format('d/m/Y')}}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -279,7 +279,7 @@ foreach($invoice->products as $item){
                                                     @endif
                                                     @if($invoice->tax_setting)
                                                         <td class="w-amount text-nowrap">
-                                                            {{ round((int) App\Helpers\Currency::getReadableAmount($invoice->amount_no_tax,$invoice->currency) * ($invoice->tax_setting->rate / 100), 2)}}
+                                                            {{ App\Helpers\Currency::getReadableAmount($invoice->amount_no_tax * ($invoice->tax_setting->rate / 100), $invoice->currency)}}
                                                         </td>
                                                     @else
                                                         <td class="w-amount text-nowrap">{{App\Helpers\Currency::getReadableAmount($invoice->amount_no_tax, $invoice->currency)}}
@@ -353,7 +353,7 @@ foreach($invoice->products as $item){
                                                             </div>
                                                             <div class="col-6">
                                                                 <span class="is-gray">
-                                                                    Due date {{\Carbon\Carbon::parse($invoice->invoicePartialPaymentRequests[$i]['due_date'])->format('d.m.Y') }}
+                                                                    Due date {{\Carbon\Carbon::parse($invoice->invoicePartialPaymentRequests[$i]['due_date'])->format('d/m/Y') }}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -398,7 +398,7 @@ foreach($invoice->products as $item){
                                     <a href="{{route('invoice.download', [$business->id, $invoice->id])}}"
                                        class="btn btn-download">
                                         <img src="{{asset('images/ico-download.svg')}}"/>Download PDF
-                                    </a>                                   
+                                    </a>
                                     @if($invoice->status != \App\Enumerations\Business\InvoiceStatus::PAID)
                                         <button onclick="pay()" class="btn btn-pay btn-primary" id="pay">Pay</button>
                                     @else

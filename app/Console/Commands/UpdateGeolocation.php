@@ -42,10 +42,10 @@ class UpdateGeolocation extends Command
     /**
      * Execute the console command.
      */
-    public function handle() : void
+    public function handle() : int
     {
         if (!$this->confirmToProceed()) {
-            return;
+            return 0;
         }
 
         // TODO - 2019-12-11
@@ -62,7 +62,7 @@ class UpdateGeolocation extends Command
                 '--ipv6' => true,
             ]);
 
-            return;
+            return 0;
         }
 
         // TODO - 2019-12-11
@@ -98,6 +98,8 @@ class UpdateGeolocation extends Command
         $this->output->newLine();
         $this->comment('++++++++++++++++++    <info>DONE</info>    +++++++++++++++++++');
         $this->output->newLine();
+
+        return 0;
     }
 
     /**

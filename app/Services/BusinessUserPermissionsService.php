@@ -19,6 +19,8 @@ class BusinessUserPermissionsService
         'canOperatePointOfSale',
         'canOperateRecurringPlans',
         'canOperateOnlineShop',
+        'canOperateOnlineShopDashboard',
+        'canOperateOnlineShopInsight',
         'canOperateOnlineShopProducts',
         'canOperateOnlineShopProductCategories',
         'canOperateOnlineShopOrders',
@@ -66,6 +68,7 @@ class BusinessUserPermissionsService
         'canOperateReferralProgram',
         'canOperatePaymentGatewayShopifyPaymentApp',
         'canRefundCharges',
+        'canManageCustomer',
     ];
 
     public function get(BusinessUser $businessUser): array
@@ -190,6 +193,34 @@ class BusinessUserPermissionsService
         }
 
         return !$businessUser->isCashier();
+    }
+
+    private function canOperateOnlineShopDashboard(BusinessUser $businessUser): bool
+    {
+        if(auth()->user()->businessPartner instanceof BusinessPartner) {
+            return false;
+        }
+
+        if(!$businessUser->business){
+            return false;
+        }
+
+        $isHasOrder = ($businessUser->business->orders->count()> 0)? true: false;
+        return !$businessUser->isCashier() && !$isHasOrder;
+    }
+
+    private function canOperateOnlineShopInsight(BusinessUser $businessUser): bool
+    {
+        if(auth()->user()->businessPartner instanceof BusinessPartner) {
+            return false;
+        }
+
+        if(!$businessUser->business){
+            return false;
+        }
+
+        $isHasOrder = ($businessUser->business->orders->count()> 0)? true: false;
+        return !$businessUser->isCashier() && $isHasOrder;
     }
 
     private function canOperateOnlineShopProducts(BusinessUser $businessUser): bool
@@ -421,5 +452,18 @@ class BusinessUserPermissionsService
             return false;
 
         return true;
+    }
+
+    /**
+     * @param BusinessUser $businessUser
+     * @return bool
+     */
+    private function canManageCustomer(BusinessUser $businessUser): bool
+    {
+        if ($businessUser->isOwner() || $businessUser->isAdmin() || $businessUser->isManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -7,6 +7,11 @@
                     <img :alt="business.name" id="avatar" :src="logo_url"
                          class="listing align-self-center rounded border mr-3">
                     <div class="media-body align-self-center">
+                        <div class="form-row">
+                            <div class="col-12">
+                                <p v-if="errors.image" class="text-danger small mb-2" role="alert">{{ errors.image }}</p>
+                            </div>
+                        </div>
                         <p v-if="is_logo_succeeded" class="text-success font-weight-bold mb-0 mt-3">
                             <i class="fas fa-check-circle mr-2"></i> Logo uploaded successfully!</p>
                         <label v-else class="d-inline-flex mb-1" for="profilePictureImage">
@@ -115,7 +120,7 @@
                 <div class="form-row">
                     <div class="col-12 col-sm-6 mb-3">
                         <label for="phone_number" class="small text-muted text-uppercase">Phone Number</label>
-                        <input id="phone_number" type="number" v-model="business.phone_number" class="form-control" :class="{
+                        <input id="phone_number" type="tel" v-model="business.phone_number" class="form-control" :class="{
                             'is-invalid': errors.phone_number,
                             'bg-light': !(is_processing || is_basic_information_succeeded),
                         }" :disabled="is_processing || is_basic_information_succeeded">
@@ -318,6 +323,7 @@ export default {
 
         uploadImage() {
             this.is_processing = true;
+            this.errors = {};
 
             let form = new FormData();
 
@@ -338,6 +344,10 @@ export default {
                     this.is_logo_succeeded = false;
                 }, 5000);
             }).catch(() => {
+                this.is_cover_image_succeeded = false;
+                this.is_processing = false;
+                this.image_modal.modal('hide'); 
+                this.errors.image = 'The image was invalid';
                 console.log('FAILURE!!');
             });
         },

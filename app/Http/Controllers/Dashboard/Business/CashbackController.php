@@ -48,8 +48,6 @@ class CashbackController extends Controller
     public function create( Business $business, BusinessManagerInterface $businessManager)
     {
         Gate::inspect('manage', $business)->authorize();
-//        for now we restrict cashbacks only for pay now
-//        $paymentMethods = $businessManager->getDefaultBusinessPaymentMethods($business, null);
 
         $paymentMethods = ['paynow_online' => 'PayNow'];
         $channels = PluginProvider::getAll(true, true);

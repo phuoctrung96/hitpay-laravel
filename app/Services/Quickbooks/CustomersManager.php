@@ -29,7 +29,6 @@ class CustomersManager
 
             return null;
         } catch (\Exception $exception) {
-            dd($exception);
         }
     }
 
@@ -47,7 +46,7 @@ class CustomersManager
             ]);
             return $this->dataService->Add($customer);
         } catch (\Exception $exception) {
-            dd($exception);
+            
         }
     }
 }

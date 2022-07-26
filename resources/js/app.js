@@ -8,12 +8,18 @@ import Datepicker from 'vuejs-datepicker';
 import JwPagination from 'jw-vue-pagination';
 import registerFilters from "./filters";
 import posthog from 'posthog-js';
-import { BPagination } from 'bootstrap-vue'
+
+import { BPagination, BFormSelect, BFormTags, BFormTag, BFormInput } from 'bootstrap-vue';
+
 import Vue from 'vue';
+import SuiVue from 'semantic-ui-vue';
+import { VueEditor } from "vue2-editor";
 
 Vue.use(VueScrollTo);
 Vue.use(Clipboard);
 Vue.use(Datepicker);
+Vue.use(SuiVue);
+Vue.use(VueEditor)
 Vue.mixin({
     methods: {
         $ready(fn) {
@@ -63,6 +69,9 @@ Vue.mixin({
             }
 
             window.location.href = destination;
+        },
+        getShopDomain() {
+            return HitPay.scheme + '://' +HitPay.shop_domain +"/";
         },
 
         // TODO - 2019-09-21 - Bug
@@ -127,6 +136,11 @@ registerFilters(Vue);
 
 Vue.component('jw-pagination', JwPagination);
 Vue.component('b-pagination', BPagination)
+Vue.component('b-form-select', BFormSelect)
+Vue.component('b-form-tags', BFormTags)
+Vue.component('b-form-tag', BFormTag)
+Vue.component('b-form-input', BFormInput)
+Vue.component('vue-editor', VueEditor)
 
 Vue.component('admin-business-charge-export', require('./components/Admin/ExportCharge').default);
 Vue.component('admin-business-commission-export', require('./components/Admin/ExportCommission').default);
@@ -162,15 +176,21 @@ Vue.component('business-order-export', require('./components/Business/ExportOrde
 Vue.component('business-delivery-export', require('./components/Business/ExportDeliveryOrder').default);
 Vue.component('business-order-list', require('./components/Business/OrderList').default);
 Vue.component('business-point-of-sale', require('./components/Business/PointOfSale').default);
+Vue.component('business-product-dashboard', require('./components/Business/ProductDashboard').default);
 Vue.component('business-product', require('./components/Business/Product').default);
-Vue.component('business-discount-create-edit', require('./components/Business/Discount').default);
-Vue.component('business-coupon-create-edit', require('./components/Business/Coupon').default);
+Vue.component('business-discount-list', require('./components/Business/Discounts/List').default);
+Vue.component('business-discount-create', require('./components/Business/Discounts/Create').default);
+Vue.component('business-discount-edit', require('./components/Business/Discounts/Edit').default);
+Vue.component('business-coupon-list', require('./components/Business/Coupons/List').default);
+Vue.component('business-coupon-create', require('./components/Business/Coupons/Create').default);
+Vue.component('business-coupon-edit', require('./components/Business/Coupons/Edit').default);
 Vue.component('business-cashback-create-edit', require('./components/Business/Cashback').default);
 Vue.component('business-product-bulk', require('./components/Business/BulkProducts').default);
 Vue.component('business-product-edit', require('./components/Business/ProductEdit').default);
 Vue.component('business-product-list', require('./components/Business/ProductList').default);
 Vue.component('business-shipping', require('./components/Business/Shipping').default);
 Vue.component('business-shipping-list', require('./components/Business/ShippingList').default);
+Vue.component('business-shipping-pickup', require('./components/Business/ShippingPickup').default);
 Vue.component('business-commission-export', require('./components/Business/ExportCommission').default);
 Vue.component('business-transfer-export', require('./components/Business/ExportTransfer').default);
 Vue.component('business-payout-breakdown-export', require('./components/Business/ExportPayoutBreakdown').default);
@@ -183,8 +203,11 @@ Vue.component('business-invoice-bulk', require('./components/Business/BulkInvoic
 Vue.component('business-notifications', require('./components/Business/Notifications').default);
 Vue.component('business-edit-slug', require('./components/Business/EditSlug').default);
 Vue.component('business-hotglue', require('./components/Business/Hotglue').default);
+Vue.component('business-dashboard', require('./components/Business/ShopDashboard').default);
+Vue.component('business-insight', require('./components/Business/ShopInsight').default);
 Vue.component('product-category-create-edit', require('./components/Business/ProductCategory').default);
 Vue.component('add-product', require('./components/Shop/AddProduct').default);
+Vue.component('shop-gateway-provider', require('./components/Shop/GatewayProvider').default);
 Vue.component('create-payment-link', require('./components/Business/PaymentLinkCreate').default);
 Vue.component('product-featured', require('./components/Shop/ProductFeatured').default);
 Vue.component('product-images', require('./components/Shop/ProductImages').default);
@@ -210,7 +233,7 @@ Vue.component('passport-clients', require('./components/Passport/Clients.vue').d
 Vue.component('passport-authorized-clients', require('./components/Passport/AuthorizedClients.vue').default);
 Vue.component('passport-personal-access-tokens', require('./components/Passport/PersonalAccessTokens.vue').default);
 
-Vue.component('business-checkout-customisation', require('./components/Admin/CheckoutCustomisation/CheckoutCustomisation.vue').default);
+Vue.component('business-checkout-customisation', require('./components/Dashboard/CheckoutCustomization/CheckoutCustomisation.vue').default);
 Vue.component('left-side-menu', require('./components/Dashboard/LeftSideMenu.vue').default);
 Vue.component('main-layout', require('./components/Dashboard/MainLayout.vue').default);
 Vue.component('login-register-layout', require('./components/Authentication/LoginRegisterLayout.vue').default);
@@ -223,6 +246,7 @@ Vue.component('balance-top-up', require('./components/Business/Wallets/TopUp').d
 Vue.component('main-dashboard', require('./components/Dashboard/MainDashboard.vue').default);
 Vue.component('business-users', require('./components/Business/Users/BusinessUsers.vue').default);
 Vue.component('business-role-restrictions', require('./components/Business/RoleRestrictions.vue').default);
+Vue.component('business-settings', require('./components/Business/BusinessSettings.vue').default);
 Vue.component('getting-started', require('./components/Dashboard/GettingStarted.vue').default);
 
 Vue.component('paynow-settings', require('./components/Business/PaymentMethods/PayNowSettings.vue').default);
@@ -240,6 +264,13 @@ Vue.component('business-settings-bank-accounts-create', require('./components/Bu
 Vue.component('business-settings-bank-accounts-edit', require('./components/Business/BankAccounts/Edit').default);
 
 Vue.component('provider-logo', require('./components/UI/ProviderLogo').default);
+
+Vue.component('email-template', require('./components/Dashboard/EmailTemplate.vue').default);
+
+//Email Templates
+Vue.component('payment-email-template', require('./components/Dashboard/EmailTemplates/PaymentReceipt.vue').default);
+Vue.component('recurring-email-template', require('./components/Dashboard/EmailTemplates/RecurringInvoice.vue').default);
+Vue.component('order-confirmation-email-template',  require('./components/Dashboard/EmailTemplates/OrderConfirmation.vue').default)
 
 Vue.component('business-onboard-paynow-create',
     require('./components/Business/Onboard/Paynow/Create').default);

@@ -3,16 +3,16 @@
 namespace App\Business;
 
 use App\Business;
-use App\Enumerations\Business\PluginProvider;
 use App\Enumerations\Business\ChargeStatus;
-use HitPay\Model\UsesUuid;
+use App\Enumerations\Business\PaymentRequestStatus;
+use Carbon\Carbon;
 use HitPay\Business\Contracts\Ownable as OwnableContract;
 use HitPay\Business\Ownable;
-use App\Enumerations\Business\PaymentRequestStatus;
+use HitPay\Model\UsesUuid;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\URL;
 
 /**
  * Class PaymentRequest
@@ -91,7 +91,8 @@ class PaymentRequest extends Model implements OwnableContract
         'expiry_date',
         'commission_rate',
         'platform_business_id',
-        'channel'
+        'channel',
+        'add_admin_fee'
     ];
 
     public $charge_id;
@@ -143,5 +144,31 @@ class PaymentRequest extends Model implements OwnableContract
         return Charge::where('status', ChargeStatus::SUCCEEDED)
             ->where('plugin_provider_reference', $this->getKey())
             ->get();
+    }
+
+    /**
+     * Get the redirect URL for the payment request, append parameters if given.
+     *
+     * @param  array  $parametersToBeAppended
+     *
+     * @return string|null
+     */
+    public function getRedirectUrl(array $parametersToBeAppended = [])
+    {
+        $redirectUrl = $this->redirect_url;
+
+        if (!URL::isValidUrl($redirectUrl)) {
+            return null;
+        }
+
+        $val = http_build_query($parametersToBeAppended);
+		  
+        if (strpos($redirectUrl, '?') !== false) {
+          $redirectUrl .= '&' . $val;
+        } else {
+          $redirectUrl .= '?' . $val;
+        }
+  
+        return $redirectUrl;
     }
 }

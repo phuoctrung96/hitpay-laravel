@@ -65,13 +65,17 @@ class PaymentIntentManager implements PaymentIntentManagerInterface
         ];
 
         if ($charge->customer_name) {
-          $nameArr = explode(' ', $charge->customer_name);
+          $name = trim($charge->customer_name);
 
-          $requestData['shopper']['first_name'] = $nameArr[0];
+          if (strlen($name) > 0) {
+            $nameArr = explode(' ', $name);
 
-          if (count($nameArr) > 1) {
-            $requestData['shopper']['last_name'] = implode(' ', array_slice($nameArr, 1));
-          }          
+            $requestData['shopper']['first_name'] = $nameArr[0];
+  
+            if (count($nameArr) > 1) {
+              $requestData['shopper']['last_name'] = implode(' ', array_slice($nameArr, 1));
+            }            
+          }
         }
 
         $res = Zip::postRequest('checkouts', $requestData, 201);

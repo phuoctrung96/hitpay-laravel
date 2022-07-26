@@ -36,8 +36,10 @@ class QuickbooksSalesFeed extends Command
      *
      * @return mixed
      */
-    public function handle(HitpaySalesExportService $exportService)
+    public function handle(HitpaySalesExportService $exportService) : int
     {
         $exportService->export();
+
+        return 0;
     }
 }

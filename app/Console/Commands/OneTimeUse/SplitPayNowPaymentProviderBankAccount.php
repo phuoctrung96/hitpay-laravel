@@ -33,7 +33,7 @@ class SplitPayNowPaymentProviderBankAccount extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         PaymentProvider::with([
             'business' => function (BelongsTo $business) {
@@ -46,21 +46,21 @@ class SplitPayNowPaymentProviderBankAccount extends Command
             if (!( $paymentProvider->business instanceof Business )) {
                 $this->error("The payment provider '{$paymentProvider->getKey()}' doesn't attached to any business.");
 
-                return;
+                return 1;
             }
 
             if ($paymentProvider->business->business_type === 'partner') {
                 if (!( $paymentProvider->business->verifiedData instanceof Business\Verification )) {
                     $this->error("The business '{$paymentProvider->business->getKey()}' (payment provider '{$paymentProvider->getKey()}') with type '{$paymentProvider->business->business_type}' doesn't have a valid verified data. The business will have to create the bank account manually.");
 
-                    return;
+                    return 1;
                 }
             }
 
             if ($paymentProvider->business->bank_accounts_count > 0) {
                 $this->line("<comment>[ SKIPPED ]</comment> - The business '{$paymentProvider->business->getKey()}' (payment provider '{$paymentProvider->getKey()}') is already having bank account(s).");
 
-                return;
+                return 1;
             }
 
             try {
@@ -68,7 +68,7 @@ class SplitPayNowPaymentProviderBankAccount extends Command
             } catch (ErrorException $exception) {
                 $this->error("The business '{$paymentProvider->business->getKey()}' (payment provider '{$paymentProvider->getKey()}') got error '{$exception->getMessage()}' when getting bank swift code and account number hence the bank account has to be created manually.");
 
-                return;
+                return 1;
             }
 
             $holderTypesAvailable = [
@@ -122,7 +122,7 @@ class SplitPayNowPaymentProviderBankAccount extends Command
             } catch (ApiErrorException $exception) {
                 $this->error("The business '{$paymentProvider->business->getKey()}' (payment provider '{$paymentProvider->getKey()}') is having issue when syncing bank account to Stripe. {$exception->getMessage()} The business will have to sync the bank account manually via update.");
 
-                return;
+                return 1;
             }
         });
 

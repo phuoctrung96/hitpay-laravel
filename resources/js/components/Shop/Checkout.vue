@@ -151,7 +151,7 @@
             <div class="form-stack mb-3">
                 <input v-model="checkout.name" id="name" title="Name" class="form-control bg-light" placeholder="Full name" :disabled="is_processing">
                 <input v-model="checkout.email" id="email" title="Email" class="form-control bg-light" placeholder="Email address" :disabled="is_processing">
-                <input v-model="checkout.phone_number" id="phone_number" title="Phone Number" class="form-control bg-light" placeholder="Phone Number" :disabled="is_processing">
+                <input v-model="checkout.phone_number" id="phone_number" type="tel" title="Phone Number" class="form-control bg-light" placeholder="Phone Number" :disabled="is_processing">
             </div>
             <div v-if="business.can_pick_up" class="form-group">
                 <div class="custom-control custom-checkbox">

@@ -9,7 +9,7 @@
                     <label class="col-form-label">Currency:</label>
                     <input id="currency" v-model="bank_account.currency.toUpperCase()" class="form-control" disabled>
                 </div>
-                <div id="group_bank_swift_code" class="form-group">
+                <div id="group_bank_id" class="form-group" v-if="select_bank_visible">
                     <label class="col-form-label">Select Bank:</label>
                     <div class="input-group">
                         <select v-model="bank_account.bank_id" :class="getSelectClasses('bank_id')" :disabled="is_creating">
@@ -19,16 +19,32 @@
                     </div>
                     <span class="text-danger small" role="alert" v-if="errors.bank_id">{{ errors.bank_id }}</span>
                 </div>
-                <div id="group_branch" class="form-group">
-                    <label class="col-form-label">Select Branch:</label>
-                    <div class="input-group">
-                        <select v-model="bank_account.branch_code" :class="getSelectClasses('branch_code')" :disabled="is_creating || !bank_account.bank_id || branches.length <= 0">
-                            <option value="" disabled>Please select a branch</option>
-                            <option v-for="branch in branches" :value="branch.code">[{{ branch.code }}] {{ branch.name }}</option>
-                        </select>
-                    </div>
-                    <span class="text-danger small" role="alert" v-if="errors.branch_code">{{ errors.branch_code }}</span>
-                </div>
+
+                <template v-if="select_bank_visible">
+                  <div id="group_branch" class="form-group">
+                      <label class="col-form-label">Select Branch:</label>
+                      <div class="input-group">
+                          <select v-model="bank_account.branch_code" :class="getSelectClasses('branch_code')" :disabled="is_creating || !bank_account.bank_id || branches.length <= 0">
+                              <option value="" disabled>Please select a branch</option>
+                              <option v-for="branch in branches" :value="branch.code">[{{ branch.code }}] {{ branch.name }}</option>
+                          </select>
+                      </div>
+                      <span class="text-danger small" role="alert" v-if="errors.branch_code">{{ errors.branch_code }}</span>
+                  </div>
+                </template>
+                <template v-else>
+                  <div id="group_bank_routing_number" class="form-group" v-if="routing_number_visible">
+                    <label for="bank_routing_number">Routing number</label>
+                    <input id="bank_routing_number" v-model="bank_account.bank_routing_number" :class="getInputClasses('bank_routing_number')" :disabled="is_creating">
+                    <span class="invalid-feedback" role="alert" v-if="errors.bank_routing_number">{{ errors.bank_routing_number }}</span>
+                  </div>
+                  <div id="group_bank_swift_code" class="form-group" v-if="swift_visible">
+                    <label for="bank_swift_code">SWIFT code</label>
+                    <input id="bank_swift_code" v-model="bank_account.bank_swift_code" :class="getInputClasses('bank_swift_code')" :disabled="is_creating">
+                    <span class="invalid-feedback" role="alert" v-if="errors.bank_swift_code">{{ errors.bank_swift_code }}</span>
+                  </div>
+                </template>
+
                 <div id="group_number" class="form-group">
                     <label for="number">Account Number</label>
                     <input id="number" v-model="bank_account.number" :class="getInputClasses('number')" :disabled="is_creating">
@@ -50,7 +66,7 @@
                 </div>
                 <div id="group_holder_name" class="form-group">
                     <label for="account_holder_name">Account Holder Name</label>
-                    <input id="account_holder_name" v-model="bank_account.holder_name" :class="getInputClasses('holder_name')" :disabled="is_creating">
+                    <input id="account_holder_name" maxlength="160" v-model="bank_account.holder_name" :class="getInputClasses('holder_name')" :disabled="is_creating">
                     <span class="invalid-feedback" role="alert" v-if="errors.holder_name">{{ errors.holder_name }}</span>
                 </div>
                 <div id="group_use_in_stripe" class="form-group">
@@ -79,10 +95,6 @@ export default {
     name : "Components.Business.BankAccounts.Create",
 
     props : {
-        business : {
-            required : true,
-            type : Object,
-        },
         bank_accounts_count : {
             type : Number,
         },
@@ -90,6 +102,7 @@ export default {
             required : true,
             type : Array,
         },
+        bank_fields : Object
     },
 
     watch : {
@@ -109,9 +122,12 @@ export default {
 
     data() {
         return {
+            business : window.Business,
             bank_account : {
-                currency : this.business.currency,
+                currency : window.Business.currency,
                 bank_id : "",
+                bank_swift_code : "",
+                bank_routing_number : "",
                 branch_code : "",
                 number : "",
                 holder_name : "",
@@ -134,6 +150,9 @@ export default {
             ],
             is_creating : false,
             number_confirmation : "",
+            select_bank_visible : ['sg', 'my'].includes(window.Business.country),
+            routing_number_visible : this.bank_fields.routing_number.includes(window.Business.country),
+            swift_visible : this.bank_fields.swift.includes(window.Business.country)
         };
     },
 
@@ -186,16 +205,30 @@ export default {
             this.is_creating = true;
             this.errors = {};
 
-            if (!this.bank_account.bank_id) {
-                this.errors.bank_id = "Please select a bank.";
-            } else if (this.branches.length > 0 && !this.bank_account.branch_code) {
-                this.errors.branch_code = "Please select the branch of the bank.";
+            if (this.select_bank_visible) {
+                if (!this.bank_account.bank_id) {
+                    this.errors.bank_id = "Please select a bank.";
+                } else if (this.branches.length > 0 && !this.bank_account.branch_code) {
+                    this.errors.branch_code = "Please select the branch of the bank.";
+                }
+            } else {
+                if (this.routing_number_visible) {
+                  if (this.bank_account.bank_routing_number.trim().length <= 0) {
+                    this.errors.bank_routing_number = "Please enter Bank Routing Number";
+                  }
+                }
+
+                if(this.swift_visible) {
+                  if (this.bank_account.bank_swift_code.trim().length <= 0) {
+                    this.errors.bank_swift_code = "Please enter SWIFT code";
+                  }
+                }
             }
 
             if (this.bank_account.number.trim().length <= 0) {
                 this.errors.number = "The account number is required.";
-            } else if (!/(^[0-9]+$)+/.test(this.bank_account.number)) {
-                this.errors.number = "The account number should contain only digits.";
+            // } else if (!/(^[0-9]+$)+/.test(this.bank_account.number)) {
+            //     this.errors.number = "The account number should contain only digits.";
             } else if (this.bank_account.number !== this.number_confirmation) {
                 this.errors.number_confirmation = "Please confirm the account number.";
             }
@@ -206,8 +239,6 @@ export default {
 
             if (this.bank_account.holder_name.trim().length <= 0) {
                 this.errors.holder_name = "The holder name is required.";
-            } else if (!/(^[A-Za-z. ]+$)+/.test(this.bank_account.holder_name)) {
-                this.errors.holder_name = "The holder name should contain only alphabet.";
             }
 
             if (Object.keys(this.errors).length > 0) {

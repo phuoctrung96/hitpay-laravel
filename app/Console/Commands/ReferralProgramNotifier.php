@@ -38,11 +38,13 @@ class ReferralProgramNotifier extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $this->getBusinesses()->each(function (Business $business) {
             $business->notify(new BusinessReferralProgramNotification());
         });
+
+        return 0;
     }
 
     private function getBusinesses(): Builder

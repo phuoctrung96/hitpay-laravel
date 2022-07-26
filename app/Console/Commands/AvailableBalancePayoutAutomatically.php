@@ -7,6 +7,7 @@ use App\Enumerations\Business\Wallet\Type;
 use App\Enumerations\CurrencyCode;
 use App\Enumerations\PaymentProvider;
 use App\Models\Business\BankAccount;
+use App\Models\Business\SpecialPrivilege;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -28,12 +29,12 @@ class AvailableBalancePayoutAutomatically extends Command
      *
      * @var string
      */
-    protected $description = 'Payout available balance automatically';
+    protected $description = 'Payout available balance automatically for Singapore';
 
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
         $time = $this->argument('time');
 
@@ -46,6 +47,9 @@ class AvailableBalancePayoutAutomatically extends Command
         $query = Business::query();
 
         $query->with([
+            'specialPrivileges' => function (HasMany $query) {
+                $query->where('special_privilege', SpecialPrivilege::TRANSFER_PAUSED);
+            },
             'paymentProviders' => function (HasMany $query) {
                 $query->where('payment_provider', PaymentProvider::DBS_SINGAPORE);
             },
@@ -93,7 +97,7 @@ class AvailableBalancePayoutAutomatically extends Command
             if (!($paymentProvider instanceof Business\PaymentProvider)) {
                 Log::channel('available-balance-payouts')->info("Payout was not made to business ID {$business->getKey()} ({$business->getName()}) because the payment provider hasn't set.");
 
-                return;
+                return 1;
             }
 
             $bankAccount = $business->bankAccounts->where('country', $business->country)->first();
@@ -101,7 +105,7 @@ class AvailableBalancePayoutAutomatically extends Command
             if (!($bankAccount instanceof BankAccount)) {
                 Log::channel('available-balance-payouts')->info("Payout was not made to business ID {$business->getKey()} ({$business->getName()}) because the bank account hasn't set.");
 
-                return;
+                return 1;
             }
 
             try {
@@ -111,7 +115,9 @@ class AvailableBalancePayoutAutomatically extends Command
                 Log::channel('available-balance-payouts')->info("A {$amountText} payout was created for business ID {$business->getKey()} ({$business->getName()}).");
 
                 try {
-                    $transfer->doFastTransfer();
+                    if ($business->specialPrivileges->isEmpty()) {
+                        $transfer->doFastTransfer();
+                    }
 
                     Log::channel('available-balance-payouts')->info("A {$amountText} transfer was made to business ID {$business->getKey()} ({$business->getName()}).");
 
@@ -123,5 +129,7 @@ class AvailableBalancePayoutAutomatically extends Command
                 Log::channel('available-balance-payouts')->error("Payout Creation Failed: {$exception->getMessage()}");
             }
         });
+
+        return 0;
     }
 }

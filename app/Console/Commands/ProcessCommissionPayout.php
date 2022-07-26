@@ -8,6 +8,7 @@ use App\Business\Commission;
 use App\Enumerations\Business\ChargeStatus;
 use App\Enumerations\Business\SupportedCurrencyCode;
 use App\Enumerations\PaymentProvider;
+use App\Models\Business\SpecialPrivilege;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class ProcessCommissionPayout extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $date = $this->option('date');
 
@@ -170,7 +171,14 @@ class ProcessCommissionPayout extends Command
 
                 DB::commit();
 
-                $commissionModel->doFastTransfer();
+                $transferPaused = $business
+                    ->specialPrivileges()
+                    ->where('special_privilege', SpecialPrivilege::TRANSFER_PAUSED)
+                    ->exists();
+
+                if (!$transferPaused) {
+                    $commissionModel->doFastTransfer();
+                }
 
                 Log::info('A '.getFormattedAmount($commissionModel->currency, $commissionModel->amount).' commission was made'
                     .' to business '.$business->getName().'.');
@@ -178,5 +186,7 @@ class ProcessCommissionPayout extends Command
                 Log::error('Fast Payment Failed: '.$exception->getMessage());
             }
         }
+
+        return 0;
     }
 }

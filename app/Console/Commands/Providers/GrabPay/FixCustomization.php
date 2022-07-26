@@ -27,8 +27,9 @@ class FixCustomization extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle(): int
     {
       Customization::replaceOldGrabPay($this->argument('business_id'));
+      return 0;
     }
 }

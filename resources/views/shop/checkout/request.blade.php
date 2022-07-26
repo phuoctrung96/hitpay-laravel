@@ -43,6 +43,7 @@
               @if(isset($campaignRule)) :campaign_rule="{{json_encode($campaignRule)}}"@endif
               :default_method="{{ json_encode($defaultMethod) }}"
               :show_test_payment="{{ json_encode($show_test_payment) }}"
+              :rates="{{ json_encode($rates ?? null) }}"
               :zero_decimal="{{ json_encode($zeroDecimal) }}"
               @if(isset($expire_date)) :expire_date="{{ json_encode($expire_date) }}"@endif
               >

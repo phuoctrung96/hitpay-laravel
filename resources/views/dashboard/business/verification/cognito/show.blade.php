@@ -46,7 +46,6 @@
 @endsection
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         window.Verification = @json($verification_data);
         window.Type = @json($type);
 

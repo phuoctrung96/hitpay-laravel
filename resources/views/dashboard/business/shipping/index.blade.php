@@ -10,7 +10,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         window.Shippings = @json($shippings);
         window.Countries = @json($countries);
         window.ShippingDiscount = @json($shipping_discount);

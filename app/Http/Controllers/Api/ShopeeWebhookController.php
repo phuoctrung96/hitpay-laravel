@@ -31,7 +31,6 @@ class ShopeeWebhookController extends Controller
     {
       if ($request->hasHeader('X-Airpay-Req-H')) {        
         // !!!
-        Log::critical("[SHOPEE] WebHook received");
 
         $body = $request->getContent();
 
@@ -57,16 +56,9 @@ class ShopeeWebhookController extends Controller
             if ($paymentIntent->charge->amount === $jsonBody->amount) {
               $business = $paymentIntent->business;
 
-              $provider = $business->paymentProviders()
-                ->where([
-                  'payment_provider' => PaymentProviderEnum::SHOPEE_PAY,
-                  'onboarding_status' => OnboardingStatus::SUCCESS
-                ])->first();
-
               try {
                 Shopee::confirmOrder(
                   $business,
-                  $provider,
                   $paymentIntent,
                   $jsonBody
                 );

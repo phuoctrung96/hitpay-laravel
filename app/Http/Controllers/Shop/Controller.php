@@ -197,7 +197,7 @@ class Controller extends Base
         foreach ($discounts as $discount) {
             if ($totalCartAmount >= $discount->minimum_cart_amount){
                 if ($discount->fixed_amount) $discountAmount = $discount->fixed_amount;
-                if ($discount->percentage) $discountAmount = $totalCartAmount * $discount->percentage;
+                if ($discount->percentage) $discountAmount = bcmul($totalCartAmount, $discount->percentage, 2);
                 $appliedDiscount = $discount;
                 break;
             }

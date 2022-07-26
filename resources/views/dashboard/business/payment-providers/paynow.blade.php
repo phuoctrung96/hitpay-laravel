@@ -16,7 +16,6 @@
         </div>
     @else
         <paynow-settings
-            :business="{{ json_encode($business) }}"
             :provider="{{ json_encode($provider) }}"
             :success_message="{{ json_encode($success_message) }}"/>
     @endif

@@ -3,6 +3,7 @@
 namespace HitPay\Stripe\CustomAccount;
 
 use App\Business\PaymentProvider;
+use App\Enumerations\PaymentProvider as PaymentProviderEnum;
 use App\Enumerations\OnboardingStatus;
 use App\Logics\ConfigurationRepository;
 use Illuminate\Support\Facades;
@@ -45,11 +46,13 @@ class Create extends CustomAccount
         // active and some be inactive.
         //
         // TODO - KEEP IN MIND - Not all account will have same capabilities.
+        $service_agreement = $this->business->isPartner() && $this->business->payment_provider === PaymentProviderEnum::STRIPE_US && $this->business->country !== 'us' ? 'recipient' : 'full';
 
         $parameters = array_merge([
             'type' => 'custom',
             'country' => strtoupper($this->business->country),
-            'capabilities' => $this->generateDesiredCapabilities(),
+            'default_currency' => strtolower($this->business->currency),
+            'capabilities' => $this->generateDesiredCapabilities('recipient' === $service_agreement),
             'business_type' => $this->business->getStripeAccountBusinessType(),
             'metadata' => [
                 'platform' => Facades\Config::get('app.name'),
@@ -58,6 +61,7 @@ class Create extends CustomAccount
                 'business_id' => $this->business->getKey(),
             ],
             'tos_acceptance' => [
+                'service_agreement' => $service_agreement,
                 'user_agent' => $this->clientUserAgent,
                 'ip' => $this->clientIp,
                 'date' => Facades\Date::now()->getTimestamp(),

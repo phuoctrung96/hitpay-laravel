@@ -9,6 +9,7 @@ use App\Business\Product;
 use App\Business\ProductVariation;
 use App\Business\ProductCategory;
 use App\Enumerations\Business\ImageGroup;
+use App\Enumerations\Business\ProductStatus;
 use App\Enumerations\CountryCode;
 use App\Enumerations\CurrencyCode;
 use App\Exports\ProductFeedTemplate;
@@ -64,44 +65,8 @@ class ProductController extends Controller
     {
         Gate::inspect('view', $business)->authorize();
 
-        $products = $business->products()->with('variations', 'images');
-
-        $keywords = $request->get('keywords');
-
-        if ($keywords) {
-            $keywords = is_array($keywords) ? $keywords : explode(' ', $keywords);
-            $keywords = array_map(function ($value) {
-                return trim($value);
-            }, $keywords);
-            $keywords = array_filter($keywords);
-            $keywords = array_unique($keywords);
-
-            if (count($keywords)) {
-                foreach ($keywords as $keyword) {
-                    $products->where('name', 'like', '%' . $keyword . '%');
-                }
-            }
-        }
-
         $status = $request->get('status', 'published');
         $shopifyOnly = $request->get('shopify_only', 0);
-
-        switch ($status) {
-
-            case 'draft':
-                $products->whereNull('published_at');
-
-                break;
-
-            default:
-                $products->whereNotNull('published_at');
-
-                if ($shopifyOnly) {
-                    $products->whereNotNull('shopify_id');
-                }
-        }
-
-        $products = $products->orderByDesc('created_at')->get();
 
         $feed_url = null;
         if (isset($business->fb_feed_slot)) {
@@ -115,28 +80,12 @@ class ProductController extends Controller
                 'checkout_url' => str_replace($random, '', URL::route('checkout.store', $random)),
             ],
         ];
-        $product_attrs = [];
-
-        foreach ($products as $product) {
-            $isShopify = false;
-            if ($sku = $product->stock_keeping_unit) {
-                if (HotglueProductTracker::whereStockKeepingUnit($sku)->whereIsShopify(true)->first()) {
-                    $isShopify = true;
-                }
-            }
-            $product_attrs['image'][] = $product->display('image');
-            $product_attrs['price'][] = $product->display('price');
-            $product_attrs['manageable'][] = $product->isManageable();
-            $product_attrs['quantity'][] = $product->variations->sum('quantity');
-            $product_attrs['is_shopify'][] = $isShopify;
-        }
 
         $currentBusinessUser = resolve(\App\Services\BusinessUserPermissionsService::class)->getBusinessUser(Auth::user(), $business);
 
-        return Response::view('dashboard.business.product.index', compact('business', 'products', 'status', 'data', 'currentBusinessUser') + [
-                'shopify_only' => $shopifyOnly,
-                'product_attrs' => $product_attrs
-            ]);
+        return Response::view('dashboard.business.product.index', compact('business', 'status', 'data', 'currentBusinessUser') + [
+            'shopify_only' => $shopifyOnly
+        ]);
     }
 
     /**
@@ -207,7 +156,7 @@ class ProductController extends Controller
             'price' => 'required|decimal:0,2',
             'business_product_category_id' => 'nullable|string',
             'is_manageable' => 'required|bool',
-            'quantity' => 'required_if:is_manageable,true|required_with:quantity_alert_level|int|min:0',
+            'quantity' => 'required_if:is_manageable,true|int|min:0',
             'quantity_alert_level' => 'nullable|int|min:0',
             'image1' => 'nullable|image',
             'image2' => 'nullable|image',
@@ -219,7 +168,7 @@ class ProductController extends Controller
             'variation.*.values' => 'required_with:variation|array|max:3',
             'variation.*.values.*.key' => 'required_with:variation.*.values',
             'variation.*.values.*.value' => 'required_with:variation.*.values.*.key|string',
-            'variation.*.quantity' => 'required_if:is_manageable,true|required_with:variation.*.quantity_alert_level|int|min:0',
+            'variation.*.quantity' => 'required_if:is_manageable,true|int|min:0',
             'variation.*.quantity_alert_level' => 'nullable|int|min:0',
             'variation.*.price' => 'required|decimal:0,2',
             'publish' => 'required|bool',
@@ -237,8 +186,18 @@ class ProductController extends Controller
             'is_pinned' => $requestData['is_pinned'] ?? false
         ];
 
+        if ($productData['description']) {
+            $config = \HTMLPurifier_Config::createDefault();
+            $config->set('Cache.SerializerPath', App::bootstrapPath('cache/serializer_path'));
+            $purifier = new \HTMLPurifier($config);
+            $productData['description'] = $purifier->purify($productData['description']);
+        }
+
         if ($requestData['publish']) {
             $productData['published_at'] = Date::now();
+            $productData['status'] = ProductStatus::PUBLISHED;
+        }else{
+            $productData['status'] = ProductStatus::DRAFT;
         }
 
         if (isset($requestData['variation'])) {
@@ -354,18 +313,23 @@ class ProductController extends Controller
 
         $product->load('variations', 'images');
 
-        $product = $this->getProductObject($product);
+        $product = $product->getProductObject();
 
         $categories = $business->productCategories()->where('active', 1)->get();
 
         if (!isset($product['image'])) $product['image'] = [];
 
-        $product['is_shopify'] = false;
-        if ($sku = $product['stock_keeping_unit']) {
-            if (HotglueProductTracker::whereStockKeepingUnit($sku)->whereIsShopify(true)->first()) {
-                $product['is_shopify'] = true;
+        $itemIds = ProductVariation::where('parent_id', $product['id'])->get()->pluck('shopify_inventory_item_id')->filter();
+        if ($itemId = $product['shopify_inventory_item_id']) {
+            $itemIds[] = $itemId;
+        }
+        $isShopify = false;
+        if (count($itemIds) > 0) {
+            if (HotglueProductTracker::whereIn('item_id', $itemIds)->where('is_shopify', true)->first()) {
+                $isShopify = true;
             }
         }
+        $product['is_shopify'] = $isShopify;
 
         return Response::view('dashboard.business.product.form', compact('business', 'product', 'categories'));
     }
@@ -394,18 +358,18 @@ class ProductController extends Controller
             'stock_keeping_unit' => 'nullable|string|max:32',
             'business_product_category_id' => 'nullable|string',
             'is_manageable' => 'nullable|bool',
-            'quantity' => 'required_if:is_manageable,true|required_with:quantity_alert_level|int|min:0',
+            'quantity' => 'required_if:is_manageable,true|int|min:0',
             'quantity_alert_level' => 'nullable|int|min:0',
             'variation' => 'nullable|array',
             'variation.*.id' => 'required_with:variation|string',
-            'variation.*.quantity' => 'required_if:is_manageable,true|required_with:variation.*.quantity_alert_level|int|min:0',
+            'variation.*.quantity' => 'required_if:is_manageable,true|int|min:0',
             'variation.*.quantity_alert_level' => 'nullable|int|min:0',
             'variation.*.price' => 'required|decimal:0,2',
             'new_variation' => 'nullable|array|max:100',
             'new_variation.*.values' => 'required_with:new_variation|array|max:3',
             'new_variation.*.values.*.key' => 'required_with:new_variation.*.values',
             'new_variation.*.values.*.value' => 'required_with:new_variation.*.values.*.key|string',
-            'new_variation.*.quantity' => 'required_if:is_manageable,true|required_with:new_variation.*.quantity_alert_level|int|min:0',
+            'new_variation.*.quantity' => 'required_if:is_manageable,true|int|min:0',
             'new_variation.*.quantity_alert_level' => 'nullable|int|min:0',
             'new_variation.*.price' => 'required|decimal:0,2',
             'publish' => 'required|bool',
@@ -420,10 +384,19 @@ class ProductController extends Controller
         $product->business_product_category_id = $requestData['business_product_category_id'] ?? null;
         $product->is_pinned = $requestData['is_pinned'] ?? false;
 
+        if ($product->description) {
+            $config = \HTMLPurifier_Config::createDefault();
+            $config->set('Cache.SerializerPath', App::bootstrapPath('cache/serializer_path'));
+            $purifier = new \HTMLPurifier($config);
+            $product->description = $purifier->purify($product->description);
+        }
+
         if ($requestData['publish']) {
             $product->published_at = $product->published_at ?: Date::now();
+            $product->status  = ProductStatus::PUBLISHED;
         } else {
             $product->published_at = null;
+            $product->status = ProductStatus::DRAFT;
         }
 
         if (isset($requestData['variation'])) {
@@ -601,7 +574,7 @@ class ProductController extends Controller
 
         $product->load('variations', 'images');
 
-        return Response::json($this->getProductObject($product));
+        return Response::json($product->getProductObject());
     }
 
     /**
@@ -629,7 +602,7 @@ class ProductController extends Controller
 
         $product->load('variations', 'images');
 
-        $product = $this->getProductObject($product);
+        $product = $product->getProductObject();
 
         if (!isset($product['image'])) $product['image'] = ['id' => '', 'url' => ''];
 
@@ -710,7 +683,7 @@ class ProductController extends Controller
 
         $product->load('variations', 'images');
 
-        return Response::json($this->getProductObject($product));
+        return Response::json($product->getProductObject());
     }
 
     /**
@@ -744,7 +717,7 @@ class ProductController extends Controller
 
         $product->load('variations', 'images');
 
-        return Response::json($this->getProductObject($product));
+        return Response::json($product->getProductObject());
     }
 
     /**
@@ -779,8 +752,9 @@ class ProductController extends Controller
 
         foreach ($request->products as $product) {
             if (isset($product['checked']) && $product['checked']) {
-                $product = Product::find($product['id']);
-                ProductRepository::delete($product);
+                if ($product = Product::find($product['id'])) {
+                    ProductRepository::delete($product);
+                }
             }
         }
 
@@ -788,11 +762,11 @@ class ProductController extends Controller
 
         switch ($request->status) {
             case 'draft':
-                $products->whereNull('published_at');
-
+                $products->where('status', ProductStatus::DRAFT);
                 break;
+
             default:
-                $products->whereNotNull('published_at');
+                $products->where('status', ProductStatus::PUBLISHED);
         }
 
         $products = $products->orderByDesc('created_at')->get();
@@ -809,97 +783,6 @@ class ProductController extends Controller
         return Response::json([
             'products' => $products,
             'product_attrs' => $product_attrs]);
-    }
-
-    private
-    function getProductObject(Product $product)
-    {
-        if (!$product->shortcut_id) {
-            $shortcut = $product->shortcut()->create([
-                'route_name' => 'shop.product',
-                'parameters' => [
-                    'business' => $product->business_id,
-                    'product_id' => $product->getKey(),
-                ],
-            ]);
-
-            $product->shortcut_id = $shortcut->getKey();
-            $product->save();
-        }
-        $data['id'] = $product->id;
-        $data['name'] = $product->name;
-        $data['description'] = $product->description;
-        $data['currency'] = $product->currency;
-        $data['price'] = $product->price;
-        $data['stock_keeping_unit'] = $product->stock_keeping_unit;
-        $data['categories'] = $product->business_product_category_id;
-        $data['readable_price'] = $product->readable_price;
-        $data['is_manageable'] = $product->quantity > 0;
-        $data['is_published'] = $product->published_at instanceof Carbon;
-        $data['has_variations'] = $product->variations_count > 1;
-        $data['variations_count'] = $product->variations_count;
-        $data['checkout_url'] = $product->shortcut_id
-            ? URL::route('shortcut', $product->shortcut_id)
-            : URL::route('shop.product', [
-                $product->business_id,
-                $product->getKey(),
-            ]);
-        if ($product->variations_count > 1) {
-            $data['variation_types'] = array_filter([
-                $product->variation_key_1,
-                $product->variation_key_2,
-                $product->variation_key_3,
-            ]);
-        } elseif ($data['is_manageable']) {
-            $data['quantity'] = $product->variations[0]->quantity;
-            $data['quantity_alert_level'] = $product->variations[0]->quantity_alert_level;
-        }
-
-        $data['variations'] = [];
-
-        foreach ($product->variations as $variation) {
-            $variationData = [
-                'id' => $variation->id,
-                'description' => $variation->description,
-                'values' => [
-                    [
-                        'key' => $product->variation_key_1,
-                        'value' => $variation->variation_value_1,
-                    ],
-                    [
-                        'key' => $product->variation_key_2,
-                        'value' => $variation->variation_value_2,
-                    ],
-                    [
-                        'key' => $product->variation_key_3,
-                        'value' => $variation->variation_value_3,
-                    ],
-                ],
-                'price' => getReadableAmountByCurrency($product->currency, $variation->price),
-            ];
-
-            if ($data['is_manageable']) {
-                $variationData['quantity'] = $variation->quantity;
-                $variationData['quantity_alert_level'] = $variation->quantity_alert_level;
-            }
-
-            $data['variations'][] = $variationData;
-        }
-
-        if ($product->relationLoaded('images')) {
-            foreach ($product->images as $image) {
-                $data['image'][] = [
-                    'id' => $image->getKey(),
-                    'url' => $image->getUrl(),
-                ];
-            }
-        }
-
-        $data['is_pinned'] = $product->is_pinned;
-        $data['created_at'] = $product->created_at->toAtomString();
-        $data['updated_at'] = $product->updated_at->toAtomString();
-
-        return $data;
     }
 
     /**

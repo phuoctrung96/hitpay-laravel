@@ -337,21 +337,12 @@ function str_slug($title, $separator = '-', $language = 'en')
 function generate_unique_slug($name)
 {
     $slug = str_slug($name);
+    $original = $slug;
 
-    $existingBusiness = Business::where('slug', $slug)->first();
+    $i = 2;
 
-    if ($existingBusiness instanceof Business) {
-        for ($i=1; $i < 99; $i++) {
-
-            $newSlug = $slug . '-' . $i;
-            $existingBusiness = Business::where('slug', $newSlug)->first();
-
-            if (!$existingBusiness instanceof Business) {
-
-                return $newSlug;
-
-            }
-        }
+    while (Business::where('slug', $slug)->exists()) {
+        $slug = $original . '-' . $i++;
     }
 
     return $slug;
@@ -374,4 +365,25 @@ function generateRandomString($length = 10) {
         $randomString .= $characters[rand(0, $charactersLength - 1)];
     }
     return $randomString;
+}
+
+function recoverDashForUuid(string $uuid)
+{
+    $segments = [];
+
+    $previous = 0;
+
+    foreach ([ 8, 4, 4, 4, 12 ] as $length) {
+        $segments[] = substr($uuid, $previous, $length);
+
+        $previous += $length;
+    }
+
+    $uuid = join('-', $segments);
+
+    if (Str::isUuid($uuid)) {
+        return $uuid;
+    }
+
+    return false;
 }

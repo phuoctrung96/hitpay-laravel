@@ -2,7 +2,7 @@
     <div>
         <div class="card shadow-sm mb-3">
             <div class="card-body border-top p-4">
-                <p class="text-uppercase text-muted">Role Restrctions</p>
+                <p class="text-uppercase text-muted">Role Restrictions</p>
                 <div class="form-row">
                     <div class="col-12 col-md-6 mb-3">
                         <p class="text-uppercase mb-2">Cashier</p>

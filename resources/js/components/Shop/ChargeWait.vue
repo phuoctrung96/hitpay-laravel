@@ -15,7 +15,7 @@ export default {
     charge_id: String,
     business_id: String,
     timeout: {
-      type: Number, // sec
+      type: [Number, String], // sec
       default: 6
     },
     interval: {
@@ -47,7 +47,7 @@ export default {
           } else {
             this.timer += this.interval
 
-            if (this.timer < this.timeout) {
+            if (this.timer < Number(this.timeout)) {
               this.checkCharge()
             } else {
               // Redirect back

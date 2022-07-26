@@ -44,8 +44,6 @@ class Kernel extends HttpKernel
         'api' => [
             'throttle:60,1',
             'bindings',
-            \App\Http\Middleware\VerifyCsrfToken::class,
-
         ],
 
         'client_credentials' => [
@@ -77,12 +75,12 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'shopify.checkout' => \App\Http\Middleware\ShopifyCheckoutAccess::class,
         'shopify.access' => \App\Http\Middleware\ShopifyAccessMiddleware::class,
+        'shopify.access.hmac' => \App\Http\Middleware\ShopifyAccessHmacMiddleware::class,
         'payment.gateway.checkout' => \App\Http\Middleware\PaymentGatewayCheckoutAccess::class,
         'payment.request.auth' => \App\Http\Middleware\PaymentRequestAuthentication::class,
         'payment.request.access' => \App\Http\Middleware\PaymentRequestCheckoutAccess::class,
         'shop.enabled' => \App\Http\Middleware\ShopIsEnabled::class,
         'partner' => PartnerMiddleware::class,
-        'cors' => \App\Http\Middleware\cors::class,
     ];
 
     /**

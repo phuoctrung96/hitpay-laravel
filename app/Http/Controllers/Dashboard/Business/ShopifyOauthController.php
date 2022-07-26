@@ -145,10 +145,7 @@ class ShopifyOauthController extends Controller
 
             throw $exception;
         } catch (InvalidStateException $exception) {
-            Log::critical("[Shopify InvalidStateException] There is issue when user want to authorize \n
-                this shop {$request->get('shop')} \n
-                with params " . json_encode($request->all()) . " \n
-                and message error tracing " . $exception->getTraceAsString());
+            $request->session()->flush();
 
             return Response::redirectToRoute('dashboard.payment.integration.shopify.invalid.state', $request->all());
         }
@@ -197,4 +194,3 @@ class ShopifyOauthController extends Controller
         return Response::view('dashboard.shopify.invalidstate', compact("url"));
     }
 }
-

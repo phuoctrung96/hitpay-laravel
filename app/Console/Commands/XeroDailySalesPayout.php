@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Business;
 use App\Enumerations\Business\ChargeStatus;
+use App\Enumerations\PaymentProvider;
 use App\Services\XeroApiFactory;
 use DateTime;
 use Illuminate\Console\Command;
@@ -51,7 +52,7 @@ class XeroDailySalesPayout extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $businesses = Business::whereNotNull('xero_payment_fee_account_id')
             ->get();
@@ -66,25 +67,27 @@ class XeroDailySalesPayout extends Command
                 Log::error($exception);
             }
         }
+
+        return 0;
     }
 
     private function makePayout(Business $business)
     {
         try {
-            [$spend, $received] = $this->getSpendReceived($business);
+            $amounts = $this->getSpendReceived($business);
 
-            if($spend > 0) {
-                $this->createSpendTransaction($business, $spend);
-            }
+            foreach ($amounts as $paymentProvider => $groupedAmounts) {
+                [$spend, $received] = $groupedAmounts;
 
-            if($received > 0) {
-                $this->createReceivedTransaction($business, $received);
+                if($spend > 0) {
+                    $this->createSpendTransaction($business, $spend, $paymentProvider);
+                }
+
+                if($received > 0) {
+                    $this->createReceivedTransaction($business, $received, $paymentProvider);
+                }
             }
-        } catch (ApiException $exception) {
-            dump($exception->getResponseBody(), $exception);
-            Log::error($exception);
         } catch (\Exception $exception) {
-            dump($exception);
             Log::error($exception);
         }
     }
@@ -112,8 +115,10 @@ class XeroDailySalesPayout extends Command
             ->whereDate('closed_at', '=', date('Y-m-d', strtotime('-1 day')))
             ->get();
 
-        $spend = 0;
-        $received = 0;
+        $amounts = [
+            'spent' => [],
+            'received' => []
+        ];
 
         /** @var Business\Charge $orderSale */
         foreach ($orderSales as $orderSale) {
@@ -121,11 +126,23 @@ class XeroDailySalesPayout extends Command
                 continue;
             }
 
-            $spend += $orderSale->getTotalFee();
-            $received += $orderSale->amount;
+            $paymentProvider = $orderSale->payment_provider;
+            if(in_array($paymentProvider, [PaymentProvider::DBS_SINGAPORE, PaymentProvider::GRABPAY, PaymentProvider::SHOPEE_PAY, PaymentProvider::ZIP])) {
+                $paymentProvider = 'group';
+            }
+
+            if(!isset($amounts[$paymentProvider])) {
+                $amounts[$paymentProvider] = [
+                    'spent' => 0,
+                    'received' => 0
+                ];
+            }
+
+            $amounts[$paymentProvider]['spent'] += $orderSale->getTotalFee() / 100;
+            $amounts[$paymentProvider]['received'] += $orderSale->amount / 100;
         }
 
-        return [$spend / 100, $received / 100];
+        return $amounts;
     }
 
     private function getAccount(string $tenantId, string $id)

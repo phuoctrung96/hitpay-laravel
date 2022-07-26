@@ -2,6 +2,7 @@
 
 namespace HitPay\Data\Countries\Objects;
 
+use App\Enumerations\CountryCode;
 use HitPay\Data\Countries\Objects\PaymentProvider\Currency;
 use HitPay\Data\Countries\Objects\PaymentProvider\Method;
 use Illuminate\Support\Collection;
@@ -33,7 +34,10 @@ class PaymentProvider extends Base
             } else {
                 foreach ($_method['currencies'] as $key => $value) {
                     if (is_string($value)) {
-                        $value = [ 'code' => $value ];
+                        // pull from general rules
+                        $value = $currencies->first(function($item) use ($value) {
+                            return $item->code === $value;
+                        })->toArray();
                     }
 
                     if (!array_key_exists('minimum_amount', $value)) {
@@ -55,5 +59,18 @@ class PaymentProvider extends Base
         );
 
         return $data;
+    }
+
+    public function getCountry(): string
+    {
+        $country = parent::getCountry();
+
+        if($this->data['official_code'] === 'stripe') {
+            if (!in_array($country, [CountryCode::SINGAPORE, CountryCode::MALAYSIA])) {
+                return CountryCode::UNITED_STATES;
+            }
+        }
+
+        return $country;
     }
 }

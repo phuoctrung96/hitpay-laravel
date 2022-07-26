@@ -32,14 +32,14 @@ class MassOnboarding extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
       $businesses = Business::where('verified_wit_my_info_sg', true)
         ->whereHas('verifications', function ($query) {
           $query->where('type', 'business');
         })->whereDoesntHave('paymentProviders', function ($query) {
           $query->where('payment_provider', PaymentProviderEnum::GRABPAY);
-          $query->where('onboarding_status', 'success');    
+          $query->where('onboarding_status', 'success');
         }
       )->with('verifications')
       ->with('merchantCategory')
@@ -58,8 +58,8 @@ class MassOnboarding extends Command
         'country_of_registration',
         'address',
         'postal_code',
-        'SSIC',            
-        'merchant_category_code',            
+        'SSIC',
+        'merchant_category_code',
         'submitted_date',
         'updated_date',
         'status',
@@ -90,7 +90,7 @@ class MassOnboarding extends Command
           'country_of_registration' => 'SG',
           'address' => $addrs,
           'postal_code' => $entity_address['postal'] ? $entity_address['postal']['value'] : '',
-          'SSIC' => '',            
+          'SSIC' => '',
           'merchant_category_code' => $cat ? $cat->code : '',
           'submitted_date' => date('d-m-Y H:i:s'),
           'updated_date' => '',
@@ -99,8 +99,10 @@ class MassOnboarding extends Command
         ];
       }
 
-      $csv->insertAll($data);      
+      $csv->insertAll($data);
 
       Mail::to($this->argument('email'))->send(new GrabPayMassOnboarding($csv));
+
+      return 0;
     }
 }

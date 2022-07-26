@@ -14,7 +14,7 @@ class PartnerController extends Controller
             ->paginate();
         $business = $user->businessPartner->business;
 
-        $commissions = $user->businessPartner->commission()
+        $commissions = $user->businessPartner->commissions()
             ->paginate();
 
         return view('dashboard.partner.index', compact('merchants', 'business', 'commissions'));

@@ -139,7 +139,7 @@
             :disabled="is_processing"
         />
 
-        <div class="mt-5" v-if="form.country === '' || form.country === 'sg'">
+        <div class="mt-5" v-if="form.country === 'sg'">
             <label for="agree_with_partner_terms">
                 <input :disabled="is_processing" type="checkbox" v-model="agree_with_partner_terms" value="1" class=""
                        @click="agree_with_partner_terms_error = agree_with_partner_terms != 1 ? 0 : 1"
@@ -148,16 +148,25 @@
             </label>
         </div>
 
-        <div class="mt-5" v-if="form.country === 'my'">
-            <label for="agree_with_partner_terms">
-                <input :disabled="is_processing" type="checkbox" v-model="agree_with_partner_terms" value="1" class=""
-                       @click="agree_with_partner_terms_error = agree_with_partner_terms != 1 ? 0 : 1"
-                       id="agree_with_partner_terms">
-                <span :class="{'error': agree_with_partner_terms_error}">I agree to the partner program <a href="https://drive.google.com/file/d/1WxqGcmN5TvBJYyYC1eTEd22Hi-nkEHLx/view" target="_blank" style="text-decoration: underline">terms and conditions</a></span>
-            </label>
+        <div class="mt-5" v-else-if="form.country === 'my'">
+          <label for="agree_with_partner_terms">
+            <input :disabled="is_processing" type="checkbox" v-model="agree_with_partner_terms" value="1" class=""
+                   @click="agree_with_partner_terms_error = agree_with_partner_terms != 1 ? 0 : 1"
+                   id="agree_with_partner_terms">
+            <span :class="{'error': agree_with_partner_terms_error}">I agree to the partner program <a href="https://drive.google.com/file/d/1WxqGcmN5TvBJYyYC1eTEd22Hi-nkEHLx/view" target="_blank" style="text-decoration: underline">terms and conditions</a></span>
+          </label>
         </div>
 
-        <div class="notice text-center mb-4 mt-5" v-if="form.country === '' || form.country === 'sg'">
+        <div class="mt-5" v-else>
+          <label for="agree_with_partner_terms">
+            <input :disabled="is_processing" type="checkbox" v-model="agree_with_partner_terms" value="1" class=""
+                   @click="agree_with_partner_terms_error = agree_with_partner_terms != 1 ? 0 : 1"
+                   id="agree_with_partner_terms">
+            <span :class="{'error': agree_with_partner_terms_error}">I agree to the partner program <a href="https://drive.google.com/file/d/1WxqGcmN5TvBJYyYC1eTEd22Hi-nkEHLx/view" target="_blank" style="text-decoration: underline">terms and conditions</a></span>
+          </label>
+        </div>
+
+        <div class="notice text-center mb-4 mt-5" v-if="form.country === 'sg'">
             By clicking "Register", you agree to our <a
             href="https://www.hitpayapp.com/termsofservice" target="_blank">Terms of Service</a>, <a
             href="https://www.hitpayapp.com/privacypolicy" target="_blank">Privacy Policy</a> and <a
@@ -165,13 +174,21 @@
             receive email from us and can opt out at any time.
         </div>
 
-        <div class="notice text-center mb-4 mt-5" v-if="form.country === 'my'">
+        <div class="notice text-center mb-4 mt-5" v-else-if="form.country === 'my'">
             By clicking "Register", you agree to our <a
             href="https://hitpayapp.com/en-my/termsofservice" target="_blank">Terms of Service</a>, <a
             href="https://hitpayapp.com/en-my/privacypolicy" target="_blank">Privacy Policy</a>, <a
             href="https://hitpayapp.com/en-my/acceptableusepolicy" target="_blank">Acceptable Use Policy</a> and the
             <a href="https://stripe.com/connect-account/legal">Stripe Connected Account Agreement.</a>
             You may receive email from us and can opt out at any time.
+        </div>
+
+        <div class="notice text-center mb-4 mt-5" v-else>
+          By clicking "Register", you agree to our <a
+          href="https://www.hitpayapp.com/termsofservice" target="_blank">Terms of Service</a>, <a
+          href="https://www.hitpayapp.com/privacypolicy" target="_blank">Privacy Policy</a> and <a
+          href="https://www.hitpayapp.com/acceptableusepolicy" target="_blank">Acceptable Use Policy</a>. You may
+          receive email from us and can opt out at any time.
         </div>
 
         <CheckoutButton
@@ -197,6 +214,8 @@ import CheckoutButton from '../Shop/CheckoutButton'
 import LoginInput from './LoginInput'
 import LoginSelect from "./LoginSelect";
 import WebsiteHelper from "../../mixins/WebsiteHelper";
+import Vue from "vue";
+import {VueReCaptcha} from "vue-recaptcha-v3";
 
 export default {
     components: {
@@ -210,6 +229,7 @@ export default {
         'email',
         'categories',
         'countries',
+        'recaptcha_sitekey',
     ],
     mixins: [
         WebsiteHelper
@@ -239,7 +259,8 @@ export default {
                 other_referred_channel: '',
                 merchant_category: '',
                 business_type: 'individual',
-                country: this.country,
+                country: 'sg', // default to SG
+                recaptcha_token: ''
             },
             is_processing: false,
             services: [
@@ -345,6 +366,10 @@ export default {
                 this.showError(_.first(Object.keys(this.errors)));
             } else {
                 try {
+                    // verify CAPTCHA
+                    await this.$recaptchaLoaded()
+                    this.form.recaptcha_token = await this.$recaptcha('register_partner')
+
                     const formData = new FormData()
                     formData.append('logo', this.form.logo);
                     formData.append('display_name', this.form.display_name);
@@ -363,6 +388,7 @@ export default {
                     formData.append('business_type', this.form.business_type);
                     formData.append('country', this.form.country);
                     formData.append('name', this.form.display_name);
+                    formData.append('recaptcha_token', this.form.recaptcha_token);
 
                     const res = await axios.post(this.getDomain('register-partner', 'dashboard'), formData)
                     window.location.href = res.data.redirect_url
@@ -383,6 +409,10 @@ export default {
         },
 
         showError(firstErrorKey) {
+            if (firstErrorKey === 'recaptcha_token') {
+                alert('Invalid CAPTCHA, please refresh the page and try again');
+            }
+
             if (firstErrorKey !== undefined) {
                 this.scrollTo('#' + firstErrorKey);
 
@@ -411,6 +441,13 @@ export default {
                 that.form.country = item.id;
             }
         });
+
+        Vue.use(VueReCaptcha, {
+          siteKey: this.recaptcha_sitekey,
+          loaderOptions: {
+            useRecaptchaNet: true
+          }
+        })
     },
 }
 </script>

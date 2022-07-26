@@ -53,7 +53,7 @@
                         <div class="form-group">
                             <label for="name" class="small text-secondary">Methods</label>
                             @foreach ($data['methods'] as $key => $val)
-                                @php($checked = in_array($key, json_decode($gatewayProvider->methods, true) ?? []) ? 'CHECKED' : '')
+                                @php($checked = in_array($key, $gatewayProvider->methods ?? []) ? 'CHECKED' : '')
                                 <div class="custom-control custom-checkbox">
                                     <input {{ $checked }} type="checkbox" class="custom-control-input" id="completedCheck{{ $key }}" name="methods[]" value="{{ $key }}">
                                     <label class="custom-control-label" for="completedCheck{{ $key }}">{{ $val }}</label>

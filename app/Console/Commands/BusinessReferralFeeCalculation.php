@@ -41,7 +41,7 @@ class BusinessReferralFeeCalculation extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $payoutDate = Carbon::today();
         $businessPayoutFee = DB::table((new BusinessReferralPayout())->getTable())
@@ -71,5 +71,7 @@ class BusinessReferralFeeCalculation extends Command
                 }
             });
         });
+
+        return 0;
     }
 }

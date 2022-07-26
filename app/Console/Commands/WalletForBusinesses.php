@@ -26,7 +26,7 @@ class WalletForBusinesses extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
         Business::where('currency', CurrencyCode::SGD)->each(function (Business $business) {
             $repeater = str_repeat('=', strlen($business->name) + 6);
@@ -56,5 +56,7 @@ class WalletForBusinesses extends Command
 
             $this->line('');
         });
+
+        return 0;
     }
 }

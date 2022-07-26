@@ -49,25 +49,25 @@
                             <div class="today-item mt-2">
                                 <span class="ti-title">Referral code</span>
                                 <div>
-                                    <span>{{ $partner['referral_code'] }}</span>
+                                    <span>{{ $partner['referral_code'] ?? '' }}</span>
                                 </div>
                             </div>
                             <div class="today-item mt-2">
                                 <span class="ti-title">Referral URL</span>
                                 <div>
-                                    <span>{{ $partner['referral_url'] }}</span>
+                                    <span>{{ $partner['referral_url'] ?? '' }}</span>
                                 </div>
                             </div>
                             <div class="today-item mt-2">
                                 <span class="ti-title">Website</span>
                                 <div>
-                                    <span>{{ $partner['website'] }}</span>
+                                    <span>{{ $partner['website'] ?? '' }}</span>
                                 </div>
                             </div>
                             <div class="today-item mt-2">
                                 <span class="ti-title">Platforms</span>
                                 <div>
-                                    <span>{{ join(', ', $partner['platforms']) }}</span>
+                                    <span>{{ isset($partner['platforms']) ? join(', ', $partner['platforms']) : '' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -75,30 +75,32 @@
                             <div class="today-item mt-2">
                                 <span class="ti-title">Services</span>
                                 <div>
-                                    <span>{{ join(', ', $partner['services']) }}</span>
+                                    <span>{{ isset($partner['services']) ? join(', ', $partner['services']) : '' }}</span>
                                 </div>
                             </div>
                             <div class="today-item mt-2">
                                 <span class="ti-title">Description</span>
                                 <div>
-                                    <span>{{ $partner['short_description'] }}</span>
+                                    <span>{{ $partner['short_description'] ?? '' }}</span>
                                 </div>
                             </div>
                             <div class="today-item mt-2">
                                 <span class="ti-title">Special sign up offer to HitPay Merchants</span>
                                 <div>
-                                    <span>{{ $partner['special_offer'] }}</span>
+                                    <span>{{ $partner['special_offer'] ?? '' }}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-2 text-right">
-                            <img src="/storage/{{$partner['logo_path']}}" style="height: 120px" alt=""/>
+                            @isset($partner['logo_path'])
+                                <img src="/storage/{{$partner['logo_path']}}" style="height: 120px" alt=""/>
+                            @endisset
                         </div>
                     </div>
                 </div>
             </div>
 
-            @if($partner['status'] == 'pending')
+            @if(isset($partner['status']) && $partner['status'] == 'pending')
             <div class="dashboard-card d-flex flex-column flex-grow-1 ml-3" style="height: auto; min-height: 211px;" >
                 <div class="today-title mt-5 pt-5">
                     Your partner account has been submitted for approval
@@ -106,22 +108,17 @@
             </div>
             @endif
         </div>
-    @elseif(count($dailyData['lastTransactions']) > 0)
+    @elseif($dailyData['hasTransactions'])
         <main-dashboard
-            business_id="{{ $business->getKey() }}"
-            :business="{{ json_encode($business) }}"
             :is_show_modal_verification="{{ json_encode($isShowModalVerification) }}"
             :country_code="{{ json_encode($business->country) }}"
-            :daily_data="{{ json_encode($dailyData) }}"
-            :user="{{json_encode(Auth::user()->load('businessUsers'))}}"></main-dashboard>
+            :daily_data="{{ json_encode($dailyData) }}"></main-dashboard>
             <business-help-guide :page_type="'overview'"></business-help-guide>
     @else
         <getting-started
             :payment_count="{{json_encode($isPayment)}}"
             :is_show_modal_verification="{{json_encode($isShowModalVerification)}}"
             :is_verification_verified="{{ json_encode($isVerificationVerified) }}"
-            :business="{{ json_encode($business) }}"
-            business_id="{{ $business->getKey() }}"
             :country_code="{{ json_encode($business->country) }}"
             verification_status="{{$verificationStatus}}"
         />

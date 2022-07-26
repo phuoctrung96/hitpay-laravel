@@ -52,6 +52,9 @@ class VerificationMoreConfirmController extends Controller
 
         Session::flash('success_message_completed', 'Your account verification has been completed. You can start accepting payments.');
 
-        return route('dashboard.business.verification.home', $business->getKey());
+        return route('dashboard.business.verification.home', [
+            'business_id' => $business->getKey(),
+            'first_submit' => 1
+        ]);
     }
 }

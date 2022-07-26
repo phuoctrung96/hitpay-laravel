@@ -2,18 +2,29 @@
 
 namespace App\Manager;
 
+use App\Actions\Exceptions\BadRequest;
 use App\Business;
 use App\Business\GatewayProvider;
 use App\Business\PaymentProvider;
 use App\Enumerations\Business\PaymentMethodType;
 use App\Enumerations\Business\PluginProvider;
+use App\Enumerations\CountryCode;
 use App\Enumerations\OnboardingStatus;
 use App\Enumerations\PaymentProvider as PaymentProviderEnum;
+use App\Providers\AppServiceProvider;
+use Exception;
 use HitPay\Data\Countries;
+use Illuminate\Database\Connection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Stripe\Account;
+use Stripe\Exception\InvalidRequestException;
 use Stripe\Stripe;
+use Stripe\StripeObject;
 use Stripe\Terminal\ConnectionToken;
+use Stripe\Terminal\Location;
 
 class BusinessManager extends AbstractManager implements ManagerInterface, BusinessManagerInterface
 {
@@ -22,21 +33,148 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
         return Business::class;
     }
 
-    public function createStripeConnectionToken(Business $business)
+    /**
+     * Get business Stripe terminal location, create one if it doesn't exist.
+     *
+     * @param  \App\Business  $business
+     * @param  \App\Business\PaymentProvider  $businessPaymentProvider
+     *
+     * @return \App\Business\StripeTerminalLocation
+     * @throws \Stripe\Exception\ApiErrorException
+     * @throws \Throwable
+     */
+    public function getBusinessStripeTerminalLocations(
+        Business $business,
+        PaymentProvider $businessPaymentProvider
+    ) : Business\StripeTerminalLocation
     {
-        $provider   = $business->paymentProviders()->where('payment_provider', $business->payment_provider)->first();
-        $locations  = $business->stripeTerminalLocations;
-        $location   = $locations->first();
+        // TODO
+        //   ---->>>>
+        //   Assuming no exception, we will clean up this, move the code to somewhere, and do more validation later.
+        //
+        $businessPaymentProviderConfiguration = $businessPaymentProvider->getConfiguration();
 
-        // Set your secret key. Remember to switch to your live secret key in production!
-        // See your keys here: https://dashboard.stripe.com/account/apikeys
-        Stripe::setApiKey(Config::get('services.stripe.sg.secret'));
+        if (in_array($businessPaymentProviderConfiguration->official_code, [
+            PaymentProviderEnum::STRIPE_SINGAPORE,
+            PaymentProviderEnum::STRIPE_US,
+        ])) {
+            throw new Exception('The Stripe terminal location is available for Singapore and United States only');
+        }
 
-        // In a new endpoint on your server, create a ConnectionToken and return the
-        // `secret` to your app. The SDK needs the `secret` to connect to a reader.
-        $token      = ConnectionToken::create([
+        $country = $businessPaymentProviderConfiguration->getCountry();
+
+        Stripe::setApiKey(Config::get("services.stripe.{$country}.secret"));
+
+        foreach ($business->stripeTerminalLocations as $businessStripeTerminalLocation) {
+            try {
+                $stripeLocation = Location::retrieve($businessStripeTerminalLocation->stripe_terminal_location_id, [
+                    'stripe_version' => AppServiceProvider::STRIPE_VERSION
+                ]);
+            } catch (InvalidRequestException $exception) {
+                // TODO
+                //   ---->>>>
+                //   If not found, shall we delete it?
+                //
+                continue;
+            }
+
+            if ($stripeLocation instanceof Location) {
+                return $businessStripeTerminalLocation;
+            }
+        }
+
+        $address = [ 'country' => $business->country ];
+
+        if ($businessPaymentProviderConfiguration->code === PaymentProviderEnum::STRIPE_US) {
+            $stripeAccount = Account::retrieve($businessPaymentProvider->payment_provider_account_id, [
+                'stripe_version' => AppServiceProvider::STRIPE_VERSION,
+            ]);
+
+            if ($stripeAccount instanceof Account) {
+                switch (false) {
+                    case $stripeAccount->company instanceof StripeObject:
+                    case $stripeAccount->company->address instanceof StripeObject:
+                        $message = "Unable to create Stripe terminal location for business {$business->getKey()}, the address of the company in Stripe account can't be retrieved.";
+
+                        Log::error($message);
+
+                        throw new BadRequest($message);
+                    default:
+                        $address['line1'] = $stripeAccount->company->address->line1;
+                        $address['line2'] = $stripeAccount->company->address->line2;
+                        $address['city'] = $stripeAccount->company->address->city;
+                        $address['state'] = $stripeAccount->company->address->state;
+                        $address['postal_code'] = $stripeAccount->company->address->postal_code;
+                }
+            }
+        }
+
+        try {
+            $stripeLocation = Location::create([
+                'display_name' => $business->getName(),
+                'address' => $address,
+            ], [ 'stripe_version' => AppServiceProvider::STRIPE_VERSION ]);
+        } catch (InvalidRequestException $exception) {
+            Log::error(
+                "Error when creating Stripe terminal location for business : {$business->getKey()}. Error from Stripe: {$exception->getMessage()}"
+            );
+
+            throw new BadRequest($exception->getMessage());
+        }
+
+        try {
+            $businessStripeTerminalLocation = DB::transaction(
+                function (Connection $connection) use ($business, $stripeLocation, $businessPaymentProvider) {
+                    return $business->stripeTerminalLocations()->create([
+                        'name' => $stripeLocation->display_name,
+                        'payment_provider' => $businessPaymentProvider->payment_provider,
+                        'stripe_terminal_location_id' => $stripeLocation->id,
+                        'data' => $stripeLocation->toArray(),
+                    ]);
+                },
+                3
+            );
+        } catch (Exception $exception) {
+            $stripeLocation->delete();
+
+            throw $exception;
+        }
+
+        return $businessStripeTerminalLocation;
+    }
+
+    /**
+     * Create a Stripe connection token for terminal.
+     *
+     * @param  \App\Business  $business
+     *
+     * @return string|null
+     * @throws \Stripe\Exception\ApiErrorException
+     * @throws \Throwable
+     */
+    public function createStripeConnectionToken(Business $business) : ?string
+    {
+        $businessPaymentProvider = $business
+            ->paymentProviders()
+            ->where('payment_provider', $business->payment_provider)
+            ->first();
+
+        if (!$businessPaymentProvider instanceof PaymentProvider) {
+            return null;
+        }
+
+        try {
+            $location = $this->getBusinessStripeTerminalLocations($business, $businessPaymentProvider);
+        } catch (BadRequest $exception) {
+            return null;
+        }
+        $country = $businessPaymentProvider->getConfiguration()->getCountry();
+
+        Stripe::setApiKey(Config::get("services.stripe.{$country}.secret"));
+
+        $token = ConnectionToken::create([
             'location' => $location->stripe_terminal_location_id,
-        ]);
+        ], [ 'stripe_version' => AppServiceProvider::STRIPE_VERSION ]);
 
         return $token->secret;
     }
@@ -58,7 +196,9 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
                 $paymentMethods[PaymentMethodType::WECHAT] = 'WeChatPay';
             }
 
-            $paymentMethods[PaymentMethodType::ALIPAY]   = 'AliPay';
+            if ($this->allowStripeAlipay($business, $currency)) {
+              $paymentMethods[PaymentMethodType::ALIPAY]   = 'AliPay';
+            }
 
             if ($stripeProvider->payment_provider === PaymentProviderEnum::STRIPE_MALAYSIA && (!$currency || strtolower($currency) === 'myr')) {
               $paymentMethods[PaymentMethodType::FPX] = 'FPX';
@@ -102,45 +242,53 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
      */
     public function getBusinessProviderPaymentMethods(Business $business, $provider, $currency = null)
     {
-
         if ($provider == 'api_custom' || ($provider == '')) {
             $provider = PluginProvider::getProviderByChanel(PluginProvider::CUSTOM);
         }
-        $provider       = $business->gatewayProviders()->where('name', $provider)->first();
-        $paymentMethods = [];
 
-        if ($provider instanceof GatewayProvider) {
-            foreach ($provider->array_methods as $method) {
-                $paymentMethods[] = $method;
-            }
-        }
+        if ($provider == 'shopify')
+            $provider = PluginProvider::APISHOPIFY;
+
+        $paymentMethods = $business->getProviderMethods($provider);
 
         if (!is_null($currency)) {
-            if (strtolower($currency) != 'sgd') {
-                foreach ($paymentMethods as $key => $paymentMethod) {
-                    if ($paymentMethod == PaymentMethodType::PAYNOW) {
-                      unset($paymentMethods[$key]);
-                    }
+            $cur = strtolower($currency);
 
-                    if ($paymentMethod == PaymentMethodType::GRABPAY || $paymentMethod == PaymentMethodType::GRABPAY_DIRECT || $paymentMethod == PaymentMethodType::GRABPAY_PAYLATER) {
-                      unset($paymentMethods[$key]);
-                    }
-
-                    if ($paymentMethod == PaymentMethodType::SHOPEE) {
-                      unset($paymentMethods[$key]);
-                    }
-
-                    if ($paymentMethod == PaymentMethodType::HOOLAH) {
-                      unset($paymentMethods[$key]);
-                    }
-
-                    if ($paymentMethod == PaymentMethodType::ZIP) {
-                      unset($paymentMethods[$key]);
-                    }
+            foreach ($paymentMethods as $key => $paymentMethod) {
+              if ($cur !== 'sgd') {
+                if ($paymentMethod == PaymentMethodType::PAYNOW) {
+                  unset($paymentMethods[$key]);
                 }
 
-                $paymentMethods = array_values($paymentMethods);
+                if ($paymentMethod == PaymentMethodType::GRABPAY_DIRECT || $paymentMethod == PaymentMethodType::GRABPAY_PAYLATER) {
+                  unset($paymentMethods[$key]);
+                }
+
+                if ($paymentMethod == PaymentMethodType::SHOPEE) {
+                  unset($paymentMethods[$key]);
+                }
+
+                if ($paymentMethod == PaymentMethodType::HOOLAH) {
+                  unset($paymentMethods[$key]);
+                }
+
+                if ($paymentMethod == PaymentMethodType::ZIP) {
+                  unset($paymentMethods[$key]);
+                }
+              }
+
+              if (($business->currency === 'myr' && $cur !== 'myr') || ($business->currency === 'sgd' && $cur !== 'sgd')) {
+                if ($paymentMethod !== PaymentMethodType::CARD) {
+                  unset($paymentMethods[$key]);
+                }
+              }
+
+              if ($paymentMethod === PaymentMethodType::ALIPAY && !$this->allowStripeAlipay($business, $cur)) {
+                unset($paymentMethods[$key]);
+              }
             }
+
+            $paymentMethods = array_values($paymentMethods);
         }
 
         return $paymentMethods;
@@ -180,6 +328,12 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
           }));
         }
 
+        if (!$this->allowStripeAlipay($business, $business->currency)) {
+          $paymentMethods = array_values(array_filter($paymentMethods, function ($value) {
+            return $value !== PaymentMethodType::ALIPAY;
+          }));
+        }
+
         return $paymentMethods;
     }
 
@@ -188,6 +342,8 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
         $paymentMethods     = [];
 
         [ $payNowProvider, $stripeProvider, $shopeeProvider, $hoolahProvider, $grabpayProvider, $zipProvider ] = $this->getProviders($business);
+
+        $myMYR = $business->country === 'my' && strtolower($currency) === 'myr';
 
         foreach ($methods as $method) {
             switch ($method) {
@@ -205,11 +361,15 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
                             $paymentMethods[] = PaymentMethodType::WECHAT;
                         }
 
-                        if ($method === PaymentMethodType::ALIPAY) {
+                        // AliPay
+                        // MY - only MYR currency
+                        // Other - all currencies
+                        if ($method === PaymentMethodType::ALIPAY && $this->allowStripeAlipay($business, strtolower($currency))) {
                             $paymentMethods[] = PaymentMethodType::ALIPAY;
                         }
 
-                        if ($method === PaymentMethodType::FPX && $business->country === 'my' && strtolower($currency) === 'myr') {
+                        // FPX only for MY
+                        if ($method === PaymentMethodType::FPX && $myMYR) {
                           $paymentMethods[] = PaymentMethodType::FPX;
                         }
 
@@ -299,12 +459,6 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
           $paymentMethods[] = PaymentMethodType::ZIP;
         }
 
-        /*$paymentMethods[] = self::CASH;
-
-        if ($business->stripeTerminals()->count()) {
-            $paymentMethods[] = self::CARD_PRESENT;
-        }*/
-
         return $paymentMethods;
     }
 
@@ -328,7 +482,8 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
 
         $stripeFilter = [
             PaymentProviderEnum::STRIPE_SINGAPORE,
-            PaymentProviderEnum::STRIPE_MALAYSIA
+            PaymentProviderEnum::STRIPE_MALAYSIA,
+            PaymentProviderEnum::STRIPE_US
         ];
 
         // get payment provider by request
@@ -379,11 +534,25 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
 
     function allowStripeGrabPay(Business $business, $stripeProvider, $grabpayProvider)
     {
-        if ($business->country === 'sg') {
+        if ($business->country !== 'my') {
             return false;
         }
 
         return !( $grabpayProvider instanceof PaymentProvider );
+    }
+
+    function allowStripeAlipay(Business $business, $currency)
+    {
+        switch ($business->country) {
+          case 'sg':
+            return true;
+
+          case 'my':
+            return !config('services.stripe.my.disable_alipay') && (empty($currency) || strtolower($currency) === 'myr');
+
+          default:
+            return false;
+        }
     }
 
     /**
@@ -405,14 +574,18 @@ class BusinessManager extends AbstractManager implements ManagerInterface, Busin
      */
     public function getStripePublishableKey(Business $business)
     {
-        if ($business->country == 'sg') {
-            return config('services.stripe.sg.key');
-        }
-        else if ($business->country == 'my') {
-            return config('services.stripe.my.key');
-        }
-        else {
-            throw new \Exception("stripe not yet supported with business " . $business->getKey());
+        if (in_array($business->country, CountryCode::listConstants())) {
+            if ($business->country === 'sg') {
+                return config('services.stripe.sg.key');
+            }
+
+            if ($business->country === 'my') {
+                return config('services.stripe.my.key');
+            }
+
+            return config('services.stripe.us.key');
+        } else {
+            throw new Exception("stripe not yet supported with business " . $business->getKey());
         }
     }
 }

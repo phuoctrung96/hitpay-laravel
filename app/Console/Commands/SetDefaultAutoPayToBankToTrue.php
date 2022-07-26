@@ -34,10 +34,12 @@ class SetDefaultAutoPayToBankToTrue extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
         Business::query()->update([
             'auto_pay_to_bank' => true,
         ]);
+
+        return 0;
     }
 }

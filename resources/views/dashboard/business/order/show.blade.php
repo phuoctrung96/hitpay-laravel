@@ -13,6 +13,7 @@
         <div class="col-md-10 col-lg-8 order-2 order-md-1">
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-body p-4">
+                    <p class="mb-2">Order ID: <span class="text-muted">{{ $order->id }}</span>
                     @switch ($order->status)
                         @case ('completed')
                         @if ($order->customer_pickup)
@@ -75,7 +76,9 @@
                             @endif
                             @break
                             @case ('requires_customer_action')
-                            <button class="btn btn-sm btn-warning">Cancel</button>
+                                <button class="btn btn-sm btn-warning" data-toggle="modal"
+                                        data-target="#cancelOrderModalRequiresCustomer">Cancel
+                                </button>
                             @break
                         @endswitch
                     </div>
@@ -241,6 +244,27 @@
                     <p class="mb-4" for="messageInput">Do you want to refund transaction?</p>
                     <a href="{{route('dashboard.business.order.cancel', ['business_id'=>$business->id, 'b_order'=>$order->id, 'refund' => '1'])}}" class="btn btn-primary">Yes</a>
                     <a href="{{route('dashboard.business.order.cancel', ['business_id'=>$business->id, 'b_order'=>$order->id, 'refund' => '0'])}}" class="btn btn-danger">No</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="cancelOrderModalRequiresCustomer" class="modal" tabindex="-1" role="dialog" data-backdrop="static">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title mb-0">
+                        Cancel Order
+                    </h5>
+                    <button id="closeBtn" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-4" for="messageInput">Do you want to cancel transaction?</p>
+                    <form method="POST" action="{{route('dashboard.business.order.cancel.requires_customer_action', ['business_id'=>$business->id, 'b_order'=>$order->id])}}">
+                        @csrf
+                        <button class="btn btn-primary" type="submit">Yes</button>
+                    </form>
                 </div>
             </div>
         </div>

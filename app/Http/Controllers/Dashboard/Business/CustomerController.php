@@ -80,7 +80,7 @@ class CustomerController extends Controller
      */
     public function create(BusinessModel $business)
     {
-        Gate::inspect('update', $business)->authorize();
+        Gate::inspect('canManageCustomer', $business)->authorize();
 
         $data = $this->formData();
 
@@ -120,7 +120,7 @@ class CustomerController extends Controller
      */
     public function store(Request $request, BusinessModel $business)
     {
-        Gate::inspect('update', $business)->authorize();
+        Gate::inspect('canManageCustomer', $business)->authorize();
 
         $customer = CustomerRepository::store($request, $business, false);
 
@@ -192,7 +192,7 @@ class CustomerController extends Controller
      */
     public function update(Request $request, BusinessModel $business, CustomerModel $customer)
     {
-        Gate::inspect('update', $business)->authorize();
+        Gate::inspect('canManageCustomer', $business)->authorize();
 
         $customer = CustomerRepository::update($request, $customer, false);
 
@@ -219,7 +219,7 @@ class CustomerController extends Controller
      */
     public function destroy(BusinessModel $business, CustomerModel $customer)
     {
-        Gate::inspect('update', $business)->authorize();
+        Gate::inspect('canManageCustomer', $business)->authorize();
 
         $customerName = $customer->name ?? $customer->email;
 
@@ -244,7 +244,7 @@ class CustomerController extends Controller
      */
     public function bulkDestroy(Request $request, BusinessModel $business)
     {
-        Gate::inspect('update', $business)->authorize();
+        Gate::inspect('canManageCustomer', $business)->authorize();
 
         $request->validate([
             'customer_ids' => 'required|array',
@@ -331,7 +331,7 @@ class CustomerController extends Controller
         $fileName = $business->getKey() . '-' . time() . '-customer_feed_template.csv';
         $path = $request->file('file')->storeAs($folderName, $fileName);
 
-        Artisan::queue('proceed:customerFeed --business_id=' . $business->getKey() . ' --file_path=' . $path);
+        // Artisan::queue('proceed:customerFeed --business_id=' . $business->getKey() . ' --file_path=' . $path);
 
         Session::flash('success_message', 'We  will start to upload shortly and email you the result.');
         return Response::json([

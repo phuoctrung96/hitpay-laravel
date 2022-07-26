@@ -9,6 +9,7 @@ use HitPay\MyInfoSG\Exceptions\MyInfoPersonDataNotFoundException;
 use HitPay\MyInfoSG\Exceptions\SubNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Laravel\Passport\Exceptions\OAuthServerException;
+use Throwable;
 
 class Handler extends ExceptionHandler
 {
@@ -42,7 +43,7 @@ class Handler extends ExceptionHandler
         'recovery_code',
     ];
 
-    public function report(\Exception $exception)
+    public function report(Throwable $exception)
     {
         if (app()->bound('sentry') && $this->shouldReport($exception)) {
             app('sentry')->captureException($exception);

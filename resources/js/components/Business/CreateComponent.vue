@@ -1,8 +1,6 @@
 <template>
     <LoginRegisterLayout title="Create Business">
-        <BusinessModeSwitch
-            v-model="form.business_type"
-            class="mb-5"/>
+        <BusinessModeSwitch v-model="form.business_type"/>
 
         <div class="form-control loggedin-message" v-if="is_message_logout">
             <p>Logged in as <span class="email">{{email}}</span> please continue to create a business or <span class="logout" @click="doLogout()">logout</span></p>
@@ -19,12 +17,12 @@
         </template>
 
         <template v-else>
-            <LoginInput
-                id="email"
-                v-model="form.email"
-                label="Company Email"
-                :error="errors.email"
-                :disabled="is_processing"/>
+<!--            <LoginInput-->
+<!--                id="email"-->
+<!--                v-model="form.email"-->
+<!--                label="Company Email"-->
+<!--                :error="errors.email"-->
+<!--                :disabled="is_processing"/>-->
 
             <LoginInput
                 id="name"
@@ -163,6 +161,8 @@ import PhoneInput from '../Authentication/PhoneInput'
 import LoginSelect from '../Authentication/LoginSelect'
 import BusinessModeSwitch from './BusinessModeSwitch'
 import WebsiteHelper from "../../mixins/WebsiteHelper";
+import Vue from 'vue'
+import { VueReCaptcha } from 'vue-recaptcha-v3'
 
 export default {
     name: 'BusinessCreate',
@@ -180,7 +180,8 @@ export default {
         referral: String,
         countries: Array,
         country: String,
-        src_url: String
+        src_url: String,
+        recaptcha_sitekey: String,
     },
     mixins: [
         WebsiteHelper
@@ -203,6 +204,7 @@ export default {
                 other_referred_channel: '',
                 merchant_category: '',
                 checkbox_agree: false,
+                recaptcha_token: '',
             },
             phone_number: '',
             is_processing: false,
@@ -233,17 +235,18 @@ export default {
                 this.errors.name = `The ${this.businessNameStr} may not be greater than 255 characters.`;
             }
 
-            if (this.form.business_type === 'company') {
-                if (!this.form.email) {
-                    this.errors.email = 'The company email field is required';
-                } else if (!this.validateEmail(this.form.email)) {
-                    this.errors.email = 'The company email field must be a valid email address.';
-                } else if (this.form.email.length > 255) {
-                    this.errors.email = 'The company email may not be greater than 255 characters.';
-                }
-            } else {
-                this.form.email = this.email
-            }
+            // if (this.form.business_type === 'company') {
+            //     if (!this.form.email) {
+            //         this.errors.email = 'The company email field is required';
+            //     } else if (!this.validateEmail(this.form.email)) {
+            //         this.errors.email = 'The company email field must be a valid email address.';
+            //     } else if (this.form.email.length > 255) {
+            //         this.errors.email = 'The company email may not be greater than 255 characters.';
+            //     }
+            // } else {
+            //     this.form.email = this.email
+            // }
+            this.form.email = this.email
 
             if (!this.phone_number) {
                 this.errors.phone_number = 'The WhatsApp Number field is required';
@@ -299,12 +302,27 @@ export default {
                 this.showError(_.first(Object.keys(this.errors)));
             } else {
                 try {
+                    // verify CAPTCHA
+                    await this.$recaptchaLoaded()
+                    this.form.recaptcha_token = await this.$recaptcha('create_business')
+
                     this.form.referral = this.referral;
-                    const res = await axios.post(this.getDomain('business', 'dashboard'), this.form)
+                    const res = await axios.post(this.getDomain('business', 'dashboard'), this.form);
+                    let businessId = res.data.redirect_url.split('/')[4];
+
+                    try {
+                      if (this.$gtm.enabled()) {
+                        window.dataLayer?.push({
+                          event: 'signup',
+                          'business_id': businessId
+                        });
+                      }
+                    } catch (err) {
+                      // do nothing?
+                    }
 
                     window.location.href = res.data.redirect_url;
 
-                    let businessId = res.data.redirect_url.split('/')[4];
                     this.postHogCaptureData('business_created',
                         businessId,
                         this.form.email,
@@ -338,6 +356,10 @@ export default {
         },
 
         showError(firstErrorKey) {
+            if (firstErrorKey === 'recaptcha_token') {
+                alert('Invalid CAPTCHA, please refresh the page and try again');
+            }
+
             if (firstErrorKey !== undefined) {
                 this.scrollTo('#' + firstErrorKey);
 
@@ -373,7 +395,7 @@ export default {
     mounted() {
         var that = this;
 
-        this.countries.forEach(function(item, _) {
+        _.forEach(this.countries, function(item, _) {
             if (item.active === true) {
                 that.form.country = item.id;
             }
@@ -382,6 +404,13 @@ export default {
         if(this.src_url == "registration"){
             this.is_message_logout = false;
         }
+
+        Vue.use(VueReCaptcha, {
+          siteKey: this.recaptcha_sitekey,
+          loaderOptions: {
+            useRecaptchaNet: true
+          }
+        })
     },
 
     computed: {

@@ -88,12 +88,13 @@
       <!-- Buttons row -->
       <div class="mt-3 d-flex justify-content-center">
         <SmallButton
-          title="Download Pending Merchants"
+          :title="downloadCaption"
           :width="200"
           color="blue"
           @click="onDownload"/>
 
         <SmallButton        
+          v-if="showUpload"
           title="Upload Pending Merchants"
           class="ml-2"
           :width="200"
@@ -140,7 +141,11 @@ export default {
       perPage: 10,
       all: this.initial_data.all,
       message: '',
-      messageError: false
+      messageError: false,
+      uploadSupported: [
+        'grabpay',
+        'shopee_pay'
+      ]
     }
   },
   watch: {
@@ -150,6 +155,14 @@ export default {
     all () {
       this.page = 1
       this.loadData()
+    }
+  },
+  computed: {
+    showUpload () {
+      return this.uploadSupported.includes(this.provider)
+    },
+    downloadCaption () {
+      return `Download ${this.all ? 'All' : 'Pending'} Merchants`
     }
   },
   methods: {
@@ -166,7 +179,7 @@ export default {
     },
     onDownload () {
       this.message = ''
-      window.location = this.getDomain(`onboarding/${this.provider}/download`, 'admin')
+      window.location = this.getDomain(`onboarding/${this.provider}/download?all=${this.all}`, 'admin')
     },
     onUpload () {
       this.message = ''

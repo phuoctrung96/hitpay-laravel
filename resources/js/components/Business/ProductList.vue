@@ -1,8 +1,4 @@
 <style scoped>
-.pagination {
-    display: block !important;
-}
-
 .product-checkbox {
     position: absolute;
     top: 5px;
@@ -15,67 +11,106 @@
 </style>
 <template>
     <div>
-        <div class="card-body border-top py-2 action-panel">
-            <input type="checkbox" class="all-status-checkbox mr-3" v-model="checkedAll" @click="checkAll()">
-            <button class="btn btn-danger btn-sm" @click="deleteProducts">Delete Products</button>
-        </div>
-        <a class="hoverable" v-for="(product,index) in pageOfProducts" :key="product.id"
-           :href="productLink(product.id)">
-            <div class="card-body bg-light border-top p-4 position-relative">
-                <input type="checkbox" class="product-checkbox"
-                       v-model="product.checked">
-                <div class="media">
-                    <template v-if="product.images_count > 0">
-                        <img :src="product.imageSrc"
-                             class="d-none d-phone-block listing rounded border mr-3"
-                             :alt="product.name">
-                    </template>
-                    <template v-else>
-                        <img src="/hitpay/images/product.jpg"
-                             class="d-none d-phone-block listing rounded border mr-3"
-                             alt="product">
-                    </template>
-                    <div class="media-body">
-                        <span class="font-weight-bold text-dark float-right">{{ product.showPrice }}</span>
-                        <p class="font-weight-bold mb-2">{{ product.name }} <span v-if="product.isShopify">( <img width="65px" src="/images/shopify.svg" alt="shopify"> )</span></p>
-                        <p class="text-dark small mb-2">
-                            <span class="text-muted"># {{ product.id }}</span></p>
-                        <p v-if="product.description" class="text-dark small mb-0">
-                            {{ showDescription(product.description) }}</p>
-                        <template v-if="product.variations_count > 1">
-                            <p class="text-dark small mb-0">Variations Count:
-                                <span class="text-muted">{{ product.variations_count }}</span></p>
-                        </template>
-
-                        <p v-if="product.manageable" class="text-dark small mb-0">Quantity Available:
-                            <span
-                                class="text-muted">{{ product.quantity }}</span>
-                        </p>
-                        <template v-if="product.stock_keeping_unit">
-                            <p class="text-dark small mb-0">Stock Keeping Unit:
-                                <span class="text-muted">{{ product.stock_keeping_unit }}</span></p>
-                        </template>
-                        <template v-if="product.shopify_id">
-                            <p class="text-dark small mb-0">
-                                <i class="fab fa-shopify mr-2"></i> Synced from Shopify</p>
-                        </template>
-                    </div>
+        <div v-if="products.length > 0">
+            <div class="card-body border-top border-bottom px-4 py-0 action-panel">
+                <div class="d-flex inner align-items-center">
+                    <input type="checkbox" class="all-status-checkbox mr-3" v-model="checkedAll" @click="checkAll()">
+                    <button class="btn btn-danger btn-sm" @click="deleteProducts">Delete Products</button>
                 </div>
             </div>
-        </a>
-        <jw-pagination :items="products" :pageSize=5 @changePage="onChangePage"></jw-pagination>
-        <div class="modal" tabindex="-1" role="dialog" id="confirmationModal">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-content">
-                        <div class="modal-body">
-                            <p>Products have been successfully deleted</p>
+            <div v-for="(product) in products" :key="product.id" class="is-item-product">
+                <input type="checkbox" class="is-product-checkbox" v-model="product.checked" id="check_product">
+                <a class="hoverable"
+                :href="productLink(product.id, this)">
+                <div class="item-product">
+                    <div class="card-body px-4 position-relative">
+                            <div class="row">
+                                <div class="col-12 col-lg-2">
+                                    <div class="d-flex">
+                                        <div class="thumbnail">
+                                            <img :src="getImage(product.images)"
+                                            :alt="product.name">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-8">
+                                    <div class="product-detail">
+                                        <p class="title fw-500 mb-2">{{ product.name }} <span v-if="product.shopify">( <img src="/images/shopify.svg" alt="shopify"> )</span></p>
+                                        <p v-if="product.description" v-html="showDescription(product.description)" class="description"></p>
+                                        <div class="meta-detail d-flex">
+                                            <p v-if="product.is_manageable && product.quantity" class="quantity mr-3 mb-0">Quantity Available:
+                                                <span class="number">{{ product.quantity }}</span>
+                                            </p>
+                                            <p v-else-if="product.is_manageable && product.variations" class="quantity mr-3 mb-0">Quantity Available:
+                                                <span class="number">{{ product.variations.reduce((sum, variant) => sum + variant.quantity, 0) }}</span>
+                                            </p>
+                                            <p v-else class="quantity mr-3 mb-0">Quantity Available:
+                                                <span class="number"> - </span>
+                                            </p>
+                                            <p v-if="product.category_id" class="cat mb-0">Product category:
+                                                <span class="name">{{ product.category_id[0].name }}</span>
+                                            </p>
+                                            <p v-else class="cat mb-0">Product category:
+                                                <span class="name"> - </span>
+                                            </p>
+                                            <template v-if="product.variations_count > 0 && product.variations[0].stock_keeping_unit">
+                                                <p class="text-dark small mb-0">Stock Keeping Unit:
+                                                    <span class="text-muted">{{ product.variations[0].stock_keeping_unit }}</span>
+                                                </p>
+                                            </template>
+                                        </div>
+                                        <template v-if="product.shopify">
+                                            <p class="text-dark small mb-0">
+                                                <i class="fab fa-shopify mr-2"></i> Synced from Shopify</p>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-lg-2">
+                                    <div class="meta d-flex justify-content-between align-items-center">
+                                        <div class="status" :class="(product.status == 'draft') ? 'draft' : ''">
+                                            <span>{{ product.status }}</span>
+                                        </div>
+                                        <span class="price font-weight-bold">{{ product.price_display }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                </div>
+                </a>
+            </div>
+            <div class="pagination-product">
+                <div class="card-body px-4">
+                    <b-pagination
+                        v-model="page"
+                        :total-rows="total"
+                        :per-page="pageSize"
+                        first-text="First"
+                        prev-text="Prev"
+                        next-text="Next"
+                        last-text="Last"
+                        @change="handlePageChange">
+                    </b-pagination>
+                </div>
+            </div>
+        </div>
+        <div v-else>
+            <div class="card-body bg-light p-4">
+            <div class="text-center text-muted py-4">
+                <p><i class="fa fas fa-boxes fa-4x"></i></p>
+                <p class="small mb-0">- No product found -</p>
+            </div>
+            </div>
+        </div>
+        <div class="modal modal-succeed" tabindex="-1" role="dialog" id="confirmationModal">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-body bg-light text-center">
+                        <div class="icon d-flex align-items-center mt-3 mb-3">
+                            <img src="/images/ico-done.png" alt="">
+                        </div>
+                        <h3 class="mb-3">Done!</h3>
+                        <p class="mb-4">Products have been successfully deleted</p>
+                        <p><a data-dismiss="modal" href="#" class="btn btn-primary">OK</a></p>
                     </div>
                 </div>
             </div>
@@ -86,95 +121,83 @@
 <script>
 export default {
     props: {
-      status: String,
+      products: {
+          type: Array,
+          default: ()=>[]
+      },
+      total: {
+          type: Number,
+          default: 0
+      },
+      page: {
+          type: Number,
+          default: 1
+      },
+      pageSize: {
+          type: Number,
+          default: 5
+      }
     },
     data() {
         return {
             business: [],
-            products: [],
             is_processing: false,
-            pageOfProducts: [],
-            checkedAll: false,
+            checkedAll: false
         };
     },
     mounted() {
         this.business = Business;
-
-        if (window.Products !== undefined) {
-            this.products = Products;
-        }
-
-        let productsWithAttrs = [];
-
-        let productAttrs = ProductAttrs;
-
-        let i = 0;
-        _.each(this.products, (product) => {
-            product.checked = false;
-            product.imageSrc = productAttrs['image'][i];
-            product.showPrice = productAttrs['price'][i];
-            product.manageable = productAttrs['manageable'][i];
-            product.quantity = productAttrs['quantity'][i];
-            product.isShopify = productAttrs['is_shopify'][i];
-            productsWithAttrs.push(product);
-            i++;
-        });
-
-        this.products = productsWithAttrs;
     },
     methods: {
-        onChangePage(pageOfItems) {
-            // update page of items
-            this.pageOfProducts = pageOfItems;
-        },
         productLink(id) {
             return '/business/' + this.business.id + '/product/' + id;
-        },
-        checkAll() {
-            _.each(this.pageOfProducts, (product) => {
-                if (!this.checkedAll) {
-                    product.checked = true;
-                } else product.checked = false;
-            });
         },
         showDescription(desc) {
             return desc.substring(0, 50);
         },
+        getImage(images) {
+            if (images.length > 0) {
+              let img = images[0]['other_dimensions'].find(img => img.size === 'thumbnail');
 
+              if (img) return img.path;
+            }
+
+            return '/hitpay/images/product.jpg';
+        },
+        checkAll() {
+            _.each(this.products, (product) => {
+                product.checked = !this.checkedAll;
+            });
+        },
         async deleteProducts() {
-            let deleteStateCount = this.pageOfProducts.reduce((sum, product) => !product.checked ? sum : sum + 1, 0);
-            if (deleteStateCount < 1) {
+            let selectedProducts = this.products.filter((product, index) => true === product.checked);
+
+            if (selectedProducts.length < 1) {
                 alert('Nothing to delete.');
                 return;
             }
             let submissionData = {
-                'products': this.pageOfProducts,
+                'products': selectedProducts,
                 'status' : this.status
             };
             await axios.post(this.getDomain('business/' + this.business.id + '/product/delete-products', 'dashboard'), submissionData).then(({data}) => {
+                this.retrieveItems();
                 $('#confirmationModal').modal();
-                this.products = data.products;
-
-                let productAttrs = data.product_attrs;
-
-                let productsWithAttrs = [];
-
-                let i = 0;
-                _.each(this.products, (product) => {
-                    product.checked = false;
-                    product.imageSrc = productAttrs['image'][i];
-                    product.showPrice = productAttrs['price'][i];
-                    product.manageable = productAttrs['manageable'][i];
-                    product.quantity = productAttrs['quantity'][i];
-                    product.isShopify = productAttrs['is_shopify'][i];
-                    productsWithAttrs.push(product);
-                    i++;
-                });
-
-                this.products = productsWithAttrs;
             });
         },
-
+        retrieveItems() {
+            let i = 0;
+            while(i < this.products.length) {
+                if(this.products[i].checked) {
+                    this.products.splice(i, 1);
+                } else {
+                    i++
+                }
+            }
+        },
+        handlePageChange(value) {
+            this.$emit('handlePageChange', value);
+        }
     },
 }
 </script>

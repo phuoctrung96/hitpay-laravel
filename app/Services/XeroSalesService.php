@@ -3,10 +3,13 @@
 namespace App\Services;
 
 
+use App\Actions\Xero\CreateContactAction;
+use App\Actions\Xero\GetContactsAction;
 use App\Business;
 use App\Business\Charge;
 use App\Business\Xero;
 use App\Enumerations\Business\ChargeStatus;
+use App\Enumerations\Business\PluginProvider;
 use App\Http\Resources\Business\Order;
 use Carbon\Carbon;
 use DateTime;
@@ -178,6 +181,21 @@ class XeroSalesService
         return $apiResponse->getContacts()[0];
     }
 
+    private function findOrCreateXeroContactForSale(Charge $charge): Contact
+    {
+        $customerName = $charge->customer_name;
+        $customerEmail = $charge->customer_email;
+
+        $contacts = (new GetContactsAction($this->business))();
+        foreach ($contacts->getContacts() as $contact) {
+            if($contact->getEmailAddress() === $customerEmail) {
+                return $contact;
+            }
+        }
+
+        return (new CreateContactAction($this->business))($customerName, $customerEmail);
+    }
+
     /**
      * @param AccountingApi $accountingApi
      * @param string $status
@@ -276,16 +294,39 @@ class XeroSalesService
         $orderSales = $this->getOrders($status, $date, $dateIsPast);
 
         if (count($orderSales) > 0) {
-            list($feeLineItems, $lineItems) = $this->getLineItemsFromOrders($orderSales, $status, $date, $dateIsPast);
+            if($this->business->xero_invoice_grouping === Xero::INVOICE_GROUPING_INDIVIDUAL) {
+                list($feeLineItems, $lineItems) = $this->getLineItemsFromIndividualOrdersCharges($orderSales, $status);
 
-            $invoiceData = $this->getInvoicesData($status, $feeLineItems, $lineItems, $currentContact, $date);
+                $orderSales = collect($orderSales)->keyBy('id');
 
-            if (count($invoiceData) > 0) {
-                $createdInvoices = $this->createInvoices($accountingApi, $invoiceData);
+                foreach ($lineItems as $saleId => $saleLineItems) {
+                    $orderSale = $orderSales[$saleId];
 
-                $this->createPayments($accountingApi, $createdInvoices, $this->currentAccount, $this->currentFeeAccount, $status);
+                    $contact = $this->findOrCreateXeroContactForSale($orderSale);
+
+                    $invoiceData = $this->getInvoicesData($status, $feeLineItems[$saleId] ?? [], $saleLineItems, $contact, $date, $saleId);
+
+                    if (count($invoiceData) > 0) {
+                        $createdInvoices = $this->createInvoices($accountingApi, $invoiceData);
+
+                        $this->createPayments($accountingApi, $createdInvoices, $this->currentAccount, $this->currentFeeAccount, $status);
+                    }
+                }
+
                 $this->markOrdersAsImported($orderSales);
                 $this->updateBusinessLog($status, $feeLineItems, $lineItems);
+            } else {
+                list($feeLineItems, $lineItems) = $this->getLineItemsFromOrders($orderSales, $status, $date, $dateIsPast);
+
+                $invoiceData = $this->getInvoicesData($status, $feeLineItems, $lineItems, $currentContact, $date);
+
+                if (count($invoiceData) > 0) {
+                    $createdInvoices = $this->createInvoices($accountingApi, $invoiceData);
+
+                    $this->createPayments($accountingApi, $createdInvoices, $this->currentAccount, $this->currentFeeAccount, $status);
+                    $this->markOrdersAsImported($orderSales);
+                    $this->updateBusinessLog($status, $feeLineItems, $lineItems);
+                }
             }
         }
     }
@@ -296,11 +337,20 @@ class XeroSalesService
      * @param bool $dateIsPast
      * @return Charge[]
      */
-    private function getOrders(string $status, string $date, bool $dateIsPast)
+    public function getOrders(string $status, string $date, bool $dateIsPast)
     {
         $orderSales = $this->business->charges()->with('target')
             ->where('currency', 'sgd')
-            ->where('xero_imported', false);
+            ->where('xero_imported', false)
+            ->when('all' !== $this->business->xero_channels && !in_array('all', $this->business->xero_channels), function($query) {
+                return $query->where(function ($query) {
+                    return $query
+                        ->where('plugin_provider', $this->business->xero_channels)
+                        ->when(PluginProvider::POINT_OF_SALE === $this->business->xero_channels, function ($query) {
+                            return $query->orWhere('channel', PluginProvider::POINT_OF_SALE);
+                        });
+                });
+            });
         if ($status === 'success') {
             $orderSales = $orderSales->where('status', ChargeStatus::SUCCEEDED);
         } else if ($status === 'refund') {
@@ -373,25 +423,50 @@ class XeroSalesService
      */
     private function getLineItemsFromIndividualOrdersCharges($orderSales, $status)
     {
-        $lineItems = $feeLineItems = [];
+        $lineItems = [];
+        $feeLineItems = [];
         foreach ($orderSales as $orderSale) {
+            if(!isset($lineItem[$orderSale->id])) {
+                $lineItem[$orderSale->id] = [];
+            }
+            if($orderSale->target && $orderSale->target instanceof Business\Order) {
+                /** @var Order $order */
+                $order = $orderSale->target;
+                foreach ($order->products as $product) {
+                    $lineItem = new LineItem();
+                    $lineItem->setDescription('SKU: ' . $product->stock_keeping_unit . '. Name: ' . $product->name);
+                    $lineItem->setQuantity($product->quantity);
+                    $lineItem->setDiscountAmount(getFormattedAmount($this->business->currency, $product->discount_amount, false));
+                    $lineItem->setTaxAmount(getFormattedAmount($this->business->currency, round($product->tax_amount), false));
+                    $lineItem->setAccountCode($this->getAccountCodeForLineItem());
+                    $lineItem->setUnitAmount(getFormattedAmount($this->business->currency, $product->unit_price, false));
+                    $lineItem->setLineAmount(getFormattedAmount($this->business->currency, $product->price, false));
+                    $lineItem->setLineItemId($product->id);
+                    $lineItems[$orderSale->id][] = $lineItem;
+                }
+            } else {
+                $lineItem = new LineItem();
+                $lineItem->setDescription($this->getOrderSaleDescription($orderSale, $status) . ' SKU: ' . $orderSale->stock_keeping_unit);
+                $lineItem->setQuantity(1);
+                $lineItem->setTaxType('NONE');
+                $lineItem->setAccountCode($this->getAccountCodeForLineItem());
+                $lineItem->setUnitAmount(getFormattedAmount($this->business->currency, $orderSale->amount, false));
+                $lineItems[$orderSale->id][] = $lineItem;
+            }
+
             $fee = $orderSale->getTotalFee();
             if ($status === 'success' && $fee > 0) {
+                if(!isset($lineItem[$orderSale->id])) {
+                    $feeLineItems[$orderSale->id] = [];
+                }
                 $feeLineItem = new LineItem();
                 $feeLineItem->setDescription($this->getOrderSaleFeeDescription($orderSale));
                 $feeLineItem->setQuantity(1);
                 $feeLineItem->setTaxType('NONE');
                 $feeLineItem->setAccountCode($this->getAccountCodeForLineItem(true));
                 $feeLineItem->setUnitAmount(getFormattedAmount($this->business->currency, $fee, false));
-                array_push($feeLineItems, $feeLineItem);
+                $feeLineItems[$orderSale->id][] = $feeLineItem;
             }
-            $lineItem = new LineItem();
-            $lineItem->setDescription($this->getOrderSaleDescription($orderSale, $status));
-            $lineItem->setQuantity(1);
-            $lineItem->setTaxType('NONE');
-            $lineItem->setAccountCode($this->getAccountCodeForLineItem());
-            $lineItem->setUnitAmount(getFormattedAmount($this->business->currency, $orderSale->amount, false));
-            array_push($lineItems, $lineItem);
         }
 
         return [$feeLineItems, $lineItems];
@@ -495,11 +570,6 @@ class XeroSalesService
      */
     private function getLineItemsFromOrders($orderSales, $status, $date, $dateIsPast)
     {
-
-        if($this->business->xero_invoice_grouping != Xero::INVOICE_GROUPING_TOTAL) {
-            return $this->getLineItemsFromIndividualOrdersCharges($orderSales, $status);
-        }
-
         return  $this->getLineItemsFromTotalOrderCharges($orderSales, $status, $date, $dateIsPast);
     }
 
@@ -512,7 +582,7 @@ class XeroSalesService
      * @return array
      * @throws \Exception
      */
-    private function getInvoicesData(string $status, array $feeLineItems, array $lineItems, $currentContact, $date)
+    private function getInvoicesData(string $status, array $feeLineItems, array $lineItems, $currentContact, $date, $reference = null)
     {
         $invoiceData = [];
         $invoice = new Invoice();
@@ -523,6 +593,7 @@ class XeroSalesService
         $invoice->setStatus(Xero::INVOICE_STATUS);
         $invoice->setSentToContact(false);
         $invoice->setLineItems($lineItems);
+        $invoice->setReference($reference);
         $invoiceData[] = $invoice;
         if ($status === 'success' && count($feeLineItems) > 0) {
             $feeInvoice = new Invoice();

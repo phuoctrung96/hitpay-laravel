@@ -27,18 +27,20 @@ class CreateApiKeyForBusinesses extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $count = Business::whereDoesntHave('apiKeys')->count();
 
         $this->comment($count.' businesses are without API key.');
 
         if ($count === 0 || !$this->confirm('Generate for them?')) {
-            return;
+            return 0;
         }
 
         Business::whereDoesntHave('apiKeys')->each(function (Business $business) {
             ApiKeyManager::create($business);
         });
+
+        return 0;
     }
 }

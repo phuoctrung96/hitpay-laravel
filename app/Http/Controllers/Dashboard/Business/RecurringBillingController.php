@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Dashboard\Business;
 
+use App;
+use App\Actions\Business\RecurringPlan\CanCreateRecurringPlan;
 use App\Business;
 use App\Business\RecurringBilling;
 use App\Enumerations\Business\ChargeStatus;
@@ -19,6 +21,7 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class RecurringBillingController extends Controller
 {
@@ -68,6 +71,10 @@ class RecurringBillingController extends Controller
     {
         Gate::inspect('operate', $business)->authorize();
 
+        if (!CanCreateRecurringPlan::withBusiness($business)->process()) {
+            App::abort(403, "Transaction Failed. Please complete card payments setup under Settings > Payment Methods in your hitpay dashboard.");
+        }
+
         if ($templateId = $request->get('template_id')) {
             $template = $business->subscriptionPlans()->find($templateId);
         } else {
@@ -92,6 +99,11 @@ class RecurringBillingController extends Controller
         return Response::view('dashboard.business.recurring-plan.create-template', compact('business', 'templates'));
     }
 
+    /**
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws \ReflectionException
+     * @throws ValidationException
+     */
     public function store(Request $request, Business $business)
     {
         Gate::inspect('operate', $business)->authorize();
@@ -125,7 +137,6 @@ class RecurringBillingController extends Controller
             'starts_at' => [
                 'required',
                 'date_format:d/m/Y',
-                'after_or_equal:'.now()->toDateString(),
             ],
             'times_to_be_charged' => [
                 'nullable',
@@ -135,13 +146,27 @@ class RecurringBillingController extends Controller
             'send_email' => 'boolean'
         ]);
 
+        // TODO - We will need check on the payment providers before allowing business to create recurring plan.
+
         $customer = $business->customers()->find($data['customer_id']);
 
         $recurringPlan = new RecurringBilling;
 
         $startsAt = Date::createFromFormat('d/m/Y', $data['starts_at']);
 
+        if ($startsAt < now()) {
+            throw ValidationException::withMessages([
+                'starts_at' => 'Starts date must more or same ' . now()->format('d/m/Y'),
+            ]);
+        }
+
         // The format for DBS DDA Reference is  'RP0000AAAAA'
+
+        $paymentMethods = [ PaymentMethodType::CARD ];
+
+        if ($business->country === 'sg') {
+            $paymentMethods[] = PaymentMethodType::GIRO;
+        }
 
         $recurringPlan->dbs_dda_reference = strtoupper('RP'.Str::random(9));
         $recurringPlan->name = $data['name'];
@@ -150,7 +175,7 @@ class RecurringBillingController extends Controller
         $recurringPlan->price = getRealAmountForCurrency($recurringPlan->currency, $data['price']);
         $recurringPlan->cycle = $data['cycle'];
         $recurringPlan->send_email = $data['send_email'];
-        $recurringPlan->payment_methods = [PaymentMethodType::CARD, PaymentMethodType::GIRO];
+        $recurringPlan->payment_methods = $paymentMethods;
         $recurringPlan->status = RecurringPlanStatus::SCHEDULED;
         $recurringPlan->expires_at = $startsAt->endOfDay();
 
@@ -162,6 +187,10 @@ class RecurringBillingController extends Controller
         $recurringPlan->setCustomer($customer, true);
 
         $recurringPlan = $business->recurringBillings()->save($recurringPlan);
+
+        if ($recurringPlan->send_email) {
+            $recurringPlan->notify(new SendSubscriptionLink);
+        }
 
         return Response::json([
             'redirect_url' => URL::route('dashboard.business.recurring-plan.show', [

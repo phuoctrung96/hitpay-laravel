@@ -40,7 +40,7 @@ class ChargePartnersCommission extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $from = now()->subMonth()->startOfMonth();
         $to = now()->subMonth()->endOfMonth();
@@ -54,5 +54,7 @@ class ChargePartnersCommission extends Command
             ->each(function ($partner) use($from, $to) {
                 dispatch(new ChargePartnerCommissionJob($partner, $from, $to));
             });
+
+        return 0;
     }
 }

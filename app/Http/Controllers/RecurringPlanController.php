@@ -4,20 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Business;
 use App\Business\RecurringBilling;
+use App\Enumerations\Business\RecurringBillingEvent;
 use App\Enumerations\Business\RecurringPlanStatus;
 use App\Enumerations\PaymentProvider;
+use App\Jobs\ProcessRecurringPaymentCallback;
 use App\Logics\Business\ChargeRepository;
 use App\Manager\BusinessManagerInterface;
 use App\Notifications\NotifySubscriptionCardUpdated;
+use Exception;
+use HitPay\Data\Countries\Objects\PaymentProvider as PaymentProviderObject;
 use HitPay\Stripe\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use Stripe\Customer as StripeCustomer;
 use Stripe\Exception\CardException;
+use Stripe\Exception\InvalidRequestException;
 use Stripe\PaymentMethod;
 use Stripe\SetupIntent;
+use Stripe\Stripe;
 use Throwable;
 
 class RecurringPlanController extends Controller
@@ -36,11 +43,12 @@ class RecurringPlanController extends Controller
     )
     {
         if (!$recurringPlan->isCompleted()) {
-            switch (true) {
-                case $business->paymentProviders()->where('payment_provider', $business->payment_provider)
-                        ->count() <= 0:
-                case !$recurringPlan->isValid():
-                    App::abort(404);
+            if ($business->paymentProviders()->where('payment_provider', $business->payment_provider)->count() <= 0) {
+                App::abort(403, 'Missing configuration. Please contact the merchant.');
+            }
+
+            if (!$recurringPlan->isValid()) {
+                App::abort(403, 'Invalid recurring plan. Please contact the merchant.');
             }
         }
 
@@ -59,7 +67,7 @@ class RecurringPlanController extends Controller
 
     public function getSetupIntent(Business $business, RecurringBilling $recurringPlan)
     {
-        Customer::new('stripe_sg');
+        $this->setStripeApiKey($business);
 
         $customer = $this->getStripeCustomer($business, $recurringPlan);
 
@@ -97,7 +105,7 @@ class RecurringPlanController extends Controller
             ],
         ]);
 
-        Customer::new('stripe_sg');
+        $this->setStripeApiKey($business);
 
         $paymentMethod = PaymentMethod::retrieve($data['payment_method_id']);
 
@@ -135,6 +143,7 @@ class RecurringPlanController extends Controller
         if ($oldStatus === RecurringPlanStatus::SCHEDULED) {
             try {
                 $charge = $recurringPlan->charge();
+                ProcessRecurringPaymentCallback::dispatch($recurringPlan, RecurringBillingEvent::CHARGE_SUCCESS, 'succeeded',  $charge);
             } catch (Throwable $exception) {
                 $recurringPlan->payment_provider_payment_method_id = null;
 
@@ -146,25 +155,30 @@ class RecurringPlanController extends Controller
                 $recurringPlan->status = $oldStatus;
                 $recurringPlan->save();
 
+                ProcessRecurringPaymentCallback::dispatch($recurringPlan, RecurringBillingEvent::RECURRENT_BILLING_STATUS, 'failed');
+
                 if ($exception instanceof CardException) {
                     return Response::json([
                         'message' => $exception->getMessage(),
                     ], 422);
                 }
 
-                throw $exception;
-            }
+                if ($exception instanceof InvalidRequestException) {
+                    Log::critical("Payment of recurring plan failed because business ID {$business->getKey()} stripe account have issue. Message: " . $exception->getMessage() . "\n" . $exception->getTraceAsString());
 
-            try {
-                ChargeRepository::sendReceipt($charge, $charge->customer_email);
-            } catch (Throwable $exception) {
-                Log::critical('Send receipt failed for recurring payment, ID: '.$recurringPlan->getKey());
+                    return Response::json([
+                        'message' => 'Failed to complete the payment, please contact the merchant or try another payment method.'
+                    ], 422);
+                }
+
+                throw $exception;
             }
         } elseif ($oldStatus === RecurringPlanStatus::ACTIVE) {
             $recurringPlan->business->notify(new NotifySubscriptionCardUpdated($recurringPlan));
         }
 
         $redirect_url = $recurringPlan->redirect_url ? $recurringPlan->redirect_url.'/'.'?type=recurring'.'&reference='.$recurringPlan->getKey().'&status='.$recurringPlan->status : null;
+        $redirect_url = !is_null($redirect_url) && isset($charge) ? $redirect_url.'&payment_id='.$charge->getKey() : null;
 
         return Response::json([
             'redirect_url' => $redirect_url
@@ -186,5 +200,32 @@ class RecurringPlanController extends Controller
             ],
             'name' => $recurringPlan->customer_name,
         ]);
+    }
+
+    /**
+     * Set stripe API key for business.
+     *
+     * TODO - We will need to centralize this, this is not a good practice.
+     *
+     * @param  \App\Business  $business
+     *
+     * @return void
+     * @throws \Exception
+     */
+    private function setStripeApiKey(Business $business) : void
+    {
+        $paymentProvider = $business->paymentProvidersAvailable()->where('official_code', 'stripe')->first();
+
+        if (!$paymentProvider instanceof PaymentProviderObject) {
+            throw new Exception("Stripe '{$paymentProvider->getCountry()}' is not available for this business.");
+        }
+
+        $stripeConfigs = Config::get("services.stripe.{$paymentProvider->getCountry()}");
+
+        if (!isset($stripeConfigs['secret']) || blank($stripeConfigs['secret'])) {
+            throw new Exception("The configuration for Stripe '{$paymentProvider->getCountry()}' is not set.");
+        }
+
+        Stripe::setApiKey($stripeConfigs['secret']);
     }
 }

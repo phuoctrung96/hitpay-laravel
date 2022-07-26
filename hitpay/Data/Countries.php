@@ -21,9 +21,6 @@ class Countries
 
     public static function all() : array
     {
-        return [
-            CountryCode::MALAYSIA,
-            CountryCode::SINGAPORE,
-        ];
+        return array_values(CountryCode::listConstants());
     }
 }

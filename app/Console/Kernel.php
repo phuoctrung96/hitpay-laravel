@@ -4,8 +4,7 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use App\Jobs\Providers\GrabPay\CheckRemittance as GrabPayCheckRemittance;
-use App\Jobs\Providers\Zip\CheckRemittance as ZipCheckRemittance;
+use App\Jobs\Providers\ConfirmYesterday as ConfirmYesterday;
 
 class Kernel extends ConsoleKernel
 {
@@ -62,7 +61,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('hitpay:commission-payout')->dailyAt('9:00');
         $schedule->command('hitpay:commission-payout-check')->dailyAt('9:30');
         $schedule->command('hitpay:available-balance-payout-automatically', ['00:00:00'])->dailyAt('00:00');
+        $schedule->command('hitpay:available-balance-payout-by-custom-list')->dailyAt('19:15');
         $schedule->command('hitpay:available-balance-payout-automatically', ['09:30:00'])->dailyAt('09:30');
+        $schedule->command('hitpay:available-balance-payout-automatically-stripe', ['00:00:00'])->dailyAt('00:00');
+        $schedule->command('hitpay:available-balance-payout-automatically-stripe', ['09:30:00'])->dailyAt('09:30');
         $schedule->command('hitpay:dbs-fast-payment')->dailyAt('10:30');
         $schedule->command('hitpay:dbs-fast-payment-check')->dailyAt('11:00');
         $schedule->command('hitpay:process-gateway-unsuccessful-callback')->everyMinute();
@@ -92,14 +94,13 @@ class Kernel extends ConsoleKernel
         //     return \Carbon\Carbon::now()->endOfMonth()->isToday();
         // });
 
-        $schedule->job(new GrabPayCheckRemittance)->daily('02:00');
-        $schedule->job(new ZipCheckRemittance)->daily('02:30');
+        $schedule->job(new ConfirmYesterday)->daily('02:00');
 
-        // The commands below are related to hoglue integrations
+        // The commands below are related to HotGlue integrations, we have moved this to queue server and trigger
+        // manually for now.
         //
-        $schedule->command('hotglue:check-job-status')->everyFifteenMinutes();
-        $schedule->command('hitpay-to-hotglue:periodic-sync')->everyFifteenMinutes();
-        $schedule->command('hotglue:pull-scheduled-jobs')->everyFifteenMinutes();
+        // $schedule->command('hotglue:check-job-status')->everyMinute();
+        // $schedule->command('hotglue:pull-scheduled-jobs')->everyMinute();
     }
 
     /**

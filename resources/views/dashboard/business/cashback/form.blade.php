@@ -19,7 +19,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         window.Channels = @json($channels);
         window.PaymentMethods = @json($paymentMethods);
         window.Fees = @json($fees);

@@ -28,12 +28,18 @@ Route::namespace('Api')->name('api.')->group(function () {
             ->name('business.report.daily');
 
         Route::namespace('Business')->name('business.')->group(function () {
+
+            Route::get('business/{business_id}/shop/insights', 'InsightsController@index')
+                ->name('business.insights');
+
             Route::resource('business.charge', 'ChargeController')
                 ->parameter('business', 'business_id')
                 ->parameter('charge', 'b_charge')
                 ->except('create', 'edit')
                 ->names('charge');
 
+            // todo: confirm with mobile devs that "send" endpoint is not used, and leave "export" endpoint only
+            Route::post('business/{business_id}/charge/send', 'ChargeController@export');
             Route::post('business/{business_id}/charge/export', 'ChargeController@export')->name('charge.export');
             Route::post('business/{business_id}/charge/{b_charge}/send', 'ChargeController@send')->name('charge.send');
             Route::get('business/{business_id}/charge/report/daily', 'ChargeController@getDailyReport');
@@ -76,6 +82,12 @@ Route::namespace('Api')->name('api.')->group(function () {
                 ->parameter('discount', 'b_discount')
                 ->except('create', 'edit')
                 ->names('discount');
+
+            Route::resource('business.coupon', 'CouponController')
+                ->parameter('business', 'business_id')
+                ->parameter('coupon', 'b_coupon')
+                ->except('create', 'edit')
+                ->names('coupon');
 
             Route::resource('business.order', 'OrderController')
                 ->parameter('business', 'business_id')
@@ -129,6 +141,14 @@ Route::namespace('Api')->name('api.')->group(function () {
                 ->except('create', 'edit')
                 ->names('product');
 
+            Route::resource('business.products', 'ProductsController')
+                ->parameter('business', 'business_id')
+                ->parameter('product', 'b_product')
+                ->names('products');
+
+            Route::post('business/{business_id}/products/change-status',
+                'ProductsController@changeStatus')->name('products.change-status');
+
             Route::resource('business.product.image', 'ProductImageController')
                 ->parameter('business', 'business_id')
                 ->parameter('product', 'b_product')
@@ -151,6 +171,9 @@ Route::namespace('Api')->name('api.')->group(function () {
                 ->except('create', 'edit')
                 ->names('product-category');
 
+            Route::put('business/{business_id}/shipping/enable', 'ShippingController@enable')
+                ->name('business.shipping.enable');
+
             Route::resource('business.shipping', 'ShippingController')
                 ->parameter('business', 'business_id')
                 ->parameter('shipping', 'b_shipping')
@@ -168,6 +191,31 @@ Route::namespace('Api')->name('api.')->group(function () {
                 ->parameter('tax-settings', 'b_tax_setting')
                 ->except('create', 'edit')
                 ->names('tax-settings');
+
+            Route::put('business/{business_id}/shop-url', 'ShopUrlController@update')
+                ->name('business.shop-url.update');
+            Route::get('business/{business_id}/shop-url', 'ShopUrlController@index')
+                ->name('business.shop-url.get');
+
+            Route::put('business/{business_id}/theme-customisation', 'ThemeCustomisationController@update')
+                ->name('business.shop-url.update');
+            Route::get('business/{business_id}/theme-customisation', 'ThemeCustomisationController@index')
+                ->name('business.shop-url.get');
+
+            Route::put('business/{business_id}/pick-up', 'PickUpController@update')
+                ->name('business.pick-up.update');
+            Route::get('business/{business_id}/pick-up', 'PickUpController@index')
+                ->name('business.pick-up.get');
+
+            Route::put('business/{business_id}/store-settings', 'StoreSettingsController@update')
+                ->name('business.store_settings.update');
+            Route::get('business/{business_id}/store-settings', 'StoreSettingsController@index')
+                ->name('business.store_settings.index');
+
+            Route::put('business/{business_id}/store-onboarding-status', 'StoreOnboardingStatusController@update')
+                ->name('business.pick-up.update');
+            Route::get('business/{business_id}/store-onboarding-status', 'StoreOnboardingStatusController@index')
+                ->name('business.pick-up.get');
 
             Route::resource('business.invoice', 'InvoiceController')
                 ->parameter('business', 'business_id')
@@ -194,6 +242,10 @@ Route::namespace('Api')->name('api.')->group(function () {
                 ->middleware('payment.request.auth')
             ;
 
+            Route::get('charges/export', 'ExportChargesController')
+                ->middleware('payment.request.auth')
+                ->name('export-charges');
+
             Route::post('refund', 'RefundController@store')
                 ->name('refund.store')->middleware('payment.request.auth');
 
@@ -201,6 +253,9 @@ Route::namespace('Api')->name('api.')->group(function () {
                 ->middleware('payment.request.auth');
 
             Route::apiResource('recurring-billing', 'RecurringBillingController')
+                ->middleware('payment.request.auth');
+
+            Route::post('charge/recurring-billing/{recurring_billing}', 'RecurringBillingController@charge')
                 ->middleware('payment.request.auth');
 
             Route::post('business/{business_id}/logo', 'BusinessLogoController@store')
@@ -214,6 +269,21 @@ Route::namespace('Api')->name('api.')->group(function () {
 
             Route::put('business/{business_id}/tax-detail', 'BusinessTaxDetailController@update')
                 ->name('business.tax_detail.update');
+
+            Route::get('business/{business_id}/email-templates', 'EmailTemplate\EmailTemplateController@show')
+                ->name('business.email_template.show');
+
+            Route::put('business/{business_id}/email-templates', 'EmailTemplate\EmailTemplateController@update')
+                ->name('business.email_template.update');
+
+            Route::post('business/{business_id}/email-templates', 'EmailTemplate\EmailTemplateController@store')
+                ->name('business.email_template.store');
+
+            Route::put('business/{business_id}/email-templates/reset-default', 'EmailTemplate\ResetDefaultController@update')
+                ->name('business.email_template.reset_default');
+
+            Route::post('business/{business_id}/email-templates/send-email-test', 'EmailTemplate\SendTestEmailController@store')
+                ->name('business.email_template.send_email_template');
         });
 
         // !!! Seems to unused
@@ -227,6 +297,8 @@ Route::namespace('Api')->name('api.')->group(function () {
         Route::prefix('order')->name('order.')->group(function () {
           Route::get('/status/{paymentIntent}', 'OrderStatusController@status')->name('status');
         });
+
+        Route::get('gateway-provider/store/{business}', 'GatewayProviderStoreController')->name('gatewayprovider.store');
 
         Route::get('callback/stripe', 'WhateverController')->name('dumper.stripe');
         Route::get('currency', 'MiscellaneousController@currency');
@@ -287,9 +359,21 @@ Route::namespace('Api')->name('api.')->group(function () {
             Route::post('redact/shop', 'ShopifyController@redactShop')->name('redact.shop');
             Route::post('request/customer', 'ShopifyController@respondOkay')->name('request.customer');
 
-            Route::post('customer-data-request', 'ShopifyCustomerDataRequestWebhook')->name('customer.data.request');
-            Route::post('customer-redact', 'ShopifyCustomerRedactWebhook')->name('customer.redact');
-            Route::post('shop-redact', 'ShopifyShopRedactWebhook')->name('shop.redact');
+            Route::post('customer-data-request', 'ShopifyCustomerDataRequestWebhook')
+                ->name('customer.data.request')
+                ->middleware('shopify.access.hmac');
+
+            Route::post('customer-redact', 'ShopifyCustomerRedactWebhook')
+                ->name('customer.redact')
+                ->middleware('shopify.access.hmac');
+
+            Route::post('shop-redact', 'ShopifyShopRedactWebhook')
+                ->name('shop.redact')
+                ->middleware('shopify.access.hmac');
+
+            Route::post('uninstall-app', 'ShopifyUninstallAppWebhook')
+                ->name('uninstall.app')
+                ->middleware('shopify.access.hmac');
         });
 
         Route::post('stripe/{platform}', 'StripeWebhookController')->name('stripe');

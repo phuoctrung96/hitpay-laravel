@@ -121,6 +121,11 @@ class PaymentLinkController extends Controller
                 'email',
                 'max:255',
             ],
+            'full_phone_number' => [
+                'nullable',
+                'min: 11', // validation with dial code + total number (8+3)
+                'max: 18', // validation with dial code + total number (15+3)
+            ],
             'reference_number' => [
                 'nullable',
                 'string',
@@ -131,8 +136,6 @@ class PaymentLinkController extends Controller
                 Rule::in([true, false]),
             ]
         ]);
-
-//        $charge = $this->createCharge($business, $data);
 
         $apiKey = $business->apiKeys()->first();
         $businessApiKey = $apiKey->api_key;
@@ -149,6 +152,7 @@ class PaymentLinkController extends Controller
 
         $data = [
             'email' => $data['email'] ?? null,
+            'phone' => $data['full_phone_number'] ?? null,
             'redirect_url' => null,
             'webhook' => null,
             'currency' => strtolower($data['currency']),
@@ -158,7 +162,8 @@ class PaymentLinkController extends Controller
             'channel' => PluginProvider::LINK,
             'send_email' => true,
             'allow_repeated_payments' => $data['repeated'] ?? false,
-            'expiry_date' => $data['expiry_date'] ?? null
+            'expiry_date' => $data['expiry_date'] ?? null,
+            'add_admin_fee' => false
         ];
 
         $paymentRequest = $paymentRequestManager->create(

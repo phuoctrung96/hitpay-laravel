@@ -38,6 +38,7 @@
                         <p class="small mb-0">Business: <span class="text-muted">{{ $charge->business->name }}</span></p>
                         <p class="text-dark small mb-0">Payment Method: <span class="text-muted">{!! \App\Enumerations\Business\PaymentMethodType::displayName($charge->payment_provider_charge_method) !!}</span></p>
                         @php($card = $charge->card())
+                        @if($card instanceof \HitPay\Data\Objects\PaymentMethods\Card)
                         <p class="text-dark small mb-0">Card Brand: <span class="text-muted">{{ $card->brand_name }}</span></p>
                         <p class="text-dark small mb-0">Card Last 4: <span class="text-muted">{{ $card->last_4 }}</span></p>
                         <p class="text-dark small mb-0">Card Country: <span class="text-muted">{{ $card->country_name }}</span></p>
@@ -45,6 +46,7 @@
                         <p class="text-dark small mb-0">Card Network: <span class="text-muted">{{ $card->network }}</span></p>
                         <p class="text-dark small mb-0">Card Expiry Year: <span class="text-muted">{{ $card->exp_year }}</span></p>
                         <p class="text-dark small mb-0">Card Expiry Month: <span class="text-muted">{{ $card->exp_month }}</span></p>
+                        @endif
                         @if ($charge->status === 'requires_payment_method')
                             <span class="badge badge-info">Payment In Progress</span>
                             <form class="mt-3" method="post" action="{{ route('admin.charge.capture', [

@@ -56,7 +56,9 @@ class PaymentIntent extends Model implements OwnableContract
     {
         if ($this->viaStripe()) {
             if ($this->payment_provider_method === PaymentMethodType::CARD) {
-                $card = $this->data['stripe']['payment_method'][$this->payment_provider_method];
+                $card = isset($this->data['stripe']['payment_method'])
+                  ? $this->data['stripe']['payment_method'][$this->payment_provider_method]
+                  : null;
             } elseif ($this->payment_provider_method === PaymentMethodType::CARD_PRESENT) {
                 $isCardPresented = true;
 
@@ -90,6 +92,7 @@ class PaymentIntent extends Model implements OwnableContract
         return in_array($this->payment_provider, [
             PaymentProvider::STRIPE_MALAYSIA,
             PaymentProvider::STRIPE_SINGAPORE,
+            PaymentProvider::STRIPE_US,
         ]);
     }
 }

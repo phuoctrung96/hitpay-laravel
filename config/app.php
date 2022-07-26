@@ -235,6 +235,7 @@ return [
         App\Providers\HorizonServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\ViewServiceProvider::class,
+        App\Providers\RecaptchaValidatorServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         HitPay\Firebase\ServiceProvider::class,
     ],

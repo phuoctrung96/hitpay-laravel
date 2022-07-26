@@ -42,7 +42,7 @@ class CheckCommissionPayout extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $commissions = Commission::with('business')
             ->whereHas('business')
@@ -52,7 +52,7 @@ class CheckCommissionPayout extends Command
             ->get();
 
         if ($commissions->count() === 0) {
-            return;
+            return 0;
         }
 
         $data = [];
@@ -79,5 +79,7 @@ class CheckCommissionPayout extends Command
 
         Notification::route('slack', Config::get('services.slack.pending_payouts'))
             ->notify(new NotifyAdminAboutPendingPayout($data));
+
+        return 0;
     }
 }

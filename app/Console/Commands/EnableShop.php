@@ -38,7 +38,7 @@ class EnableShop extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $businesses = Business::all();
 
@@ -53,6 +53,9 @@ class EnableShop extends Command
                 }
             }
         }
-       $this->info('Command work');
+
+        $this->info('Command work');
+
+        return 0;
     }
 }

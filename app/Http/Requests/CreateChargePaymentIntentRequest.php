@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Business;
-use App\Enumerations\Business\PaymentMethodType;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CreateChargePaymentIntentRequest extends FormRequest
@@ -16,10 +14,6 @@ class CreateChargePaymentIntentRequest extends FormRequest
     public function authorize()
     {
         return true;
-        /*$business       = Business::find($this->route('business_id'))->first();
-        $paymentMethods = $business->getProviderMethods($business);
-
-        return in_array($this->input('method'), $paymentMethods)? true: false;*/
     }
 
     /**
@@ -31,6 +25,11 @@ class CreateChargePaymentIntentRequest extends FormRequest
     {
         return [
             'method'    => 'required',
+            'amount'    => [
+                'sometimes',
+                'required',
+                'numeric'
+            ],
             'email'     => [
                 'required',
                 'string',

@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "/dist/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 68);
+/******/ 	return __webpack_require__(__webpack_require__.s = 69);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -435,8 +435,8 @@ if (typeof __g == 'number') __g = global; // eslint-disable-line no-undef
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var store = __webpack_require__(37)('wks');
-var uid = __webpack_require__(38);
+var store = __webpack_require__(38)('wks');
+var uid = __webpack_require__(39);
 var Symbol = __webpack_require__(1).Symbol;
 var USE_SYMBOL = typeof Symbol == 'function';
 
@@ -713,35 +713,11 @@ exports.from = function from (value, defaultValue) {
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var dP = __webpack_require__(14);
-var createDesc = __webpack_require__(33);
-module.exports = __webpack_require__(8) ? function (object, key, value) {
-  return dP.f(object, key, createDesc(1, value));
-} : function (object, key, value) {
-  object[key] = value;
-  return object;
-};
-
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// Thank's IE8 for his funny defineProperty
-module.exports = !__webpack_require__(20)(function () {
-  return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
-});
-
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
 var global = __webpack_require__(1);
 var core = __webpack_require__(3);
-var ctx = __webpack_require__(12);
-var hide = __webpack_require__(7);
-var has = __webpack_require__(15);
+var ctx = __webpack_require__(15);
+var hide = __webpack_require__(8);
+var has = __webpack_require__(19);
 var PROTOTYPE = 'prototype';
 
 var $export = function (type, name, source) {
@@ -802,6 +778,30 @@ module.exports = $export;
 
 
 /***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var dP = __webpack_require__(17);
+var createDesc = __webpack_require__(35);
+module.exports = __webpack_require__(9) ? function (object, key, value) {
+  return dP.f(object, key, createDesc(1, value));
+} : function (object, key, value) {
+  object[key] = value;
+  return object;
+};
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// Thank's IE8 for his funny defineProperty
+module.exports = !__webpack_require__(18)(function () {
+  return Object.defineProperty({}, 'a', { get: function () { return 7; } }).a != 7;
+});
+
+
+/***/ }),
 /* 10 */
 /***/ (function(module, exports) {
 
@@ -819,85 +819,6 @@ module.exports = {};
 
 /***/ }),
 /* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// optional / simple context binding
-var aFunction = __webpack_require__(13);
-module.exports = function (fn, that, length) {
-  aFunction(fn);
-  if (that === undefined) return fn;
-  switch (length) {
-    case 1: return function (a) {
-      return fn.call(that, a);
-    };
-    case 2: return function (a, b) {
-      return fn.call(that, a, b);
-    };
-    case 3: return function (a, b, c) {
-      return fn.call(that, a, b, c);
-    };
-  }
-  return function (/* ...args */) {
-    return fn.apply(that, arguments);
-  };
-};
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports) {
-
-module.exports = function (it) {
-  if (typeof it != 'function') throw TypeError(it + ' is not a function!');
-  return it;
-};
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var anObject = __webpack_require__(4);
-var IE8_DOM_DEFINE = __webpack_require__(75);
-var toPrimitive = __webpack_require__(76);
-var dP = Object.defineProperty;
-
-exports.f = __webpack_require__(8) ? Object.defineProperty : function defineProperty(O, P, Attributes) {
-  anObject(O);
-  P = toPrimitive(P, true);
-  anObject(Attributes);
-  if (IE8_DOM_DEFINE) try {
-    return dP(O, P, Attributes);
-  } catch (e) { /* empty */ }
-  if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported!');
-  if ('value' in Attributes) O[P] = Attributes.value;
-  return O;
-};
-
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports) {
-
-var hasOwnProperty = {}.hasOwnProperty;
-module.exports = function (it, key) {
-  return hasOwnProperty.call(it, key);
-};
-
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports) {
-
-var toString = {}.toString;
-
-module.exports = function (it) {
-  return toString.call(it).slice(8, -1);
-};
-
-
-/***/ }),
-/* 17 */
 /***/ (function(module, exports) {
 
 /*
@@ -979,7 +900,7 @@ function toComment(sourceMap) {
 
 
 /***/ }),
-/* 18 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -998,7 +919,7 @@ if (typeof DEBUG !== 'undefined' && DEBUG) {
   ) }
 }
 
-var listToStyles = __webpack_require__(116)
+var listToStyles = __webpack_require__(117)
 
 /*
 type StyleObject = {
@@ -1207,7 +1128,7 @@ function applyToTag (styleElement, obj) {
 
 
 /***/ }),
-/* 19 */
+/* 14 */
 /***/ (function(module, exports) {
 
 /* globals __VUE_SSR_CONTEXT__ */
@@ -1316,7 +1237,65 @@ module.exports = function normalizeComponent (
 
 
 /***/ }),
-/* 20 */
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// optional / simple context binding
+var aFunction = __webpack_require__(16);
+module.exports = function (fn, that, length) {
+  aFunction(fn);
+  if (that === undefined) return fn;
+  switch (length) {
+    case 1: return function (a) {
+      return fn.call(that, a);
+    };
+    case 2: return function (a, b) {
+      return fn.call(that, a, b);
+    };
+    case 3: return function (a, b, c) {
+      return fn.call(that, a, b, c);
+    };
+  }
+  return function (/* ...args */) {
+    return fn.apply(that, arguments);
+  };
+};
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports) {
+
+module.exports = function (it) {
+  if (typeof it != 'function') throw TypeError(it + ' is not a function!');
+  return it;
+};
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var anObject = __webpack_require__(4);
+var IE8_DOM_DEFINE = __webpack_require__(76);
+var toPrimitive = __webpack_require__(77);
+var dP = Object.defineProperty;
+
+exports.f = __webpack_require__(9) ? Object.defineProperty : function defineProperty(O, P, Attributes) {
+  anObject(O);
+  P = toPrimitive(P, true);
+  anObject(Attributes);
+  if (IE8_DOM_DEFINE) try {
+    return dP(O, P, Attributes);
+  } catch (e) { /* empty */ }
+  if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported!');
+  if ('value' in Attributes) O[P] = Attributes.value;
+  return O;
+};
+
+
+/***/ }),
+/* 18 */
 /***/ (function(module, exports) {
 
 module.exports = function (exec) {
@@ -1325,6 +1304,27 @@ module.exports = function (exec) {
   } catch (e) {
     return true;
   }
+};
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports) {
+
+var hasOwnProperty = {}.hasOwnProperty;
+module.exports = function (it, key) {
+  return hasOwnProperty.call(it, key);
+};
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports) {
+
+var toString = {}.toString;
+
+module.exports = function (it) {
+  return toString.call(it).slice(8, -1);
 };
 
 
@@ -1345,16 +1345,29 @@ module.exports = function (it) {
 /* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
+// 19.1.2.14 / 15.2.3.14 Object.keys(O)
+var $keys = __webpack_require__(79);
+var enumBugKeys = __webpack_require__(40);
+
+module.exports = Object.keys || function keys(O) {
+  return $keys(O, enumBugKeys);
+};
+
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
 // to indexed object, toObject with fallback for non-array-like ES3 strings
-var IObject = __webpack_require__(35);
-var defined = __webpack_require__(23);
+var IObject = __webpack_require__(36);
+var defined = __webpack_require__(24);
 module.exports = function (it) {
   return IObject(defined(it));
 };
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports) {
 
 // 7.2.1 RequireObjectCoercible(argument)
@@ -1365,7 +1378,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports) {
 
 // 7.1.4 ToInteger
@@ -1377,29 +1390,40 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var shared = __webpack_require__(37)('keys');
-var uid = __webpack_require__(38);
+var shared = __webpack_require__(38)('keys');
+var uid = __webpack_require__(39);
 module.exports = function (key) {
   return shared[key] || (shared[key] = uid(key));
 };
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports) {
 
 module.exports = true;
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var def = __webpack_require__(14).f;
-var has = __webpack_require__(15);
+// 7.1.13 ToObject(argument)
+var defined = __webpack_require__(24);
+module.exports = function (it) {
+  return Object(defined(it));
+};
+
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var def = __webpack_require__(17).f;
+var has = __webpack_require__(19);
 var TAG = __webpack_require__(2)('toStringTag');
 
 module.exports = function (it, tag, stat) {
@@ -1408,13 +1432,13 @@ module.exports = function (it, tag, stat) {
 
 
 /***/ }),
-/* 28 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 // 25.4.1.5 NewPromiseCapability(C)
-var aFunction = __webpack_require__(13);
+var aFunction = __webpack_require__(16);
 
 function PromiseCapability(C) {
   var resolve, reject;
@@ -1433,7 +1457,7 @@ module.exports.f = function (C) {
 
 
 /***/ }),
-/* 29 */
+/* 31 */
 /***/ (function(module, exports) {
 
 var g;
@@ -1460,14 +1484,14 @@ module.exports = g;
 
 
 /***/ }),
-/* 30 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
 var utils = __webpack_require__(0);
-var normalizeHeaderName = __webpack_require__(123);
+var normalizeHeaderName = __webpack_require__(128);
 var enhanceError = __webpack_require__(54);
 
 var DEFAULT_CONTENT_TYPE = {
@@ -1602,7 +1626,7 @@ module.exports = defaults;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(50)))
 
 /***/ }),
-/* 31 */
+/* 33 */
 /***/ (function(module, exports) {
 
 exports.L = { bit: 1 }
@@ -1658,14 +1682,14 @@ exports.from = function from (value, defaultValue) {
 
 
 /***/ }),
-/* 32 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(69);
+module.exports = __webpack_require__(70);
 
 
 /***/ }),
-/* 33 */
+/* 35 */
 /***/ (function(module, exports) {
 
 module.exports = function (bitmap, value) {
@@ -1679,24 +1703,11 @@ module.exports = function (bitmap, value) {
 
 
 /***/ }),
-/* 34 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// 19.1.2.14 / 15.2.3.14 Object.keys(O)
-var $keys = __webpack_require__(78);
-var enumBugKeys = __webpack_require__(39);
-
-module.exports = Object.keys || function keys(O) {
-  return $keys(O, enumBugKeys);
-};
-
-
-/***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // fallback for non-array-like ES3 and non-enumerable old V8 strings
-var cof = __webpack_require__(16);
+var cof = __webpack_require__(20);
 // eslint-disable-next-line no-prototype-builtins
 module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
   return cof(it) == 'String' ? it.split('') : Object(it);
@@ -1704,11 +1715,11 @@ module.exports = Object('z').propertyIsEnumerable(0) ? Object : function (it) {
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.15 ToLength
-var toInteger = __webpack_require__(24);
+var toInteger = __webpack_require__(25);
 var min = Math.min;
 module.exports = function (it) {
   return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
@@ -1716,7 +1727,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var core = __webpack_require__(3);
@@ -1728,13 +1739,13 @@ var store = global[SHARED] || (global[SHARED] = {});
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
   version: core.version,
-  mode: __webpack_require__(26) ? 'pure' : 'global',
+  mode: __webpack_require__(27) ? 'pure' : 'global',
   copyright: '© 2020 Denis Pushkarev (zloirock.ru)'
 });
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports) {
 
 var id = 0;
@@ -1745,24 +1756,13 @@ module.exports = function (key) {
 
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports) {
 
 // IE 8- don't enum bug keys
 module.exports = (
   'constructor,hasOwnProperty,isPrototypeOf,propertyIsEnumerable,toLocaleString,toString,valueOf'
 ).split(',');
-
-
-/***/ }),
-/* 40 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// 7.1.13 ToObject(argument)
-var defined = __webpack_require__(23);
-module.exports = function (it) {
-  return Object(defined(it));
-};
 
 
 /***/ }),
@@ -1813,7 +1813,7 @@ exports.default = function (fn) {
 /* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = { "default": __webpack_require__(83), __esModule: true };
+module.exports = { "default": __webpack_require__(84), __esModule: true };
 
 /***/ }),
 /* 43 */
@@ -1821,14 +1821,14 @@ module.exports = { "default": __webpack_require__(83), __esModule: true };
 
 "use strict";
 
-var LIBRARY = __webpack_require__(26);
-var $export = __webpack_require__(9);
-var redefine = __webpack_require__(87);
-var hide = __webpack_require__(7);
+var LIBRARY = __webpack_require__(27);
+var $export = __webpack_require__(7);
+var redefine = __webpack_require__(88);
+var hide = __webpack_require__(8);
 var Iterators = __webpack_require__(11);
-var $iterCreate = __webpack_require__(88);
-var setToStringTag = __webpack_require__(27);
-var getPrototypeOf = __webpack_require__(91);
+var $iterCreate = __webpack_require__(89);
+var setToStringTag = __webpack_require__(29);
+var getPrototypeOf = __webpack_require__(92);
 var ITERATOR = __webpack_require__(2)('iterator');
 var BUGGY = !([].keys && 'next' in [].keys()); // Safari has buggy iterators w/o `next`
 var FF_ITERATOR = '@@iterator';
@@ -1904,7 +1904,7 @@ module.exports = document && document.documentElement;
 /***/ (function(module, exports, __webpack_require__) {
 
 // getting tag from 19.1.3.6 Object.prototype.toString()
-var cof = __webpack_require__(16);
+var cof = __webpack_require__(20);
 var TAG = __webpack_require__(2)('toStringTag');
 // ES3 wrong here
 var ARG = cof(function () { return arguments; }()) == 'Arguments';
@@ -1934,7 +1934,7 @@ module.exports = function (it) {
 
 // 7.3.20 SpeciesConstructor(O, defaultConstructor)
 var anObject = __webpack_require__(4);
-var aFunction = __webpack_require__(13);
+var aFunction = __webpack_require__(16);
 var SPECIES = __webpack_require__(2)('species');
 module.exports = function (O, D) {
   var C = anObject(O).constructor;
@@ -1947,8 +1947,8 @@ module.exports = function (O, D) {
 /* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ctx = __webpack_require__(12);
-var invoke = __webpack_require__(102);
+var ctx = __webpack_require__(15);
+var invoke = __webpack_require__(103);
 var html = __webpack_require__(44);
 var cel = __webpack_require__(21);
 var global = __webpack_require__(1);
@@ -1990,7 +1990,7 @@ if (!setTask || !clearTask) {
     delete queue[id];
   };
   // Node.js 0.8-
-  if (__webpack_require__(16)(process) == 'process') {
+  if (__webpack_require__(20)(process) == 'process') {
     defer = function (id) {
       process.nextTick(ctx(run, id, 1));
     };
@@ -2052,7 +2052,7 @@ module.exports = function (exec) {
 
 var anObject = __webpack_require__(4);
 var isObject = __webpack_require__(10);
-var newPromiseCapability = __webpack_require__(28);
+var newPromiseCapability = __webpack_require__(30);
 
 module.exports = function (C, x) {
   anObject(C);
@@ -2259,23 +2259,27 @@ process.umask = function() { return 0; };
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator__ = __webpack_require__(34);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator__ = __webpack_require__(41);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_axios__ = __webpack_require__(117);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_axios__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_qrcode__ = __webpack_require__(136);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_qrcode___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_qrcode__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__icons_PaymentMethodIcon__ = __webpack_require__(158);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__icons_CheckMark__ = __webpack_require__(162);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__buttons_CheckoutButton__ = __webpack_require__(164);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__util_common_js__ = __webpack_require__(67);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__util_MethodNamesMixin__ = __webpack_require__(168);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_v_money__ = __webpack_require__(169);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9_v_money___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_9_v_money__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_keys__ = __webpack_require__(118);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_keys___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_keys__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_axios__ = __webpack_require__(122);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_axios__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_qrcode__ = __webpack_require__(141);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_qrcode___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_qrcode__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__icons_PaymentMethodIcon__ = __webpack_require__(163);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__icons_CheckMark__ = __webpack_require__(167);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__buttons_CheckoutButton__ = __webpack_require__(169);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__util_common_js__ = __webpack_require__(67);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_9__util_MethodNamesMixin__ = __webpack_require__(173);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_v_money__ = __webpack_require__(174);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_10_v_money___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_10_v_money__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_11__ui_CheckoutDivider__ = __webpack_require__(175);
 
 
+
 //
 //
 //
@@ -2616,6 +2620,36 @@ process.umask = function() { return 0; };
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
 
 
 
@@ -2628,14 +2662,15 @@ process.umask = function() { return 0; };
 
 /* harmony default export */ __webpack_exports__["a"] = ({
   name: 'app',
-  mixins: [__WEBPACK_IMPORTED_MODULE_8__util_MethodNamesMixin__["a" /* default */]],
+  mixins: [__WEBPACK_IMPORTED_MODULE_9__util_MethodNamesMixin__["a" /* default */]],
   directives: {
-    money: __WEBPACK_IMPORTED_MODULE_9_v_money__["VMoney"]
+    money: __WEBPACK_IMPORTED_MODULE_10_v_money__["VMoney"]
   },
   components: {
-    PaymentMethodIcon: __WEBPACK_IMPORTED_MODULE_4__icons_PaymentMethodIcon__["a" /* default */],
-    CheckoutButton: __WEBPACK_IMPORTED_MODULE_6__buttons_CheckoutButton__["a" /* default */],
-    CheckMark: __WEBPACK_IMPORTED_MODULE_5__icons_CheckMark__["a" /* default */]
+    PaymentMethodIcon: __WEBPACK_IMPORTED_MODULE_5__icons_PaymentMethodIcon__["a" /* default */],
+    CheckoutButton: __WEBPACK_IMPORTED_MODULE_7__buttons_CheckoutButton__["a" /* default */],
+    CheckMark: __WEBPACK_IMPORTED_MODULE_6__icons_CheckMark__["a" /* default */],
+    CheckoutDivider: __WEBPACK_IMPORTED_MODULE_11__ui_CheckoutDivider__["a" /* default */]
   },
   props: {
     // visibility control
@@ -2712,6 +2747,7 @@ process.umask = function() { return 0; };
         amount: null
       },
       minAmounts: {
+        fpx: 2,
         zip: 2
       },
       shakingErrors: {
@@ -2726,6 +2762,7 @@ process.umask = function() { return 0; };
       },
       cards: {
         card: null,
+        fpx: null,
         elements: null,
         error: null,
         status: null,
@@ -2744,11 +2781,13 @@ process.umask = function() { return 0; };
           wechat: false
         }
       },
-      supportedPaymentMethods: ['paynow_online', 'card', 'alipay', 'wechat', 'grabpay', 'shopee_pay', 'grabpay_direct', 'grabpay_paylater', 'zip'],
+      supportedPaymentMethods: ['paynow_online', 'card', 'alipay', 'wechat', 'grabpay', 'shopee_pay', 'grabpay_direct', 'grabpay_paylater', 'zip', 'fpx'],
       qrGeneration: false,
       qrSize: 227,
       dataOk: false,
-
+      psElementMounted: false,
+      cardElementMounted: false,
+      fpxElementMounted: false,
       bankImages: ['data:image/png;base64,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', 'data:image/png;base64,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', 'data:image/png;base64,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', 'data:image/png;base64,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', 'data:image/png;base64,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'],
 
       deepLinkVisible: false,
@@ -2763,11 +2802,26 @@ process.umask = function() { return 0; };
 
       fatalError: null,
 
-      shopeeQrUrl: ''
+      shopeeQrUrl: '',
+      fpxBankOk: false,
+      descriptionMaxLen: 255,
+
+      rates: null,
+      zero_decimal: false
     };
   },
 
   computed: {
+    totalAmount: {
+      get: function get() {
+        var amount = this.customerPaysFee ? this.charges.chosen_method ? this.rates[this.charges.chosen_method].total : this.amount : this.checkout.charge_amount;
+
+        return Number(String(amount).replace(',', '')).toFixed(this.money.precision);
+      },
+      set: function set(value) {
+        this.checkout.charge_amount = value;
+      }
+    },
     businessSlug: function businessSlug() {
       if (this.defaultUrl) {
         var re = this.defaultUrl.match(/@(.+)\//);
@@ -2800,7 +2854,7 @@ process.umask = function() { return 0; };
     //------------------------------------
     // From CheckoutPaymentRequestForm.vue
     payButtonTitle: function payButtonTitle() {
-      return this.in_progress ? 'Waiting for payment' : this.charges.chosen_method === 'alipay' ? 'Click to pay with AliPay' : this.charges.chosen_method === 'grabpay' ? 'Click to pay with GrabPay' : 'Pay ' + this.symbol + this.checkout.charge_amount;
+      return this.in_progress ? 'Waiting for payment' : this.charges.chosen_method === 'alipay' ? 'Click to pay with AliPay' : this.charges.chosen_method === 'grabpay' ? 'Click to pay with GrabPay' : 'Pay ' + this.symbol + this.totalAmount;
     },
     showDisabledButton: function showDisabledButton() {
       switch (this.charges.chosen_method) {
@@ -2838,6 +2892,10 @@ process.umask = function() { return 0; };
         case 'zip':
           {
             return this.in_progress || this.hasErrors;
+          }
+        case 'fpx':
+          {
+            return this.in_progress || this.hasErrors || !this.fpxBankOk;
           }
         default:
           {
@@ -2916,6 +2974,19 @@ process.umask = function() { return 0; };
 
       return 'unknown';
     },
+    useAdminFee: function useAdminFee() {
+      var _this2 = this;
+
+      return Boolean(this.rates) && __WEBPACK_IMPORTED_MODULE_2_babel_runtime_core_js_object_keys___default()(this.rates).some(function (key) {
+        return _this2.rates[key].addFee;
+      });
+    },
+    customerPaysFee: function customerPaysFee() {
+      return Boolean(this.rates) && this.charges.chosen_method && this.rates[this.charges.chosen_method] && this.rates[this.charges.chosen_method].addFee;
+    },
+    adminFee: function adminFee() {
+      return this.customerPaysFee && this.charges.chosen_method ? this.rates[this.charges.chosen_method].adminFee : '';
+    },
     isMobileOS: function isMobileOS() {
       return this.getMobileOperatingSystem === 'ios' || this.getMobileOperatingSystem === 'android';
     },
@@ -2924,6 +2995,12 @@ process.umask = function() { return 0; };
     },
     qrMargin: function qrMargin() {
       return this.isSamsungBrowser ? 4 : 0;
+    },
+    descriptionLengthText: function descriptionLengthText() {
+      return this.checkout.description && this.checkout.description.length > 0 ? this.checkout.description.length + ' of ' + this.descriptionMaxLen + ' characters' : '(Optional)';
+    },
+    adminFeeText: function adminFeeText() {
+      return this.customisation.admin_fee_settings && this.customisation.admin_fee_settings.customText ? this.customisation.admin_fee_settings.customText : 'Admin Fees';
     }
   },
   mounted: function mounted() {
@@ -2934,7 +3011,7 @@ process.umask = function() { return 0; };
 
   watch: {
     visible: function visible() {
-      var _this2 = this;
+      var _this3 = this;
 
       return __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator___default()( /*#__PURE__*/__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.mark(function _callee() {
         var url, res;
@@ -2942,158 +3019,164 @@ process.umask = function() { return 0; };
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (!_this2.visible) {
-                  _context.next = 53;
+                if (!_this3.visible) {
+                  _context.next = 57;
                   break;
                 }
 
-                _this2.page = 'loading';
+                _this3.page = 'loading';
 
-                _this2.errors = {
+                _this3.errors = {
                   amount: '',
                   email: ''
                 };
 
-                _this2.shakingErrors = {
+                _this3.shakingErrors = {
                   amount: false,
                   email: false
                 };
 
-                _this2.dataOk = false;
+                _this3.dataOk = false;
 
                 // Component init
-                url = _this2.mode === 'payment-request' ? _this2.scheme + '://api.' + _this2.domain + '/v1/business/' + _this2.checkoutOptions.paymentRequest + '/checkout-dropin-pr' : _this2.scheme + '://api.' + _this2.domain + '/v1/business/' + _this2.businessSlug + '/checkout-dropin-default';
+                url = _this3.mode === 'payment-request' ? _this3.scheme + '://api.' + _this3.domain + '/v1/business/' + _this3.checkoutOptions.paymentRequest + '/checkout-dropin-pr' : _this3.scheme + '://api.' + _this3.domain + '/v1/business/' + _this3.businessSlug + '/checkout-dropin-default';
                 _context.prev = 6;
                 _context.next = 9;
-                return __WEBPACK_IMPORTED_MODULE_2_axios___default.a.get(url);
+                return __WEBPACK_IMPORTED_MODULE_3_axios___default.a.get(url);
 
               case 9:
                 res = _context.sent;
 
 
-                _this2.business = res.data.business;
+                _this3.business = res.data.business;
 
                 if (!res.data.alreadyPaid) {
                   _context.next = 15;
                   break;
                 }
 
-                _this2.alreadyPaid();
-                _context.next = 48;
+                _this3.alreadyPaid();
+                _context.next = 52;
                 break;
 
               case 15:
                 // assign data
-                _this2.checkout.charge_amount = _this2.mode === 'payment-request' ? res.data.amount : _this2.checkoutOptions.amount || '0.00';
+                _this3.checkout.charge_amount = _this3.mode === 'payment-request' ? res.data.amount : _this3.checkoutOptions.amount || '0.00';
 
-                _this2.charge = res.data.charge;
-                _this2.countries = res.data.countries;
-                _this2.methods = res.data.paymentMethods;
-                _this2.data = res.data.data;
-                _this2.customisation = res.data.customisation;
-                _this2.pusher = null;
-                _this2.pusherConfig = res.data.pusher;
-                _this2.timeoutValue = parseInt(res.data.timeout) * 1000;
+                _this3.charge = res.data.charge;
+                _this3.countries = res.data.countries;
+                _this3.methods = res.data.paymentMethods;
+                _this3.data = res.data.data;
+                _this3.customisation = res.data.customisation;
+                _this3.pusher = null;
+                _this3.pusherConfig = res.data.pusher;
+                _this3.timeoutValue = parseInt(res.data.timeout) * 1000;
+                _this3.rates = res.data.rates;
+                // currency symbol
+                _this3.symbol = res.data.symbol;
+                // zero decimal & precision
+                _this3.zero_decimal = res.data.zeroDecimal;
+                _this3.money.precision = _this3.zero_decimal ? 0 : 2;
 
                 // Umami
 
-                if (_this2.umamiLoaded) {
-                  _context.next = 35;
+                if (_this3.umamiLoaded) {
+                  _context.next = 39;
                   break;
                 }
 
-                _this2.umami = res.data.umami;
+                _this3.umami = res.data.umami;
 
-                _context.prev = 26;
-                _context.next = 29;
-                return Object(__WEBPACK_IMPORTED_MODULE_7__util_common_js__["a" /* loadJS */])(_this2.umami.umamiUrl, document.body, 'data-website-id', _this2.umami.umamiAppId);
+                _context.prev = 30;
+                _context.next = 33;
+                return Object(__WEBPACK_IMPORTED_MODULE_8__util_common_js__["a" /* loadJS */])(_this3.umami.umamiUrl, document.body, 'data-website-id', _this3.umami.umamiAppId);
 
-              case 29:
-                _this2.umamiLoaded = true;
-                _context.next = 35;
+              case 33:
+                _this3.umamiLoaded = true;
+                _context.next = 39;
                 break;
 
-              case 32:
-                _context.prev = 32;
-                _context.t0 = _context['catch'](26);
+              case 36:
+                _context.prev = 36;
+                _context.t0 = _context['catch'](30);
 
                 // do nothing
                 console.log('Umami not loaded');
 
-              case 35:
+              case 39:
 
                 // init Stripe
-                if (!_this2.cards.stripe) {
-                  _this2.cards.stripe = Stripe(res.data.stripePkey, {
+                if (!_this3.cards.stripe) {
+                  _this3.cards.stripe = Stripe(res.data.stripePkey, {
                     betas: ['payment_intent_beta_3', 'grabpay_pm_beta_1']
                   });
 
-                  _this2.cards.elements = _this2.cards.stripe.elements();
+                  _this3.cards.elements = _this3.cards.stripe.elements();
                 }
 
-                if (!(_this2.methods.includes('card') && _this2.show_amount_input === false)) {
-                  _context.next = 41;
+                if (!(_this3.methods.includes('card') && !_this3.show_amount_input)) {
+                  _context.next = 45;
                   break;
                 }
 
-                _context.next = 39;
-                return _this2.createStripePaymentRequest(_this2.getStripeAmount());
+                _context.next = 43;
+                return _this3.createStripePaymentRequest(_this3.getStripeAmount());
 
-              case 39:
-                _context.next = 42;
+              case 43:
+                _context.next = 46;
                 break;
 
-              case 41:
-                _this2.show_payment_request_button = false;
+              case 45:
+                _this3.show_payment_request_button = false;
 
-              case 42:
+              case 46:
 
                 // Set data
-                _this2.charges.charge_object = _this2.charge;
-                _this2.charges.charge_status = '';
+                _this3.charges.charge_object = _this3.charge;
+                _this3.charges.charge_status = '';
 
                 // set email
-                _this2.checkout.email = _this2.data.customer_email;
+                _this3.checkout.email = _this3.data.customer_email;
 
-                _this2.checkout.description = _this2.data.description;
+                _this3.checkout.description = _this3.data.description;
 
-                _this2.show_amount_input = _this2.checkout.charge_amount === '0.00' || _this2.checkout.charge_amount === 0 ? true : false;
+                _this3.show_amount_input = _this3.checkout.charge_amount === '0.00' || _this3.checkout.charge_amount === 0;
 
                 // Only select first method if there are no errors in data
-                if (_this2.mode === 'payment-request') {
-                  _this2.charges.chosen_method = _this2.orderedMethods.length === 1 ? _this2.orderedMethods[0] : !_this2.checkAmount() && !_this2.checkEmail() && !(_this2.isMobileOS && _this2.orderedMethods.length > 1) ? _this2.checkoutOptions.method || res.data.defaultMethod : '';
+                if (_this3.mode === 'payment-request') {
+                  _this3.charges.chosen_method = _this3.orderedMethods.length === 1 ? _this3.orderedMethods[0] : !_this3.checkAmount() && !_this3.checkEmail() && !(_this3.isMobileOS && _this3.orderedMethods.length > 1) ? _this3.checkoutOptions.method || res.data.defaultMethod : '';
 
-                  if (_this2.checkout.email) {
-                    if (_this2.charges.chosen_method && _this2.orderedMethods.includes(_this2.charges.chosen_method)) {
-                      _this2.changeMethod(_this2.charges.chosen_method, false);
+                  if (_this3.checkout.email) {
+                    if (_this3.charges.chosen_method && _this3.orderedMethods.includes(_this3.charges.chosen_method)) {
+                      _this3.changeMethod(_this3.charges.chosen_method, false);
                     } else {
-                      _this2.page = 'select';
+                      _this3.page = 'select';
                     }
                   } else {
                     // no email provided
-                    _this2.page = 'amount';
+                    _this3.page = 'amount';
                   }
                 } else {
-                  _this2.charges.chosen_method = '';
-                  _this2.page = 'amount';
+                  _this3.charges.chosen_method = '';
+                  _this3.page = 'amount';
                 }
 
-              case 48:
-                _context.next = 53;
+              case 52:
+                _context.next = 57;
                 break;
 
-              case 50:
-                _context.prev = 50;
+              case 54:
+                _context.prev = 54;
                 _context.t1 = _context['catch'](6);
 
-                _this2.doError(_context.t1);
+                _this3.doError(_context.t1);
 
-              case 53:
+              case 57:
               case 'end':
                 return _context.stop();
             }
           }
-        }, _callee, _this2, [[6, 50], [26, 32]]);
+        }, _callee, _this3, [[6, 54], [30, 36]]);
       }))();
     },
 
@@ -3110,7 +3193,7 @@ process.umask = function() { return 0; };
         }
       }
     },
-    'checkout.charge_amount': {
+    'totalAmount': {
       immediate: true,
       handler: function handler(value) {
         if (this.checkAmount()) {
@@ -3164,7 +3247,7 @@ process.umask = function() { return 0; };
     // From CheckoutPaymentRequestForm.vue
 
     updateStripePaymentRequest: function updateStripePaymentRequest() {
-      var _this3 = this;
+      var _this4 = this;
 
       return __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator___default()( /*#__PURE__*/__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.mark(function _callee2() {
         var amount;
@@ -3173,30 +3256,30 @@ process.umask = function() { return 0; };
             switch (_context2.prev = _context2.next) {
               case 0:
                 // checkout.charge_amount will always have a value in a floating point format
-                amount = _this3.getStripeAmount();
+                amount = _this4.getStripeAmount();
 
-                if (!_this3.methods.includes('card')) {
+                if (!(_this4.methods.includes('card') || _this4.methods.includes('fpx'))) {
                   _context2.next = 15;
                   break;
                 }
 
-                if (!(_this3.show_payment_request_button === false)) {
+                if (_this4.show_payment_request_button) {
                   _context2.next = 7;
                   break;
                 }
 
-                _this3.show_payment_request_button = true;
-                _this3.createStripePaymentRequest(amount);
+                _this4.show_payment_request_button = true;
+                _this4.createStripePaymentRequest(amount);
                 _context2.next = 15;
                 break;
 
               case 7:
-                if (!(_this3.show_amount_input === true)) {
+                if (!(_this4.show_amount_input || _this4.customerPaysFee)) {
                   _context2.next = 15;
                   break;
                 }
 
-                _context2.t0 = _this3.cards.payment_request;
+                _context2.t0 = _this4.cards.payment_request;
 
                 if (!_context2.t0) {
                   _context2.next = 13;
@@ -3204,7 +3287,7 @@ process.umask = function() { return 0; };
                 }
 
                 _context2.next = 12;
-                return _this3.cards.payment_request.canMakePayment();
+                return _this4.cards.payment_request.canMakePayment();
 
               case 12:
                 _context2.t0 = _context2.sent;
@@ -3215,7 +3298,7 @@ process.umask = function() { return 0; };
                   break;
                 }
 
-                _this3.cards.payment_request.update({
+                _this4.cards.payment_request.update({
                   total: {
                     label: 'Checkout Total',
                     amount: amount
@@ -3227,7 +3310,7 @@ process.umask = function() { return 0; };
                 return _context2.stop();
             }
           }
-        }, _callee2, _this3);
+        }, _callee2, _this4);
       }))();
     },
 
@@ -3235,74 +3318,70 @@ process.umask = function() { return 0; };
     // modifications:
     // 1. scroll removed
     changeMethod: function changeMethod(method) {
-      var _this4 = this;
+      var _this5 = this;
 
       return __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator___default()( /*#__PURE__*/__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.mark(function _callee3() {
         return __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                if (!(_this4.isValidInput() && !_this4.changingMethod)) {
-                  _context3.next = 20;
+                if (!(_this5.isValidInput() && !_this5.changingMethod)) {
+                  _context3.next = 19;
                   break;
                 }
 
-                _this4.changingMethod = true;
+                _this5.changingMethod = true;
 
                 _context3.prev = 2;
 
-                _this4.resetPusher();
+                _this5.resetPusher();
 
-                if (_this4.mode === 'default') {
-                  _this4.show_amount_input = false;
-                }
+                _this5.charges.chosen_method = method;
+                _this5.cards.error = null;
+                _this5.in_progress = false;
 
-                _this4.charges.chosen_method = method;
-                _this4.cards.error = null;
-                _this4.in_progress = false;
+                if (method === 'paynow_online' && _this5.isMobileOS) {
+                  _this5.lazyPaynowQR = _this5.allowDeepLink;
 
-                if (method === 'paynow_online' && _this4.isMobileOS) {
-                  _this4.lazyPaynowQR = _this4.allowDeepLink;
-
-                  if (_this4.charges.chosen_method === 'paynow_online' && _this4.allowDeepLink) {
-                    _this4.scrollTo('#payment-methods');
+                  if (_this5.charges.chosen_method === 'paynow_online' && _this5.allowDeepLink) {
+                    _this5.scrollTo('#payment-methods');
                     // Show deep link panel only of this is allowed in .env
-                    _this4.deepLinkVisible = true;
+                    _this5.deepLinkVisible = true;
                   }
                 } else {
-                  _this4.lazyPaynowQR = false;
+                  _this5.lazyPaynowQR = false;
                 }
 
-                _this4.page = 'method';
+                _this5.page = 'method';
 
                 if (!(method === 'paynow_online' || method === 'wechat' || method === 'shopee_pay')) {
-                  _context3.next = 15;
+                  _context3.next = 14;
                   break;
                 }
 
-                _context3.next = 13;
-                return _this4.pay();
+                _context3.next = 12;
+                return _this5.pay();
 
-              case 13:
-                _context3.next = 17;
+              case 12:
+                _context3.next = 16;
                 break;
 
-              case 15:
-                _context3.next = 17;
-                return _this4.updateStripePaymentRequest();
+              case 14:
+                _context3.next = 16;
+                return _this5.updateStripePaymentRequest();
 
-              case 17:
-                _context3.prev = 17;
+              case 16:
+                _context3.prev = 16;
 
-                _this4.changingMethod = false;
-                return _context3.finish(17);
+                _this5.changingMethod = false;
+                return _context3.finish(16);
 
-              case 20:
+              case 19:
               case 'end':
                 return _context3.stop();
             }
           }
-        }, _callee3, _this4, [[2,, 17, 20]]);
+        }, _callee3, _this5, [[2,, 16, 19]]);
       }))();
     },
 
@@ -3310,55 +3389,55 @@ process.umask = function() { return 0; };
     // modifications:
     // 1. scroll removed
     pay: function pay() {
-      var _this5 = this;
+      var _this6 = this;
 
       return __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator___default()( /*#__PURE__*/__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.mark(function _callee5() {
-        var that, _ref, data, result, updatePaymentIntentUrl, _ref3, _data, response;
+        var that, _ref, data, result, updatePaymentIntentUrl, _ref3, _data, res, response;
 
         return __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                _this5.cards.error = null;
-                _this5.qrcode_data = null;
-                that = _this5;
+                _this6.cards.error = null;
+                _this6.qrcode_data = null;
+                that = _this6;
 
 
-                if (_this5.qrcode != null) {
-                  _this5.qrcode.clear();
+                if (_this6.qrcode != null) {
+                  _this6.qrcode.clear();
                 }
 
-                if (_this5.isValidInput()) {
+                if (_this6.isValidInput()) {
                   _context5.next = 7;
                   break;
                 }
 
-                _this5.in_progress = false;
+                _this6.in_progress = false;
 
                 return _context5.abrupt('return');
 
               case 7:
 
-                _this5.busy = true;
+                _this6.busy = true;
 
                 _context5.prev = 8;
 
-                if (!(_this5.charges.chosen_method === 'cash')) {
+                if (!(_this6.charges.chosen_method === 'cash')) {
                   _context5.next = 16;
                   break;
                 }
 
-                _this5.in_progress = true;
+                _this6.in_progress = true;
                 _context5.next = 13;
-                return __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post(_this5.base_url + 'charge/' + _this5.charges.charge_object.id + '/cash');
+                return __WEBPACK_IMPORTED_MODULE_3_axios___default.a.post(_this6.base_url + 'charge/' + _this6.charges.charge_object.id + '/cash');
 
               case 13:
-                _this5.charges.charge_status = 'succeeded';
-                _context5.next = 86;
+                _this6.charges.charge_status = 'succeeded';
+                _context5.next = 94;
                 break;
 
               case 16:
-                if (!(_this5.charges.chosen_method === 'card' && _this5.cards.error === null && (_this5.cards.stripe === null || _this5.cards.card === null))) {
+                if (!(_this6.charges.chosen_method === 'card' && _this6.cards.error === null && (_this6.cards.stripe === null || _this6.cards.card === null))) {
                   _context5.next = 18;
                   break;
                 }
@@ -3367,15 +3446,15 @@ process.umask = function() { return 0; };
 
               case 18:
 
-                _this5.in_progress = true;
-                _this5.qrGeneration = true;
+                _this6.in_progress = true;
+                _this6.qrGeneration = true;
 
                 _context5.next = 22;
-                return __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post(_this5.base_url + 'charge/' + _this5.charges.charge_object.id + '/create-payment-intent', {
-                  method: _this5.charges.chosen_method,
-                  email: _this5.checkout.email,
-                  description: _this5.checkout.description,
-                  amount: _this5.checkout.charge_amount
+                return __WEBPACK_IMPORTED_MODULE_3_axios___default.a.post(_this6.base_url + 'charge/' + _this6.charges.charge_object.id + '/create-payment-intent', {
+                  method: _this6.charges.chosen_method,
+                  email: _this6.checkout.email,
+                  description: _this6.checkout.description,
+                  amount: _this6.totalAmount
                 });
 
               case 22:
@@ -3387,55 +3466,55 @@ process.umask = function() { return 0; };
                   break;
                 }
 
-                _this5.alreadyPaid();
-                _context5.next = 86;
+                _this6.alreadyPaid();
+                _context5.next = 94;
                 break;
 
               case 28:
-                _this5.runTimeoutTimer();
+                _this6.runTimeoutTimer();
 
-                _this5.existing_charge = data;
+                _this6.existing_charge = data;
 
                 _context5.next = 32;
-                return _this5.updateStripePaymentRequest();
+                return _this6.updateStripePaymentRequest();
 
               case 32:
-                if (!(_this5.charges.chosen_method === 'card_present')) {
+                if (!(_this6.charges.chosen_method === 'card_present')) {
                   _context5.next = 36;
                   break;
                 }
 
-                _this5.terminals.stripe.collectPaymentMethod(data.payment_intent.client_secret).then(function (result) {
+                _this6.terminals.stripe.collectPaymentMethod(data.payment_intent.client_secret).then(function (result) {
                   if (result.error) {
-                    _this5.charges.charge_status = _this5.getTerminalErrorMessage(result.error);
+                    _this6.charges.charge_status = _this6.getTerminalErrorMessage(result.error);
                   } else {
-                    _this5.terminals.status = 'paying';
-                    _this5.terminals.stripe.processPayment(result.paymentIntent).then(function (result) {
+                    _this6.terminals.status = 'paying';
+                    _this6.terminals.stripe.processPayment(result.paymentIntent).then(function (result) {
                       if (result.error) {
-                        _this5.charges.charge_status = _this5.getTerminalErrorMessage(result.error);
+                        _this6.charges.charge_status = _this6.getTerminalErrorMessage(result.error);
                       } else if (result.paymentIntent) {
-                        __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post(_this5.base_url + 'charge/payment-intent/' + _this5.existing_charge.id + '/capture').then(function (_ref2) {
+                        __WEBPACK_IMPORTED_MODULE_3_axios___default.a.post(_this6.base_url + 'charge/payment-intent/' + _this6.existing_charge.id + '/capture').then(function (_ref2) {
                           var data = _ref2.data;
 
-                          _this5.redirectComplete();
+                          _this6.redirectComplete();
                         });
                       }
                     });
                   }
                 });
-                _context5.next = 86;
+                _context5.next = 94;
                 break;
 
               case 36:
-                if (!(_this5.charges.chosen_method === 'card')) {
+                if (!(_this6.charges.chosen_method === 'card')) {
                   _context5.next = 62;
                   break;
                 }
 
                 _context5.next = 39;
-                return _this5.cards.stripe.createPaymentMethod({
+                return _this6.cards.stripe.createPaymentMethod({
                   type: "card",
-                  card: _this5.cards.card
+                  card: _this6.cards.card
                 });
 
               case 39:
@@ -3446,15 +3525,15 @@ process.umask = function() { return 0; };
                   break;
                 }
 
-                _this5.errorMessage = result.error.message;
-                _this5.in_progress = false;
+                _this6.cards.error = result.error.message;
+                _this6.in_progress = false;
                 _context5.next = 60;
                 break;
 
               case 45:
-                updatePaymentIntentUrl = _this5.base_url + 'charge/payment-intent/' + _this5.existing_charge.id + '/confirm';
+                updatePaymentIntentUrl = _this6.base_url + 'charge/payment-intent/' + _this6.existing_charge.id + '/confirm';
                 _context5.next = 48;
-                return __WEBPACK_IMPORTED_MODULE_2_axios___default.a.put(updatePaymentIntentUrl, {
+                return __WEBPACK_IMPORTED_MODULE_3_axios___default.a.put(updatePaymentIntentUrl, {
                   payment_method_id: result.paymentMethod.id
                 });
 
@@ -3478,7 +3557,7 @@ process.umask = function() { return 0; };
                 }
 
                 _context5.next = 57;
-                return _this5.cards.stripe.handleCardAction(_data.payment_intent.client_secret).then(function () {
+                return _this6.cards.stripe.handleCardAction(_data.payment_intent.client_secret).then(function () {
                   var _ref4 = __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator___default()( /*#__PURE__*/__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.mark(function _callee4(result) {
                     return __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.wrap(function _callee4$(_context4) {
                       while (1) {
@@ -3496,7 +3575,7 @@ process.umask = function() { return 0; };
 
                           case 5:
                             _context4.next = 7;
-                            return __WEBPACK_IMPORTED_MODULE_2_axios___default.a.put(updatePaymentIntentUrl).then(function () {
+                            return __WEBPACK_IMPORTED_MODULE_3_axios___default.a.put(updatePaymentIntentUrl).then(function () {
                               that.redirectComplete();
                             });
 
@@ -3505,7 +3584,7 @@ process.umask = function() { return 0; };
                             return _context4.stop();
                         }
                       }
-                    }, _callee4, _this5);
+                    }, _callee4, _this6);
                   }));
 
                   return function (_x) {
@@ -3521,147 +3600,177 @@ process.umask = function() { return 0; };
                 console.log("Response Not Handled.", result);
 
               case 60:
-                _context5.next = 86;
+                _context5.next = 94;
                 break;
 
               case 62:
-                _context5.t0 = _this5.charges.chosen_method;
-                _context5.next = _context5.t0 === 'wechat' ? 65 : _context5.t0 === 'paynow_online' ? 68 : _context5.t0 === 'alipay' ? 71 : _context5.t0 === 'grabpay' ? 73 : _context5.t0 === 'grabpay_direct' ? 78 : _context5.t0 === 'grabpay_paylater' ? 78 : _context5.t0 === 'shopee_pay' ? 80 : _context5.t0 === 'zip' ? 83 : 85;
+                if (!(_this6.charges.chosen_method === 'fpx')) {
+                  _context5.next = 70;
+                  break;
+                }
+
+                _this6.suppressBeforeUnload = true;
+
+                _context5.next = 66;
+                return _this6.cards.stripe.confirmFpxPayment(_this6.existing_charge.payment_intent.client_secret, {
+                  payment_method: {
+                    fpx: _this6.cards.fpx
+                  },
+                  return_url: _this6.scheme + '://securecheckout.' + _this6.domain + '/redirect/fpx/' + _this6.existing_charge.id
+                }, {
+                  handleActions: false
+                });
+
+              case 66:
+                res = _context5.sent;
+
+
+                if (res.error) {
+                  _this6.errorMessage = res.error.code === 'parameter_invalid_empty' ? 'Please select FPX bank' : res.error.message;
+                } else {
+                  window.open(res.paymentIntent.next_action.redirect_to_url.url, '_blank');
+                }
+                _context5.next = 94;
                 break;
 
-              case 65:
-                __WEBPACK_IMPORTED_MODULE_3_qrcode___default.a.toDataURL(data.wechat.qr_code_url, {
-                  width: _this5.qrSize + _this5.qrMargin,
+              case 70:
+                _context5.t0 = _this6.charges.chosen_method;
+                _context5.next = _context5.t0 === 'wechat' ? 73 : _context5.t0 === 'paynow_online' ? 76 : _context5.t0 === 'alipay' ? 79 : _context5.t0 === 'grabpay' ? 81 : _context5.t0 === 'grabpay_direct' ? 86 : _context5.t0 === 'grabpay_paylater' ? 86 : _context5.t0 === 'shopee_pay' ? 88 : _context5.t0 === 'zip' ? 91 : 93;
+                break;
+
+              case 73:
+                __WEBPACK_IMPORTED_MODULE_4_qrcode___default.a.toDataURL(data.wechat.qr_code_url, {
+                  width: _this6.qrSize + _this6.qrMargin,
                   color: {
                     dark: '#000036',
                     light: '#fff'
                   },
                   errorCorrectionLevel: 'H',
-                  margin: _this5.qrMargin
+                  margin: _this6.qrMargin
                 }, function (error, url) {
-                  _this5.$refs.wechatQrCode.src = url;
+                  _this6.$refs.wechatQrCode.src = url;
                 });
 
-                _this5.qrGeneration = false;
+                _this6.qrGeneration = false;
 
-                return _context5.abrupt('break', 85);
+                return _context5.abrupt('break', 93);
 
-              case 68:
-                _this5.qrcode_data = data.paynow_online.qr_code_data;
+              case 76:
+                _this6.qrcode_data = data.paynow_online.qr_code_data;
 
-                if (!_this5.lazyPaynowQR) {
-                  _this5.generatePayNowQR();
+                if (!_this6.lazyPaynowQR) {
+                  _this6.generatePayNowQR();
                 }
 
-                return _context5.abrupt('break', 85);
+                return _context5.abrupt('break', 93);
 
-              case 71:
+              case 79:
                 window.open(data.alipay.redirect_url, '_blank');
-                return _context5.abrupt('break', 85);
+                return _context5.abrupt('break', 93);
 
-              case 73:
-                _context5.next = 75;
-                return _this5.cards.stripe.confirmGrabPayPayment(data.payment_intent.client_secret, { return_url: _this5.scheme + '://api.' + _this5.domain + '/close' }, { handleActions: false });
+              case 81:
+                _context5.next = 83;
+                return _this6.cards.stripe.confirmGrabPayPayment(data.payment_intent.client_secret, { return_url: _this6.scheme + '://api.' + _this6.domain + '/close' }, { handleActions: false });
 
-              case 75:
+              case 83:
                 response = _context5.sent;
 
 
                 window.open(response.paymentIntent.next_action.redirect_to_url.url, '_blank');
-                return _context5.abrupt('break', 85);
+                return _context5.abrupt('break', 93);
 
-              case 78:
+              case 86:
                 window.open(data.redirect_url, '_blank');
-                return _context5.abrupt('break', 85);
+                return _context5.abrupt('break', 93);
 
-              case 80:
-                __WEBPACK_IMPORTED_MODULE_3_qrcode___default.a.toDataURL(data.qr_content, {
-                  width: _this5.qrSize + _this5.qrMargin,
+              case 88:
+                __WEBPACK_IMPORTED_MODULE_4_qrcode___default.a.toDataURL(data.qr_content, {
+                  width: _this6.qrSize + _this6.qrMargin,
                   color: {
                     dark: '#000036',
                     light: '#fff'
                   },
                   errorCorrectionLevel: 'H',
-                  margin: _this5.qrMargin
+                  margin: _this6.qrMargin
                 }, function (error, url) {
-                  _this5.$refs.shopeeQrCode.src = url;
+                  _this6.$refs.shopeeQrCode.src = url;
                 });
 
-                _this5.qrGeneration = false;
+                _this6.qrGeneration = false;
 
-                return _context5.abrupt('break', 85);
-
-              case 83:
-                window.open(data.redirect_url, '_blank');
-                return _context5.abrupt('break', 85);
-
-              case 85:
-
-                _this5.pollChargeStatus();
-
-              case 86:
-                _context5.next = 91;
-                break;
-
-              case 88:
-                _context5.prev = 88;
-                _context5.t1 = _context5['catch'](8);
-
-                _this5.doError(_context5.t1);
+                return _context5.abrupt('break', 93);
 
               case 91:
+                window.open(data.redirect_url, '_blank');
+                return _context5.abrupt('break', 93);
 
-                _this5.busy = false;
+              case 93:
 
-              case 92:
+                _this6.pollChargeStatus();
+
+              case 94:
+                _context5.next = 99;
+                break;
+
+              case 96:
+                _context5.prev = 96;
+                _context5.t1 = _context5['catch'](8);
+
+                _this6.doError(_context5.t1);
+
+              case 99:
+
+                _this6.busy = false;
+
+              case 100:
               case 'end':
                 return _context5.stop();
             }
           }
-        }, _callee5, _this5, [[8, 88]]);
+        }, _callee5, _this6, [[8, 96]]);
       }))();
     },
     pollChargeStatus: function pollChargeStatus() {
-      var _this6 = this;
+      var _this7 = this;
 
       return __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator___default()( /*#__PURE__*/__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.mark(function _callee6() {
         return __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.wrap(function _callee6$(_context6) {
           while (1) {
             switch (_context6.prev = _context6.next) {
               case 0:
-                if (_this6.existing_charge) {
+                if (_this7.existing_charge) {
                   try {
                     // Enable pusher logging - don't include this in production
                     //Pusher.logToConsole = true;
 
-                    _this6.pusher = new Pusher(_this6.pusherConfig.key, {
-                      cluster: _this6.pusherConfig.cluster
+                    _this7.pusher = new Pusher(_this7.pusherConfig.key, {
+                      cluster: _this7.pusherConfig.cluster
                     });
 
-                    _this6.pusherChannel = _this6.pusher.subscribe(_this6.charges.charge_object.id);
+                    _this7.pusherChannel = _this7.pusher.subscribe(_this7.charges.charge_object.id);
 
-                    _this6.pusherChannel.bind('App\\Events\\ChargeSucceeded', function (data) {
+                    _this7.pusherChannel.bind('App\\Events\\ChargeSucceeded', function (data) {
                       if (data.status === 'succeeded') {
-                        _this6.redirectComplete();
+                        _this7.redirectComplete();
                       } else if (data.status === 'failed') {
-                        _this6.charges.charge_status = 'The payment was failed.';
+                        _this7.charges.charge_status = 'The payment was failed.';
                       } else if (data.status === 'canceled') {
-                        _this6.charges.charge_status = 'The payment was canceled by the customer.';
+                        _this7.charges.charge_status = 'The payment was canceled by the customer.';
                       }
                     });
 
-                    _this6.pusher.connection.bind('error', function (error) {
+                    _this7.pusher.connection.bind('error', function (error) {
                       console.error('error', error);
-                      _this6.oldPollChargeStatus();
+                      _this7.oldPollChargeStatus();
                     });
 
-                    _this6.pusher.connection.bind('failed', function (error) {
+                    _this7.pusher.connection.bind('failed', function (error) {
                       console.error('error', error);
-                      _this6.oldPollChargeStatus();
+                      _this7.oldPollChargeStatus();
                     });
                   } catch (e) {
                     console.error(e);
-                    _this6.oldPollChargeStatus();
+                    _this7.oldPollChargeStatus();
                   }
                 }
 
@@ -3670,18 +3779,18 @@ process.umask = function() { return 0; };
                 return _context6.stop();
             }
           }
-        }, _callee6, _this6);
+        }, _callee6, _this7);
       }))();
     },
     oldPollChargeStatus: function oldPollChargeStatus() {
-      var _this7 = this;
+      var _this8 = this;
 
       return __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator___default()( /*#__PURE__*/__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.mark(function _callee7() {
         return __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.wrap(function _callee7$(_context7) {
           while (1) {
             switch (_context7.prev = _context7.next) {
               case 0:
-                if (!(_this7.existing_charge === null)) {
+                if (!(_this8.existing_charge === null)) {
                   _context7.next = 2;
                   break;
                 }
@@ -3690,15 +3799,15 @@ process.umask = function() { return 0; };
 
               case 2:
 
-                __WEBPACK_IMPORTED_MODULE_2_axios___default.a.get(_this7.scheme + '://api.' + _this7.domain + '/v1/payment-intent/' + _this7.existing_charge.id).then(function (_ref5) {
+                __WEBPACK_IMPORTED_MODULE_3_axios___default.a.get(_this8.scheme + '://api.' + _this8.domain + '/v1/payment-intent/' + _this8.existing_charge.id).then(function (_ref5) {
                   var data = _ref5.data;
 
                   if (data.charge.status === 'succeeded') {
-                    _this7.redirectComplete();
+                    _this8.redirectComplete();
                   } else if (data.status === 'failed') {
-                    _this7.charges.charge_status = 'The payment was failed.';
+                    _this8.charges.charge_status = 'The payment was failed.';
                   } else if (data.status === 'canceled') {
-                    _this7.charges.charge_status = 'The payment was canceled by the customer.';
+                    _this8.charges.charge_status = 'The payment was canceled by the customer.';
                   }
                 });
 
@@ -3707,7 +3816,7 @@ process.umask = function() { return 0; };
                 return _context7.stop();
             }
           }
-        }, _callee7, _this7);
+        }, _callee7, _this8);
       }))();
     },
     checkAmount: function checkAmount() {
@@ -3742,7 +3851,7 @@ process.umask = function() { return 0; };
       return this.errors.email;
     },
     isValidInput: function isValidInput() {
-      var _this8 = this;
+      var _this9 = this;
 
       var newEmail = this.checkEmail();
       var newAmount = this.checkAmount();
@@ -3757,14 +3866,14 @@ process.umask = function() { return 0; };
       }
 
       this.$nextTick(function () {
-        _this8.shakingErrors.email = Boolean(newEmail);
-        _this8.shakingErrors.amount = Boolean(newAmount);
+        _this9.shakingErrors.email = Boolean(newEmail);
+        _this9.shakingErrors.amount = Boolean(newAmount);
       });
 
       return !Boolean(this.errors.amount) && !Boolean(this.errors.email);
     },
     createStripeCards: function createStripeCards() {
-      var _this9 = this;
+      var _this10 = this;
 
       if (!this.cardElementMounted) {
         this.cards.card = this.cards.elements.create('card', {
@@ -3794,33 +3903,59 @@ process.umask = function() { return 0; };
         // we need to do this in $nextTick to allow template v-if to be processed
         // and rendered, this function may be called from mounted()
         this.$nextTick(function () {
-          _this9.cards.card.mount('#card-element');
+          _this10.cards.card.mount('#card-element');
 
-          _this9.cards.card.on('change', function (_ref6) {
+          _this10.cards.card.on('change', function (_ref6) {
             var error = _ref6.error;
 
             if (error) {
-              _this9.cards.error = error.message;
+              _this10.cards.error = error.message;
             } else {
-              _this9.cards.error = null;
+              _this10.cards.error = null;
             }
           });
 
-          _this9.cardElementMounted = true;
+          _this10.cardElementMounted = true;
+        });
+      }
+    },
+    createStripeFPX: function createStripeFPX() {
+      var _this11 = this;
+
+      if (!this.fpxElementMounted) {
+        this.cards.fpx = this.cards.elements.create('fpxBank', {
+          style: {
+            base: {
+              // Add your base input styles here. For example:
+              padding: '10px 12px',
+              color: '#32325d',
+              fontSize: '16px'
+            }
+          },
+          accountHolderType: 'company'
+        });
+
+        this.$nextTick(function () {
+          _this11.cards.fpx.mount('#fpx-bank-element');
+          _this11.fpxElementMounted = true;
+        });
+
+        this.cards.fpx.on('change', function (event) {
+          _this11.fpxBankOk = event.complete;
         });
       }
     },
     createStripePaymentRequest: function createStripePaymentRequest(amount) {
-      var _this10 = this;
+      var _this12 = this;
 
       return __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator___default()( /*#__PURE__*/__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.mark(function _callee8() {
-        var that;
+        var that, paymentRequestButtonElement;
         return __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.wrap(function _callee8$(_context8) {
           while (1) {
             switch (_context8.prev = _context8.next) {
               case 0:
-                that = _this10;
-                _context8.t0 = _this10.cards.payment_request;
+                that = _this12;
+                _context8.t0 = _this12.cards.payment_request;
 
                 if (!_context8.t0) {
                   _context8.next = 6;
@@ -3828,7 +3963,7 @@ process.umask = function() { return 0; };
                 }
 
                 _context8.next = 5;
-                return _this10.cards.payment_request.canMakePayment();
+                return _this12.cards.payment_request.canMakePayment();
 
               case 5:
                 _context8.t0 = _context8.sent;
@@ -3839,7 +3974,7 @@ process.umask = function() { return 0; };
                   break;
                 }
 
-                _this10.cards.payment_request.update({
+                _this12.cards.payment_request.update({
                   total: {
                     label: 'Checkout Total',
                     amount: amount
@@ -3850,9 +3985,9 @@ process.umask = function() { return 0; };
 
               case 9:
 
-                _this10.cards.payment_request = _this10.cards.stripe.paymentRequest({
-                  country: _this10.business.country.toUpperCase(),
-                  currency: _this10.business.currency,
+                _this12.cards.payment_request = _this12.cards.stripe.paymentRequest({
+                  country: _this12.business.country.toUpperCase(),
+                  currency: _this12.business.currency,
                   total: {
                     label: 'Checkout Total',
                     amount: amount
@@ -3861,78 +3996,90 @@ process.umask = function() { return 0; };
                   requestPayerEmail: true
                 });
 
-                try {
-                  // Check the availability of the Payment Request API first.
-                  _this10.cards.payment_request.canMakePayment().then(function (result) {
-                    if (result) {
-                      var paymentRequestButtonElement = _this10.cards.elements.create('paymentRequestButton', {
-                        paymentRequest: _this10.cards.payment_request
-                      });
+                _context8.prev = 10;
+                _context8.next = 13;
+                return _this12.cards.payment_request.canMakePayment();
 
-                      paymentRequestButtonElement.mount('#payment-request-button');
-
-                      _this10.psElementMounted = true;
-
-                      that.cards.payment_request.on('paymentmethod', function (ev) {
-                        var _this11 = this;
-
-                        that.charges.chosen_method = 'card';
-
-                        __WEBPACK_IMPORTED_MODULE_2_axios___default.a.post(that.base_url + 'charge/' + that.charges.charge_object.id + '/create-payment-intent', {
-                          method: that.charges.chosen_method,
-                          email: ev.payerEmail
-                        }).then(function (_ref7) {
-                          var data = _ref7.data;
-
-                          if (data.alreadyPaid) {
-                            _this11.alreadyPaid();
-                          } else {
-                            that.runTimeoutTimer();
-
-                            that.existing_charge = data;
-
-                            that.cards.stripe.confirmCardPayment(that.existing_charge.payment_intent.client_secret, { payment_method: ev.paymentMethod.id }, { handleActions: false }).then(function (confirmResult) {
-                              if (confirmResult.error) {
-                                ev.complete('fail');
-
-                                that.cards.error = confirmResult.error.message;
-                                that.in_progress = false;
-                              } else {
-                                ev.complete('success');
-
-                                that.cards.stripe.confirmCardPayment(that.existing_charge.payment_intent.client_secret).then(function (result) {
-                                  if (result.error) {
-                                    that.cards.error = result.error.message;
-                                    that.in_progress = false;
-                                  } else {
-                                    that.pollChargeStatus();
-                                  }
-                                });
-                              }
-                            });
-                          }
-                        });
-                      });
-
-                      that.cards.payment_request.on('cancel', function (event) {
-                        that.in_progress = false;
-                      });
-                    } else {
-                      that.show_payment_request_button = false;
-                    }
-                  });
-                } catch (e) {
-                  _this10.show_payment_request_button = false;
+              case 13:
+                if (!_context8.sent) {
+                  _context8.next = 19;
+                  break;
                 }
 
-                _this10.createStripeCards();
+                paymentRequestButtonElement = _this12.cards.elements.create('paymentRequestButton', {
+                  paymentRequest: _this12.cards.payment_request
+                });
 
-              case 12:
+
+                paymentRequestButtonElement.mount('#payment-request-button');
+                _this12.psElementMounted = true;
+
+                that.cards.payment_request.on('paymentmethod', function (ev) {
+                  var _this13 = this;
+
+                  that.charges.chosen_method = 'card';
+
+                  __WEBPACK_IMPORTED_MODULE_3_axios___default.a.post(that.base_url + 'charge/' + that.charges.charge_object.id + '/create-payment-intent', {
+                    method: that.charges.chosen_method,
+                    email: ev.payerEmail
+                  }).then(function (_ref7) {
+                    var data = _ref7.data;
+
+                    if (data.alreadyPaid) {
+                      _this13.alreadyPaid();
+                    } else {
+                      that.runTimeoutTimer();
+
+                      that.existing_charge = data;
+
+                      that.cards.stripe.confirmCardPayment(that.existing_charge.payment_intent.client_secret, { payment_method: ev.paymentMethod.id }, { handleActions: false }).then(function (confirmResult) {
+                        if (confirmResult.error) {
+                          ev.complete('fail');
+
+                          that.cards.error = confirmResult.error.message;
+                          that.in_progress = false;
+                        } else {
+                          ev.complete('success');
+
+                          that.cards.stripe.confirmCardPayment(that.existing_charge.payment_intent.client_secret).then(function (result) {
+                            if (result.error) {
+                              that.cards.error = result.error.message;
+                              that.in_progress = false;
+                            } else {
+                              that.pollChargeStatus();
+                            }
+                          });
+                        }
+                      });
+                    }
+                  });
+                });
+
+                that.cards.payment_request.on('cancel', function (event) {
+                  that.in_progress = false;
+                });
+
+              case 19:
+                _context8.next = 24;
+                break;
+
+              case 21:
+                _context8.prev = 21;
+                _context8.t1 = _context8['catch'](10);
+
+                _this12.show_payment_request_button = false;
+
+              case 24:
+
+                _this12.createStripeCards();
+                _this12.createStripeFPX();
+
+              case 26:
               case 'end':
                 return _context8.stop();
             }
           }
-        }, _callee8, _this10);
+        }, _callee8, _this12, [[10, 21]]);
       }))();
     },
     recordEvent: function recordEvent(type, name) {
@@ -3941,13 +4088,13 @@ process.umask = function() { return 0; };
       }
     },
     runTimeoutTimer: function runTimeoutTimer() {
-      var _this12 = this;
+      var _this14 = this;
 
       this.clearTimeoutTimer();
 
       if (this.timeoutValue > 0) {
         this.timeoutTimer = window.setTimeout(function () {
-          _this12.page = 'timeout';
+          _this14.page = 'timeout';
         }, this.timeoutValue);
       }
     },
@@ -3958,9 +4105,9 @@ process.umask = function() { return 0; };
       }
     },
     generatePayNowQR: function generatePayNowQR() {
-      var _this13 = this;
+      var _this15 = this;
 
-      __WEBPACK_IMPORTED_MODULE_3_qrcode___default.a.toDataURL(this.qrcode_data, {
+      __WEBPACK_IMPORTED_MODULE_4_qrcode___default.a.toDataURL(this.qrcode_data, {
         width: this.qrSize + this.qrMargin,
         color: {
           dark: '#840070',
@@ -3969,38 +4116,34 @@ process.umask = function() { return 0; };
         errorCorrectionLevel: 'H',
         margin: this.qrMargin
       }, function (error, url) {
-        _this13.$refs.paynowQrCode.src = url;
+        _this15.$refs.paynowQrCode.src = url;
       });
 
       this.qrGeneration = false;
     },
     getStripeAmount: function getStripeAmount() {
-      // remove thousands separator if any
-      var filteredAmount = String(this.checkout.charge_amount).replace(',', '');
-
-      // We need to round it, because sometimes JS behave weird, like 0.55*100=55.00000000000001
-      return Math.round(filteredAmount * 100);
+      return Math.round(this.zero_decimal ? this.totalAmount : this.totalAmount * 100);
     },
     redirectComplete: function redirectComplete() {
-      var _this14 = this;
+      var _this16 = this;
 
       return __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_asyncToGenerator___default()( /*#__PURE__*/__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.mark(function _callee9() {
         return __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default.a.wrap(function _callee9$(_context9) {
           while (1) {
             switch (_context9.prev = _context9.next) {
               case 0:
-                _this14.charges.charge_status = 'succeeded';
-                _this14.clearTimeoutTimer();
+                _this16.charges.charge_status = 'succeeded';
+                _this16.clearTimeoutTimer();
 
                 // Do not block other code in case something goes wrong with umami
                 try {
-                  _this14.recordEvent('payment_status', 'success');
+                  _this16.recordEvent('payment_status', 'success');
                 } catch (error) {
                   console.log(error);
                 }
 
-                _this14.page = 'success';
-                _this14.runCloseTimer();
+                _this16.page = 'success';
+                _this16.runCloseTimer();
 
                 window.top.postMessage({
                   type: 'success'
@@ -4011,7 +4154,7 @@ process.umask = function() { return 0; };
                 return _context9.stop();
             }
           }
-        }, _callee9, _this14);
+        }, _callee9, _this16);
       }))();
     },
     payButtonOnClick: function payButtonOnClick() {
@@ -4024,6 +4167,7 @@ process.umask = function() { return 0; };
         case 'hoolah':
         case 'card':
         case 'zip':
+        case 'fpx':
           {
             this.pay();
             break;
@@ -4040,15 +4184,15 @@ process.umask = function() { return 0; };
       this.isValidInput();
     },
     runCloseTimer: function runCloseTimer() {
-      var _this15 = this;
+      var _this17 = this;
 
       this.successTimeoutValue = 5;
       this.successTimeoutTimer = window.setInterval(function () {
-        _this15.successTimeoutValue--;
+        _this17.successTimeoutValue--;
 
-        if (_this15.successTimeoutValue === 0) {
+        if (_this17.successTimeoutValue === 0) {
           // also clear all timers
-          _this15.doClose();
+          _this17.doClose();
         }
       }, 1000);
     },
@@ -4240,12 +4384,12 @@ module.exports = function enhanceError(error, config, code, request, response) {
 
 
 var utils = __webpack_require__(0);
-var settle = __webpack_require__(124);
-var cookies = __webpack_require__(125);
+var settle = __webpack_require__(129);
+var cookies = __webpack_require__(130);
 var buildURL = __webpack_require__(53);
-var buildFullPath = __webpack_require__(126);
-var parseHeaders = __webpack_require__(129);
-var isURLSameOrigin = __webpack_require__(130);
+var buildFullPath = __webpack_require__(131);
+var parseHeaders = __webpack_require__(134);
+var isURLSameOrigin = __webpack_require__(135);
 var createError = __webpack_require__(56);
 
 module.exports = function xhrAdapter(config) {
@@ -4589,7 +4733,7 @@ module.exports = Cancel;
 /* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const ECLevel = __webpack_require__(31)
+const ECLevel = __webpack_require__(33)
 
 const EC_BLOCKS_TABLE = [
 // L  M  Q  H
@@ -5004,6 +5148,10 @@ exports.qrToImageData = function qrToImageData (imgData, qr, opts) {
 //
 //
 //
+//
+//
+//
+//
 
 /* harmony default export */ __webpack_exports__["a"] = ({
   props: {
@@ -5143,17 +5291,37 @@ function loadJS(url) {
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["a"] = ({
+    name: 'CheckoutDivider',
+    props: {
+        text: String
+    }
+});
+
+/***/ }),
+/* 69 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator__ = __webpack_require__(32);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator__ = __webpack_require__(34);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_babel_runtime_regenerator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_extends__ = __webpack_require__(71);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_extends__ = __webpack_require__(72);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_extends___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_babel_runtime_helpers_extends__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_asyncToGenerator__ = __webpack_require__(41);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_asyncToGenerator___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_babel_runtime_helpers_asyncToGenerator__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vue__ = __webpack_require__(110);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__App_vue__ = __webpack_require__(113);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_vue__ = __webpack_require__(111);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__App_vue__ = __webpack_require__(114);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__util_common_js__ = __webpack_require__(67);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__assets_styles_scss__ = __webpack_require__(171);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__assets_styles_scss__ = __webpack_require__(180);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__assets_styles_scss___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_6__assets_styles_scss__);
 
 
@@ -5236,7 +5404,7 @@ var loader = function () {
 loader();
 
 /***/ }),
-/* 69 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -5261,7 +5429,7 @@ var oldRuntime = hadRuntime && g.regeneratorRuntime;
 // Force reevalutation of runtime.js.
 g.regeneratorRuntime = undefined;
 
-module.exports = __webpack_require__(70);
+module.exports = __webpack_require__(71);
 
 if (hadRuntime) {
   // Restore the original runtime.
@@ -5277,7 +5445,7 @@ if (hadRuntime) {
 
 
 /***/ }),
-/* 70 */
+/* 71 */
 /***/ (function(module, exports) {
 
 /**
@@ -6010,7 +6178,7 @@ if (hadRuntime) {
 
 
 /***/ }),
-/* 71 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6018,7 +6186,7 @@ if (hadRuntime) {
 
 exports.__esModule = true;
 
-var _assign = __webpack_require__(72);
+var _assign = __webpack_require__(73);
 
 var _assign2 = _interopRequireDefault(_assign);
 
@@ -6039,40 +6207,40 @@ exports.default = _assign2.default || function (target) {
 };
 
 /***/ }),
-/* 72 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = { "default": __webpack_require__(73), __esModule: true };
-
-/***/ }),
 /* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(74);
-module.exports = __webpack_require__(3).Object.assign;
-
+module.exports = { "default": __webpack_require__(74), __esModule: true };
 
 /***/ }),
 /* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// 19.1.3.1 Object.assign(target, source)
-var $export = __webpack_require__(9);
-
-$export($export.S + $export.F, 'Object', { assign: __webpack_require__(77) });
+__webpack_require__(75);
+module.exports = __webpack_require__(3).Object.assign;
 
 
 /***/ }),
 /* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = !__webpack_require__(8) && !__webpack_require__(20)(function () {
+// 19.1.3.1 Object.assign(target, source)
+var $export = __webpack_require__(7);
+
+$export($export.S + $export.F, 'Object', { assign: __webpack_require__(78) });
+
+
+/***/ }),
+/* 76 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = !__webpack_require__(9) && !__webpack_require__(18)(function () {
   return Object.defineProperty(__webpack_require__(21)('div'), 'a', { get: function () { return 7; } }).a != 7;
 });
 
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 7.1.1 ToPrimitive(input [, PreferredType])
@@ -6090,22 +6258,22 @@ module.exports = function (it, S) {
 
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 // 19.1.2.1 Object.assign(target, source, ...)
-var DESCRIPTORS = __webpack_require__(8);
-var getKeys = __webpack_require__(34);
-var gOPS = __webpack_require__(81);
-var pIE = __webpack_require__(82);
-var toObject = __webpack_require__(40);
-var IObject = __webpack_require__(35);
+var DESCRIPTORS = __webpack_require__(9);
+var getKeys = __webpack_require__(22);
+var gOPS = __webpack_require__(82);
+var pIE = __webpack_require__(83);
+var toObject = __webpack_require__(28);
+var IObject = __webpack_require__(36);
 var $assign = Object.assign;
 
 // should work with symbols and should have deterministic property order (V8 bug)
-module.exports = !$assign || __webpack_require__(20)(function () {
+module.exports = !$assign || __webpack_require__(18)(function () {
   var A = {};
   var B = {};
   // eslint-disable-next-line no-undef
@@ -6135,13 +6303,13 @@ module.exports = !$assign || __webpack_require__(20)(function () {
 
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var has = __webpack_require__(15);
-var toIObject = __webpack_require__(22);
-var arrayIndexOf = __webpack_require__(79)(false);
-var IE_PROTO = __webpack_require__(25)('IE_PROTO');
+var has = __webpack_require__(19);
+var toIObject = __webpack_require__(23);
+var arrayIndexOf = __webpack_require__(80)(false);
+var IE_PROTO = __webpack_require__(26)('IE_PROTO');
 
 module.exports = function (object, names) {
   var O = toIObject(object);
@@ -6158,14 +6326,14 @@ module.exports = function (object, names) {
 
 
 /***/ }),
-/* 79 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // false -> Array#indexOf
 // true  -> Array#includes
-var toIObject = __webpack_require__(22);
-var toLength = __webpack_require__(36);
-var toAbsoluteIndex = __webpack_require__(80);
+var toIObject = __webpack_require__(23);
+var toLength = __webpack_require__(37);
+var toAbsoluteIndex = __webpack_require__(81);
 module.exports = function (IS_INCLUDES) {
   return function ($this, el, fromIndex) {
     var O = toIObject($this);
@@ -6187,10 +6355,10 @@ module.exports = function (IS_INCLUDES) {
 
 
 /***/ }),
-/* 80 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(24);
+var toInteger = __webpack_require__(25);
 var max = Math.max;
 var min = Math.min;
 module.exports = function (index, length) {
@@ -6200,45 +6368,45 @@ module.exports = function (index, length) {
 
 
 /***/ }),
-/* 81 */
+/* 82 */
 /***/ (function(module, exports) {
 
 exports.f = Object.getOwnPropertySymbols;
 
 
 /***/ }),
-/* 82 */
+/* 83 */
 /***/ (function(module, exports) {
 
 exports.f = {}.propertyIsEnumerable;
 
 
 /***/ }),
-/* 83 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(84);
 __webpack_require__(85);
-__webpack_require__(92);
-__webpack_require__(96);
-__webpack_require__(108);
+__webpack_require__(86);
+__webpack_require__(93);
+__webpack_require__(97);
 __webpack_require__(109);
+__webpack_require__(110);
 module.exports = __webpack_require__(3).Promise;
 
 
 /***/ }),
-/* 84 */
+/* 85 */
 /***/ (function(module, exports) {
 
 
 
 /***/ }),
-/* 85 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $at = __webpack_require__(86)(true);
+var $at = __webpack_require__(87)(true);
 
 // 21.1.3.27 String.prototype[@@iterator]()
 __webpack_require__(43)(String, 'String', function (iterated) {
@@ -6257,11 +6425,11 @@ __webpack_require__(43)(String, 'String', function (iterated) {
 
 
 /***/ }),
-/* 86 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(24);
-var defined = __webpack_require__(23);
+var toInteger = __webpack_require__(25);
+var defined = __webpack_require__(24);
 // true  -> String#at
 // false -> String#codePointAt
 module.exports = function (TO_STRING) {
@@ -6280,25 +6448,25 @@ module.exports = function (TO_STRING) {
 
 
 /***/ }),
-/* 87 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(7);
+module.exports = __webpack_require__(8);
 
 
 /***/ }),
-/* 88 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var create = __webpack_require__(89);
-var descriptor = __webpack_require__(33);
-var setToStringTag = __webpack_require__(27);
+var create = __webpack_require__(90);
+var descriptor = __webpack_require__(35);
+var setToStringTag = __webpack_require__(29);
 var IteratorPrototype = {};
 
 // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
-__webpack_require__(7)(IteratorPrototype, __webpack_require__(2)('iterator'), function () { return this; });
+__webpack_require__(8)(IteratorPrototype, __webpack_require__(2)('iterator'), function () { return this; });
 
 module.exports = function (Constructor, NAME, next) {
   Constructor.prototype = create(IteratorPrototype, { next: descriptor(1, next) });
@@ -6307,14 +6475,14 @@ module.exports = function (Constructor, NAME, next) {
 
 
 /***/ }),
-/* 89 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
 var anObject = __webpack_require__(4);
-var dPs = __webpack_require__(90);
-var enumBugKeys = __webpack_require__(39);
-var IE_PROTO = __webpack_require__(25)('IE_PROTO');
+var dPs = __webpack_require__(91);
+var enumBugKeys = __webpack_require__(40);
+var IE_PROTO = __webpack_require__(26)('IE_PROTO');
 var Empty = function () { /* empty */ };
 var PROTOTYPE = 'prototype';
 
@@ -6354,14 +6522,14 @@ module.exports = Object.create || function create(O, Properties) {
 
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var dP = __webpack_require__(14);
+var dP = __webpack_require__(17);
 var anObject = __webpack_require__(4);
-var getKeys = __webpack_require__(34);
+var getKeys = __webpack_require__(22);
 
-module.exports = __webpack_require__(8) ? Object.defineProperties : function defineProperties(O, Properties) {
+module.exports = __webpack_require__(9) ? Object.defineProperties : function defineProperties(O, Properties) {
   anObject(O);
   var keys = getKeys(Properties);
   var length = keys.length;
@@ -6373,13 +6541,13 @@ module.exports = __webpack_require__(8) ? Object.defineProperties : function def
 
 
 /***/ }),
-/* 91 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
-var has = __webpack_require__(15);
-var toObject = __webpack_require__(40);
-var IE_PROTO = __webpack_require__(25)('IE_PROTO');
+var has = __webpack_require__(19);
+var toObject = __webpack_require__(28);
+var IE_PROTO = __webpack_require__(26)('IE_PROTO');
 var ObjectProto = Object.prototype;
 
 module.exports = Object.getPrototypeOf || function (O) {
@@ -6392,12 +6560,12 @@ module.exports = Object.getPrototypeOf || function (O) {
 
 
 /***/ }),
-/* 92 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(93);
+__webpack_require__(94);
 var global = __webpack_require__(1);
-var hide = __webpack_require__(7);
+var hide = __webpack_require__(8);
 var Iterators = __webpack_require__(11);
 var TO_STRING_TAG = __webpack_require__(2)('toStringTag');
 
@@ -6417,15 +6585,15 @@ for (var i = 0; i < DOMIterables.length; i++) {
 
 
 /***/ }),
-/* 93 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var addToUnscopables = __webpack_require__(94);
-var step = __webpack_require__(95);
+var addToUnscopables = __webpack_require__(95);
+var step = __webpack_require__(96);
 var Iterators = __webpack_require__(11);
-var toIObject = __webpack_require__(22);
+var toIObject = __webpack_require__(23);
 
 // 22.1.3.4 Array.prototype.entries()
 // 22.1.3.13 Array.prototype.keys()
@@ -6458,14 +6626,14 @@ addToUnscopables('entries');
 
 
 /***/ }),
-/* 94 */
+/* 95 */
 /***/ (function(module, exports) {
 
 module.exports = function () { /* empty */ };
 
 
 /***/ }),
-/* 95 */
+/* 96 */
 /***/ (function(module, exports) {
 
 module.exports = function (done, value) {
@@ -6474,26 +6642,26 @@ module.exports = function (done, value) {
 
 
 /***/ }),
-/* 96 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var LIBRARY = __webpack_require__(26);
+var LIBRARY = __webpack_require__(27);
 var global = __webpack_require__(1);
-var ctx = __webpack_require__(12);
+var ctx = __webpack_require__(15);
 var classof = __webpack_require__(45);
-var $export = __webpack_require__(9);
+var $export = __webpack_require__(7);
 var isObject = __webpack_require__(10);
-var aFunction = __webpack_require__(13);
-var anInstance = __webpack_require__(97);
-var forOf = __webpack_require__(98);
+var aFunction = __webpack_require__(16);
+var anInstance = __webpack_require__(98);
+var forOf = __webpack_require__(99);
 var speciesConstructor = __webpack_require__(46);
 var task = __webpack_require__(47).set;
-var microtask = __webpack_require__(103)();
-var newPromiseCapabilityModule = __webpack_require__(28);
+var microtask = __webpack_require__(104)();
+var newPromiseCapabilityModule = __webpack_require__(30);
 var perform = __webpack_require__(48);
-var userAgent = __webpack_require__(104);
+var userAgent = __webpack_require__(105);
 var promiseResolve = __webpack_require__(49);
 var PROMISE = 'Promise';
 var TypeError = global.TypeError;
@@ -6669,7 +6837,7 @@ if (!USE_NATIVE) {
     this._h = 0;              // <- rejection state, 0 - default, 1 - handled, 2 - unhandled
     this._n = false;          // <- notify
   };
-  Internal.prototype = __webpack_require__(105)($Promise.prototype, {
+  Internal.prototype = __webpack_require__(106)($Promise.prototype, {
     // 25.4.5.3 Promise.prototype.then(onFulfilled, onRejected)
     then: function then(onFulfilled, onRejected) {
       var reaction = newPromiseCapability(speciesConstructor(this, $Promise));
@@ -6700,8 +6868,8 @@ if (!USE_NATIVE) {
 }
 
 $export($export.G + $export.W + $export.F * !USE_NATIVE, { Promise: $Promise });
-__webpack_require__(27)($Promise, PROMISE);
-__webpack_require__(106)(PROMISE);
+__webpack_require__(29)($Promise, PROMISE);
+__webpack_require__(107)(PROMISE);
 Wrapper = __webpack_require__(3)[PROMISE];
 
 // statics
@@ -6720,7 +6888,7 @@ $export($export.S + $export.F * (LIBRARY || !USE_NATIVE), PROMISE, {
     return promiseResolve(LIBRARY && this === Wrapper ? $Promise : this, x);
   }
 });
-$export($export.S + $export.F * !(USE_NATIVE && __webpack_require__(107)(function (iter) {
+$export($export.S + $export.F * !(USE_NATIVE && __webpack_require__(108)(function (iter) {
   $Promise.all(iter)['catch'](empty);
 })), PROMISE, {
   // 25.4.4.1 Promise.all(iterable)
@@ -6767,7 +6935,7 @@ $export($export.S + $export.F * !(USE_NATIVE && __webpack_require__(107)(functio
 
 
 /***/ }),
-/* 97 */
+/* 98 */
 /***/ (function(module, exports) {
 
 module.exports = function (it, Constructor, name, forbiddenField) {
@@ -6778,15 +6946,15 @@ module.exports = function (it, Constructor, name, forbiddenField) {
 
 
 /***/ }),
-/* 98 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var ctx = __webpack_require__(12);
-var call = __webpack_require__(99);
-var isArrayIter = __webpack_require__(100);
+var ctx = __webpack_require__(15);
+var call = __webpack_require__(100);
+var isArrayIter = __webpack_require__(101);
 var anObject = __webpack_require__(4);
-var toLength = __webpack_require__(36);
-var getIterFn = __webpack_require__(101);
+var toLength = __webpack_require__(37);
+var getIterFn = __webpack_require__(102);
 var BREAK = {};
 var RETURN = {};
 var exports = module.exports = function (iterable, entries, fn, that, ITERATOR) {
@@ -6809,7 +6977,7 @@ exports.RETURN = RETURN;
 
 
 /***/ }),
-/* 99 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // call something on iterator step with safe closing on error
@@ -6827,7 +6995,7 @@ module.exports = function (iterator, fn, value, entries) {
 
 
 /***/ }),
-/* 100 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // check on default Array iterator
@@ -6841,7 +7009,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 101 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var classof = __webpack_require__(45);
@@ -6855,7 +7023,7 @@ module.exports = __webpack_require__(3).getIteratorMethod = function (it) {
 
 
 /***/ }),
-/* 102 */
+/* 103 */
 /***/ (function(module, exports) {
 
 // fast apply, http://jsperf.lnkit.com/fast-apply/5
@@ -6877,7 +7045,7 @@ module.exports = function (fn, args, that) {
 
 
 /***/ }),
-/* 103 */
+/* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var global = __webpack_require__(1);
@@ -6885,7 +7053,7 @@ var macrotask = __webpack_require__(47).set;
 var Observer = global.MutationObserver || global.WebKitMutationObserver;
 var process = global.process;
 var Promise = global.Promise;
-var isNode = __webpack_require__(16)(process) == 'process';
+var isNode = __webpack_require__(20)(process) == 'process';
 
 module.exports = function () {
   var head, last, notify;
@@ -6952,7 +7120,7 @@ module.exports = function () {
 
 
 /***/ }),
-/* 104 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var global = __webpack_require__(1);
@@ -6962,10 +7130,10 @@ module.exports = navigator && navigator.userAgent || '';
 
 
 /***/ }),
-/* 105 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var hide = __webpack_require__(7);
+var hide = __webpack_require__(8);
 module.exports = function (target, src, safe) {
   for (var key in src) {
     if (safe && target[key]) target[key] = src[key];
@@ -6975,15 +7143,15 @@ module.exports = function (target, src, safe) {
 
 
 /***/ }),
-/* 106 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 var global = __webpack_require__(1);
 var core = __webpack_require__(3);
-var dP = __webpack_require__(14);
-var DESCRIPTORS = __webpack_require__(8);
+var dP = __webpack_require__(17);
+var DESCRIPTORS = __webpack_require__(9);
 var SPECIES = __webpack_require__(2)('species');
 
 module.exports = function (KEY) {
@@ -6996,7 +7164,7 @@ module.exports = function (KEY) {
 
 
 /***/ }),
-/* 107 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var ITERATOR = __webpack_require__(2)('iterator');
@@ -7024,13 +7192,13 @@ module.exports = function (exec, skipClosing) {
 
 
 /***/ }),
-/* 108 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 // https://github.com/tc39/proposal-promise-finally
 
-var $export = __webpack_require__(9);
+var $export = __webpack_require__(7);
 var core = __webpack_require__(3);
 var global = __webpack_require__(1);
 var speciesConstructor = __webpack_require__(46);
@@ -7051,14 +7219,14 @@ $export($export.P + $export.R, 'Promise', { 'finally': function (onFinally) {
 
 
 /***/ }),
-/* 109 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 // https://github.com/tc39/proposal-promise-try
-var $export = __webpack_require__(9);
-var newPromiseCapability = __webpack_require__(28);
+var $export = __webpack_require__(7);
+var newPromiseCapability = __webpack_require__(30);
 var perform = __webpack_require__(48);
 
 $export($export.S, 'Promise', { 'try': function (callbackfn) {
@@ -7070,7 +7238,7 @@ $export($export.S, 'Promise', { 'try': function (callbackfn) {
 
 
 /***/ }),
-/* 110 */
+/* 111 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -19090,10 +19258,10 @@ Vue.compile = compileToFunctions;
 
 /* harmony default export */ __webpack_exports__["a"] = (Vue);
 
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(29), __webpack_require__(111).setImmediate))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(31), __webpack_require__(112).setImmediate))
 
 /***/ }),
-/* 111 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
@@ -19149,7 +19317,7 @@ exports._unrefActive = exports.active = function(item) {
 };
 
 // setimmediate attaches itself to the global object
-__webpack_require__(112);
+__webpack_require__(113);
 // On some exotic environments, it's not clear which object `setimmediate` was
 // able to install onto.  Search each possibility in the same order as the
 // `setimmediate` library.
@@ -19160,10 +19328,10 @@ exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
                          (typeof global !== "undefined" && global.clearImmediate) ||
                          (this && this.clearImmediate);
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(29)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(31)))
 
 /***/ }),
-/* 112 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
@@ -19353,20 +19521,20 @@ exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
     attachTo.clearImmediate = clearImmediate;
 }(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(29), __webpack_require__(50)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(31), __webpack_require__(50)))
 
 /***/ }),
-/* 113 */
+/* 114 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_App_vue__ = __webpack_require__(51);
 /* unused harmony namespace reexport */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_7ef4cac2_hasScoped_true_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_App_vue__ = __webpack_require__(170);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_a8f1c6cc_hasScoped_true_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_App_vue__ = __webpack_require__(179);
 function injectStyle (ssrContext) {
-  __webpack_require__(114)
+  __webpack_require__(115)
 }
-var normalizeComponent = __webpack_require__(19)
+var normalizeComponent = __webpack_require__(14)
 /* script */
 
 
@@ -19377,12 +19545,12 @@ var __vue_template_functional__ = false
 /* styles */
 var __vue_styles__ = injectStyle
 /* scopeId */
-var __vue_scopeId__ = "data-v-7ef4cac2"
+var __vue_scopeId__ = "data-v-a8f1c6cc"
 /* moduleIdentifier (server only) */
 var __vue_module_identifier__ = null
 var Component = normalizeComponent(
   __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_App_vue__["a" /* default */],
-  __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_7ef4cac2_hasScoped_true_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_App_vue__["a" /* default */],
+  __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_a8f1c6cc_hasScoped_true_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_App_vue__["a" /* default */],
   __vue_template_functional__,
   __vue_styles__,
   __vue_scopeId__,
@@ -19393,34 +19561,34 @@ var Component = normalizeComponent(
 
 
 /***/ }),
-/* 114 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(115);
+var content = __webpack_require__(116);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(18)("4cb3a7c9", content, true, {});
+var update = __webpack_require__(13)("4578ff35", content, true, {});
 
 /***/ }),
-/* 115 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(17)(false);
+exports = module.exports = __webpack_require__(12)(false);
 // imports
 exports.push([module.i, "@import url(https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap);", ""]);
 
 // module
-exports.push([module.i, ".hipay-checkout-dropin[data-v-7ef4cac2]{position:fixed;bottom:0;top:0;left:0;right:0;backdrop-filter:blur(12px) brightness(70%);-webkit-backdrop-filter:blur(12px) brightness(70%);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:3;font-family:Inter,sans-serif}.hipay-checkout-dropin .container[data-v-7ef4cac2]{background-color:#fff;color:#4a4a4a}@media screen and (max-width:576px){.hipay-checkout-dropin .container[data-v-7ef4cac2]{width:100%;height:100%}}@media screen and (min-width:576px){.hipay-checkout-dropin .container[data-v-7ef4cac2]{box-shadow:0 0 10px rgba(0,0,0,.3);border-radius:24px;width:355px;height:600px}}.hipay-checkout-dropin .container .row[data-v-7ef4cac2]{width:100%;box-sizing:border-box}@media screen and (max-width:576px){.hipay-checkout-dropin .container .row[data-v-7ef4cac2]{padding:20px}}@media screen and (min-width:576px){.hipay-checkout-dropin .container .row[data-v-7ef4cac2]{padding:20px}}.hipay-checkout-dropin .container .top-line[data-v-7ef4cac2]{position:relative;color:#4a4a4a;border-bottom:1px solid #979797;height:57px}.hipay-checkout-dropin .container .top-line .close-button[data-v-7ef4cac2]{position:absolute;margin-top:1px;right:20px;text-decoration:underline;font-size:12px;cursor:pointer}.hipay-checkout-dropin .container .amount-line[data-v-7ef4cac2]{border-bottom:1px solid #979797}.hipay-checkout-dropin .container .success-row[data-v-7ef4cac2]{padding:80px 50px 30px;box-sizing:border-box}.hipay-checkout-dropin .container .success-row table.success[data-v-7ef4cac2]{font-size:14px}.hipay-checkout-dropin .container .success-row table.success td[data-v-7ef4cac2]:last-child{font-weight:600;text-align:right}.hipay-checkout-dropin .container .change-method[data-v-7ef4cac2]{font-size:13px;font-weight:500;color:#2967ae;cursor:pointer}.hipay-checkout-dropin .container .selected-method .options[data-v-7ef4cac2]{display:flex;flex-direction:column;align-items:center;width:100%}.hipay-checkout-dropin .container .selected-method .options #card-element[data-v-7ef4cac2]{display:block;width:100%;margin:32px 0;box-sizing:border-box;padding:.375rem .75rem;font-size:1rem;font-weight:400;color:#495057;background-color:#fff;background-clip:padding-box;border:1px solid #ced4da;border-radius:.25rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out}.hipay-checkout-dropin .container .selected-method .options .qr-spinner[data-v-7ef4cac2]{display:flex;align-items:center;justify-content:center;height:231px;width:231px}.hipay-checkout-dropin .container .selected-method .options .qr-code[data-v-7ef4cac2]{height:227px;width:227px;overflow:hidden;box-shadow:0 5px 10px 0 rgba(0,0,0,.2)}.hipay-checkout-dropin .container .selected-method .options .qr-code.samsung[data-v-7ef4cac2]{border-radius:4px;height:231px;width:231px}.hipay-checkout-dropin .container .methods[data-v-7ef4cac2]{overflow-y:auto;overflow-x:hidden}.hipay-checkout-dropin .container .methods .payment-method[data-v-7ef4cac2]{width:100%;border:1px solid #011b5f;border-radius:5px;min-height:54px;height:54px;margin-top:12px;cursor:pointer;position:relative}.hipay-checkout-dropin .container .methods .payment-method.selected[data-v-7ef4cac2]{background-color:rgba(0,0,0,.1)}.hipay-checkout-dropin .container .methods .payment-method .disabler[data-v-7ef4cac2]{position:absolute;top:-1;left:-1;bottom:-1;right:-1;border-radius:5px;background-color:hsla(0,0%,100%,.8);color:red;z-index:2;font-size:14px;font-weight:700}.hipay-checkout-dropin .container .amount .input-label[data-v-7ef4cac2]{font-size:14px;font-weight:500;margin-bottom:4px}.hipay-checkout-dropin .container .amount .input-label[data-v-7ef4cac2]:not(:first-child){margin-top:24px}.hipay-checkout-dropin .container .amount .input-sublabel[data-v-7ef4cac2]{margin-top:2px;font-size:12px;color:#9b9b9b}.hipay-checkout-dropin .container .amount .amount-container[data-v-7ef4cac2]{position:relative}.hipay-checkout-dropin .container .amount .amount-container .currency[data-v-7ef4cac2]{position:absolute;left:0;top:0;height:calc(100% - 2px);width:70px;background-color:#d8d8d8;border-top-left-radius:4px;border-bottom-left-radius:4px;margin:1px}.hipay-checkout-dropin .container .amount input[data-v-7ef4cac2]{height:30px;border:1px solid #9b9b9b;border-radius:4px;font-size:14px;padding:0 8px;margin-left:0;margin-right:0}.hipay-checkout-dropin .container .amount input.amount[data-v-7ef4cac2]{padding-left:70px;text-align:center}.hipay-checkout-dropin .container .amount input[data-v-7ef4cac2]:focus{outline:none}.hipay-checkout-dropin .container .amount input.error[data-v-7ef4cac2]{border:1px solid red;color:red}.hipay-checkout-dropin .container .bottom-line a[data-v-7ef4cac2]{text-decoration:none;color:#011b5f}", ""]);
+exports.push([module.i, ".hipay-checkout-dropin[data-v-a8f1c6cc]{position:fixed;bottom:0;top:0;left:0;right:0;backdrop-filter:blur(12px) brightness(70%);-webkit-backdrop-filter:blur(12px) brightness(70%);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:3;font-family:Inter,sans-serif}.hipay-checkout-dropin .container[data-v-a8f1c6cc]{background-color:#fff;color:#4a4a4a}@media screen and (max-width:576px){.hipay-checkout-dropin .container[data-v-a8f1c6cc]{width:100%;height:100%}}@media screen and (min-width:576px){.hipay-checkout-dropin .container[data-v-a8f1c6cc]{box-shadow:0 0 10px rgba(0,0,0,.3);border-radius:24px;width:355px;height:600px}}.hipay-checkout-dropin .container .row[data-v-a8f1c6cc]{width:100%;box-sizing:border-box}@media screen and (max-width:576px){.hipay-checkout-dropin .container .row[data-v-a8f1c6cc]{padding:20px}}@media screen and (min-width:576px){.hipay-checkout-dropin .container .row[data-v-a8f1c6cc]{padding:20px}}.hipay-checkout-dropin .container .top-line[data-v-a8f1c6cc]{position:relative;color:#4a4a4a;border-bottom:1px solid #979797;height:57px}.hipay-checkout-dropin .container .top-line .close-button[data-v-a8f1c6cc]{position:absolute;margin-top:1px;right:20px;text-decoration:underline;font-size:12px;cursor:pointer}.hipay-checkout-dropin .container .amount-line[data-v-a8f1c6cc]{border-bottom:1px solid #979797}.hipay-checkout-dropin .container .success-row[data-v-a8f1c6cc]{padding:80px 50px 30px;box-sizing:border-box}.hipay-checkout-dropin .container .success-row table.success[data-v-a8f1c6cc]{font-size:14px}.hipay-checkout-dropin .container .success-row table.success td[data-v-a8f1c6cc]:last-child{font-weight:600;text-align:right}.hipay-checkout-dropin .container .change-method[data-v-a8f1c6cc]{font-size:13px;font-weight:500;color:#2967ae;cursor:pointer}.hipay-checkout-dropin .container .selected-method .options[data-v-a8f1c6cc]{display:flex;flex-direction:column;align-items:center;width:100%}.hipay-checkout-dropin .container .selected-method .options #card-element[data-v-a8f1c6cc]{display:block;width:100%;margin-top:8px;box-sizing:border-box;padding:.375rem .75rem;font-size:1rem;font-weight:400;color:#495057;background-color:#fff;background-clip:padding-box;border:1px solid #ced4da;border-radius:.25rem;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out}.hipay-checkout-dropin .container .selected-method .options .apple-pay[data-v-a8f1c6cc]{display:flex;flex-direction:column;align-items:center;position:relative;height:90px}.hipay-checkout-dropin .container .selected-method .options .apple-pay .inner[data-v-a8f1c6cc]{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center}.hipay-checkout-dropin .container .selected-method .options .apple-pay .inner #payment-request-button[data-v-a8f1c6cc]{width:100%}.hipay-checkout-dropin .container .selected-method .options.options-fpx[data-v-a8f1c6cc]{min-width:300px}.hipay-checkout-dropin .container .selected-method .options.options-fpx #fpx-bank-element[data-v-a8f1c6cc]{width:250px;margin-bottom:16px}.hipay-checkout-dropin .container .selected-method .options .qr-spinner[data-v-a8f1c6cc]{display:flex;align-items:center;justify-content:center;height:231px;width:231px}.hipay-checkout-dropin .container .selected-method .options .qr-code[data-v-a8f1c6cc]{height:227px;width:227px;overflow:hidden;box-shadow:0 5px 10px 0 rgba(0,0,0,.2)}.hipay-checkout-dropin .container .selected-method .options .qr-code.samsung[data-v-a8f1c6cc]{border-radius:4px;height:231px;width:231px}.hipay-checkout-dropin .container .methods[data-v-a8f1c6cc]{overflow-y:auto;overflow-x:hidden}.hipay-checkout-dropin .container .methods .payment-method[data-v-a8f1c6cc]{width:100%;border:1px solid #011b5f;border-radius:5px;min-height:54px;height:54px;margin-top:12px;cursor:pointer;position:relative}.hipay-checkout-dropin .container .methods .payment-method.selected[data-v-a8f1c6cc]{background-color:rgba(0,0,0,.1)}.hipay-checkout-dropin .container .methods .payment-method .disabler[data-v-a8f1c6cc]{position:absolute;top:-1;left:-1;bottom:-1;right:-1;border-radius:5px;background-color:hsla(0,0%,100%,.8);color:red;z-index:2;font-size:14px;font-weight:700}.hipay-checkout-dropin .container .amount .input-label[data-v-a8f1c6cc]{font-size:14px;font-weight:500;margin-bottom:4px}.hipay-checkout-dropin .container .amount .input-label[data-v-a8f1c6cc]:not(:first-child){margin-top:24px}.hipay-checkout-dropin .container .amount .input-sublabel[data-v-a8f1c6cc]{margin-top:2px;font-size:12px;color:#9b9b9b}.hipay-checkout-dropin .container .amount .amount-container[data-v-a8f1c6cc]{position:relative}.hipay-checkout-dropin .container .amount .amount-container .currency[data-v-a8f1c6cc]{position:absolute;left:0;top:0;height:calc(100% - 2px);width:70px;background-color:#d8d8d8;border-top-left-radius:4px;border-bottom-left-radius:4px;margin:1px}.hipay-checkout-dropin .container .amount input[data-v-a8f1c6cc]{height:30px;border:1px solid #9b9b9b;border-radius:4px;font-size:14px;padding:0 8px;margin-left:0;margin-right:0}.hipay-checkout-dropin .container .amount input.amount[data-v-a8f1c6cc]{padding-left:70px;text-align:center}.hipay-checkout-dropin .container .amount input[data-v-a8f1c6cc]:focus{outline:none}.hipay-checkout-dropin .container .amount input.error[data-v-a8f1c6cc]{border:1px solid red;color:red}.hipay-checkout-dropin .container .bottom-line a[data-v-a8f1c6cc]{text-decoration:none;color:#011b5f}.hipay-checkout-dropin .slide-y-enter-active[data-v-a8f1c6cc],.hipay-checkout-dropin .slide-y-leave-active[data-v-a8f1c6cc]{transition:max-height .3s ease-in}.hipay-checkout-dropin .slide-y-enter-to[data-v-a8f1c6cc],.hipay-checkout-dropin .slide-y-leave[data-v-a8f1c6cc]{max-height:90px;overflow:hidden}.hipay-checkout-dropin .slide-y-enter[data-v-a8f1c6cc],.hipay-checkout-dropin .slide-y-leave-to[data-v-a8f1c6cc]{overflow:hidden;max-height:0}.hipay-checkout-dropin .alert[data-v-a8f1c6cc]{padding:.75rem 1.25rem;margin-bottom:1rem;border:1px solid transparent;border-radius:.25rem}.hipay-checkout-dropin .alert-danger[data-v-a8f1c6cc]{color:#721c24;background-color:#f8d7da;border-color:#f5c6cb}", ""]);
 
 // exports
 
 
 /***/ }),
-/* 116 */
+/* 117 */
 /***/ (function(module, exports) {
 
 /**
@@ -19453,13 +19621,58 @@ module.exports = function listToStyles (parentId, list) {
 
 
 /***/ }),
-/* 117 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(118);
+module.exports = { "default": __webpack_require__(119), __esModule: true };
 
 /***/ }),
-/* 118 */
+/* 119 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(120);
+module.exports = __webpack_require__(3).Object.keys;
+
+
+/***/ }),
+/* 120 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// 19.1.2.14 Object.keys(O)
+var toObject = __webpack_require__(28);
+var $keys = __webpack_require__(22);
+
+__webpack_require__(121)('keys', function () {
+  return function keys(it) {
+    return $keys(toObject(it));
+  };
+});
+
+
+/***/ }),
+/* 121 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// most Object methods by ES6 should accept primitives
+var $export = __webpack_require__(7);
+var core = __webpack_require__(3);
+var fails = __webpack_require__(18);
+module.exports = function (KEY, exec) {
+  var fn = (core.Object || {})[KEY] || Object[KEY];
+  var exp = {};
+  exp[KEY] = exec(fn);
+  $export($export.S + $export.F * fails(function () { fn(1); }), 'Object', exp);
+};
+
+
+/***/ }),
+/* 122 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(123);
+
+/***/ }),
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19467,9 +19680,9 @@ module.exports = __webpack_require__(118);
 
 var utils = __webpack_require__(0);
 var bind = __webpack_require__(52);
-var Axios = __webpack_require__(119);
+var Axios = __webpack_require__(124);
 var mergeConfig = __webpack_require__(58);
-var defaults = __webpack_require__(30);
+var defaults = __webpack_require__(32);
 
 /**
  * Create an instance of Axios
@@ -19503,17 +19716,17 @@ axios.create = function create(instanceConfig) {
 
 // Expose Cancel & CancelToken
 axios.Cancel = __webpack_require__(59);
-axios.CancelToken = __webpack_require__(133);
+axios.CancelToken = __webpack_require__(138);
 axios.isCancel = __webpack_require__(57);
 
 // Expose all/spread
 axios.all = function all(promises) {
   return Promise.all(promises);
 };
-axios.spread = __webpack_require__(134);
+axios.spread = __webpack_require__(139);
 
 // Expose isAxiosError
-axios.isAxiosError = __webpack_require__(135);
+axios.isAxiosError = __webpack_require__(140);
 
 module.exports = axios;
 
@@ -19522,7 +19735,7 @@ module.exports.default = axios;
 
 
 /***/ }),
-/* 119 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19530,10 +19743,10 @@ module.exports.default = axios;
 
 var utils = __webpack_require__(0);
 var buildURL = __webpack_require__(53);
-var InterceptorManager = __webpack_require__(120);
-var dispatchRequest = __webpack_require__(121);
+var InterceptorManager = __webpack_require__(125);
+var dispatchRequest = __webpack_require__(126);
 var mergeConfig = __webpack_require__(58);
-var validator = __webpack_require__(131);
+var validator = __webpack_require__(136);
 
 var validators = validator.validators;
 /**
@@ -19677,7 +19890,7 @@ module.exports = Axios;
 
 
 /***/ }),
-/* 120 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19738,16 +19951,16 @@ module.exports = InterceptorManager;
 
 
 /***/ }),
-/* 121 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var utils = __webpack_require__(0);
-var transformData = __webpack_require__(122);
+var transformData = __webpack_require__(127);
 var isCancel = __webpack_require__(57);
-var defaults = __webpack_require__(30);
+var defaults = __webpack_require__(32);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -19827,14 +20040,14 @@ module.exports = function dispatchRequest(config) {
 
 
 /***/ }),
-/* 122 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var utils = __webpack_require__(0);
-var defaults = __webpack_require__(30);
+var defaults = __webpack_require__(32);
 
 /**
  * Transform the data for a request or a response
@@ -19856,7 +20069,7 @@ module.exports = function transformData(data, headers, fns) {
 
 
 /***/ }),
-/* 123 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19875,7 +20088,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
 
 
 /***/ }),
-/* 124 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19907,7 +20120,7 @@ module.exports = function settle(resolve, reject, response) {
 
 
 /***/ }),
-/* 125 */
+/* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19967,14 +20180,14 @@ module.exports = (
 
 
 /***/ }),
-/* 126 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var isAbsoluteURL = __webpack_require__(127);
-var combineURLs = __webpack_require__(128);
+var isAbsoluteURL = __webpack_require__(132);
+var combineURLs = __webpack_require__(133);
 
 /**
  * Creates a new URL by combining the baseURL with the requestedURL,
@@ -19994,7 +20207,7 @@ module.exports = function buildFullPath(baseURL, requestedURL) {
 
 
 /***/ }),
-/* 127 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20015,7 +20228,7 @@ module.exports = function isAbsoluteURL(url) {
 
 
 /***/ }),
-/* 128 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20036,7 +20249,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
 
 
 /***/ }),
-/* 129 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20096,7 +20309,7 @@ module.exports = function parseHeaders(headers) {
 
 
 /***/ }),
-/* 130 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20171,13 +20384,13 @@ module.exports = (
 
 
 /***/ }),
-/* 131 */
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var pkg = __webpack_require__(132);
+var pkg = __webpack_require__(137);
 
 var validators = {};
 
@@ -20283,13 +20496,13 @@ module.exports = {
 
 
 /***/ }),
-/* 132 */
+/* 137 */
 /***/ (function(module, exports) {
 
 module.exports = {"_args":[["axios@0.21.4","/home/adv/hitpay/hitpay-js"]],"_from":"axios@0.21.4","_id":"axios@0.21.4","_inBundle":false,"_integrity":"sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==","_location":"/axios","_phantomChildren":{},"_requested":{"type":"version","registry":true,"raw":"axios@0.21.4","name":"axios","escapedName":"axios","rawSpec":"0.21.4","saveSpec":null,"fetchSpec":"0.21.4"},"_requiredBy":["/"],"_resolved":"https://registry.npmjs.org/axios/-/axios-0.21.4.tgz","_spec":"0.21.4","_where":"/home/adv/hitpay/hitpay-js","author":{"name":"Matt Zabriskie"},"browser":{"./lib/adapters/http.js":"./lib/adapters/xhr.js"},"bugs":{"url":"https://github.com/axios/axios/issues"},"bundlesize":[{"path":"./dist/axios.min.js","threshold":"5kB"}],"dependencies":{"follow-redirects":"^1.14.0"},"description":"Promise based HTTP client for the browser and node.js","devDependencies":{"coveralls":"^3.0.0","es6-promise":"^4.2.4","grunt":"^1.3.0","grunt-banner":"^0.6.0","grunt-cli":"^1.2.0","grunt-contrib-clean":"^1.1.0","grunt-contrib-watch":"^1.0.0","grunt-eslint":"^23.0.0","grunt-karma":"^4.0.0","grunt-mocha-test":"^0.13.3","grunt-ts":"^6.0.0-beta.19","grunt-webpack":"^4.0.2","istanbul-instrumenter-loader":"^1.0.0","jasmine-core":"^2.4.1","karma":"^6.3.2","karma-chrome-launcher":"^3.1.0","karma-firefox-launcher":"^2.1.0","karma-jasmine":"^1.1.1","karma-jasmine-ajax":"^0.1.13","karma-safari-launcher":"^1.0.0","karma-sauce-launcher":"^4.3.6","karma-sinon":"^1.0.5","karma-sourcemap-loader":"^0.3.8","karma-webpack":"^4.0.2","load-grunt-tasks":"^3.5.2","minimist":"^1.2.0","mocha":"^8.2.1","sinon":"^4.5.0","terser-webpack-plugin":"^4.2.3","typescript":"^4.0.5","url-search-params":"^0.10.0","webpack":"^4.44.2","webpack-dev-server":"^3.11.0"},"homepage":"https://axios-http.com","jsdelivr":"dist/axios.min.js","keywords":["xhr","http","ajax","promise","node"],"license":"MIT","main":"index.js","name":"axios","repository":{"type":"git","url":"git+https://github.com/axios/axios.git"},"scripts":{"build":"NODE_ENV=production grunt build","coveralls":"cat coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js","examples":"node ./examples/server.js","fix":"eslint --fix lib/**/*.js","postversion":"git push && git push --tags","preversion":"npm test","start":"node ./sandbox/server.js","test":"grunt test","version":"npm run build && grunt version && git add -A dist && git add CHANGELOG.md bower.json package.json"},"typings":"./index.d.ts","unpkg":"dist/axios.min.js","version":"0.21.4"}
 
 /***/ }),
-/* 133 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20353,7 +20566,7 @@ module.exports = CancelToken;
 
 
 /***/ }),
-/* 134 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20387,7 +20600,7 @@ module.exports = function spread(callback) {
 
 
 /***/ }),
-/* 135 */
+/* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20405,15 +20618,15 @@ module.exports = function isAxiosError(payload) {
 
 
 /***/ }),
-/* 136 */
+/* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-const canPromise = __webpack_require__(137)
+const canPromise = __webpack_require__(142)
 
-const QRCode = __webpack_require__(138)
-const CanvasRenderer = __webpack_require__(156)
-const SvgRenderer = __webpack_require__(157)
+const QRCode = __webpack_require__(143)
+const CanvasRenderer = __webpack_require__(161)
+const SvgRenderer = __webpack_require__(162)
 
 function renderCanvas (renderFunc, canvas, text, opts, cb) {
   const args = [].slice.call(arguments, 1)
@@ -20487,7 +20700,7 @@ exports.toString = renderCanvas.bind(null, function (data, _, opts) {
 
 
 /***/ }),
-/* 137 */
+/* 142 */
 /***/ (function(module, exports) {
 
 // can-promise has a crash in some versions of react native that dont have
@@ -20500,22 +20713,22 @@ module.exports = function () {
 
 
 /***/ }),
-/* 138 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const Utils = __webpack_require__(5)
-const ECLevel = __webpack_require__(31)
-const BitBuffer = __webpack_require__(139)
-const BitMatrix = __webpack_require__(140)
-const AlignmentPattern = __webpack_require__(141)
-const FinderPattern = __webpack_require__(142)
-const MaskPattern = __webpack_require__(143)
+const ECLevel = __webpack_require__(33)
+const BitBuffer = __webpack_require__(144)
+const BitMatrix = __webpack_require__(145)
+const AlignmentPattern = __webpack_require__(146)
+const FinderPattern = __webpack_require__(147)
+const MaskPattern = __webpack_require__(148)
 const ECCode = __webpack_require__(60)
-const ReedSolomonEncoder = __webpack_require__(144)
-const Version = __webpack_require__(147)
-const FormatInfo = __webpack_require__(148)
+const ReedSolomonEncoder = __webpack_require__(149)
+const Version = __webpack_require__(152)
+const FormatInfo = __webpack_require__(153)
 const Mode = __webpack_require__(6)
-const Segments = __webpack_require__(149)
+const Segments = __webpack_require__(154)
 
 /**
  * QRCode for JavaScript
@@ -21001,7 +21214,7 @@ exports.create = function create (data, options) {
 
 
 /***/ }),
-/* 139 */
+/* 144 */
 /***/ (function(module, exports) {
 
 function BitBuffer () {
@@ -21044,7 +21257,7 @@ module.exports = BitBuffer
 
 
 /***/ }),
-/* 140 */
+/* 145 */
 /***/ (function(module, exports) {
 
 /**
@@ -21115,7 +21328,7 @@ module.exports = BitMatrix
 
 
 /***/ }),
-/* 141 */
+/* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -21204,7 +21417,7 @@ exports.getPositions = function getPositions (version) {
 
 
 /***/ }),
-/* 142 */
+/* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const getSymbolSize = __webpack_require__(5).getSymbolSize
@@ -21232,7 +21445,7 @@ exports.getPositions = function getPositions (version) {
 
 
 /***/ }),
-/* 143 */
+/* 148 */
 /***/ (function(module, exports) {
 
 /**
@@ -21472,10 +21685,10 @@ exports.getBestMask = function getBestMask (data, setupFormatFunc) {
 
 
 /***/ }),
-/* 144 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const Polynomial = __webpack_require__(145)
+const Polynomial = __webpack_require__(150)
 
 function ReedSolomonEncoder (degree) {
   this.genPoly = undefined
@@ -21534,10 +21747,10 @@ module.exports = ReedSolomonEncoder
 
 
 /***/ }),
-/* 145 */
+/* 150 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const GF = __webpack_require__(146)
+const GF = __webpack_require__(151)
 
 /**
  * Multiplies two polynomials inside Galois Field
@@ -21602,7 +21815,7 @@ exports.generateECPolynomial = function generateECPolynomial (degree) {
 
 
 /***/ }),
-/* 146 */
+/* 151 */
 /***/ (function(module, exports) {
 
 const EXP_TABLE = new Uint8Array(512)
@@ -21677,12 +21890,12 @@ exports.mul = function mul (x, y) {
 
 
 /***/ }),
-/* 147 */
+/* 152 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const Utils = __webpack_require__(5)
 const ECCode = __webpack_require__(60)
-const ECLevel = __webpack_require__(31)
+const ECLevel = __webpack_require__(33)
 const Mode = __webpack_require__(6)
 const VersionCheck = __webpack_require__(61)
 
@@ -21846,7 +22059,7 @@ exports.getEncodedBits = function getEncodedBits (version) {
 
 
 /***/ }),
-/* 148 */
+/* 153 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const Utils = __webpack_require__(5)
@@ -21881,17 +22094,17 @@ exports.getEncodedBits = function getEncodedBits (errorCorrectionLevel, mask) {
 
 
 /***/ }),
-/* 149 */
+/* 154 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const Mode = __webpack_require__(6)
-const NumericData = __webpack_require__(150)
-const AlphanumericData = __webpack_require__(151)
-const ByteData = __webpack_require__(152)
-const KanjiData = __webpack_require__(154)
+const NumericData = __webpack_require__(155)
+const AlphanumericData = __webpack_require__(156)
+const ByteData = __webpack_require__(157)
+const KanjiData = __webpack_require__(159)
 const Regex = __webpack_require__(62)
 const Utils = __webpack_require__(5)
-const dijkstra = __webpack_require__(155)
+const dijkstra = __webpack_require__(160)
 
 /**
  * Returns UTF8 byte length
@@ -22217,7 +22430,7 @@ exports.rawSplit = function rawSplit (data) {
 
 
 /***/ }),
-/* 150 */
+/* 155 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const Mode = __webpack_require__(6)
@@ -22266,7 +22479,7 @@ module.exports = NumericData
 
 
 /***/ }),
-/* 151 */
+/* 156 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const Mode = __webpack_require__(6)
@@ -22331,10 +22544,10 @@ module.exports = AlphanumericData
 
 
 /***/ }),
-/* 152 */
+/* 157 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const encodeUtf8 = __webpack_require__(153)
+const encodeUtf8 = __webpack_require__(158)
 const Mode = __webpack_require__(6)
 
 function ByteData (data) {
@@ -22364,7 +22577,7 @@ module.exports = ByteData
 
 
 /***/ }),
-/* 153 */
+/* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22426,7 +22639,7 @@ module.exports = function encodeUtf8 (input) {
 
 
 /***/ }),
-/* 154 */
+/* 159 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const Mode = __webpack_require__(6)
@@ -22486,7 +22699,7 @@ module.exports = KanjiData
 
 
 /***/ }),
-/* 155 */
+/* 160 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22658,7 +22871,7 @@ if (true) {
 
 
 /***/ }),
-/* 156 */
+/* 161 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const Utils = __webpack_require__(63)
@@ -22727,7 +22940,7 @@ exports.renderToDataURL = function renderToDataURL (qrData, canvas, options) {
 
 
 /***/ }),
-/* 157 */
+/* 162 */
 /***/ (function(module, exports, __webpack_require__) {
 
 const Utils = __webpack_require__(63)
@@ -22814,17 +23027,17 @@ exports.render = function render (qrData, options, cb) {
 
 
 /***/ }),
-/* 158 */
+/* 163 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_PaymentMethodIcon_vue__ = __webpack_require__(64);
 /* unused harmony namespace reexport */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_38ce952c_hasScoped_false_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_PaymentMethodIcon_vue__ = __webpack_require__(161);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_69764b54_hasScoped_false_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_PaymentMethodIcon_vue__ = __webpack_require__(166);
 function injectStyle (ssrContext) {
-  __webpack_require__(159)
+  __webpack_require__(164)
 }
-var normalizeComponent = __webpack_require__(19)
+var normalizeComponent = __webpack_require__(14)
 /* script */
 
 
@@ -22840,7 +23053,7 @@ var __vue_scopeId__ = null
 var __vue_module_identifier__ = null
 var Component = normalizeComponent(
   __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_PaymentMethodIcon_vue__["a" /* default */],
-  __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_38ce952c_hasScoped_false_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_PaymentMethodIcon_vue__["a" /* default */],
+  __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_69764b54_hasScoped_false_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_PaymentMethodIcon_vue__["a" /* default */],
   __vue_template_functional__,
   __vue_styles__,
   __vue_scopeId__,
@@ -22851,23 +23064,23 @@ var Component = normalizeComponent(
 
 
 /***/ }),
-/* 159 */
+/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(160);
+var content = __webpack_require__(165);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(18)("18e58200", content, true, {});
+var update = __webpack_require__(13)("23a51805", content, true, {});
 
 /***/ }),
-/* 160 */
+/* 165 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(17)(false);
+exports = module.exports = __webpack_require__(12)(false);
 // imports
 
 
@@ -22878,24 +23091,24 @@ exports.push([module.i, ".payment-method-icon img,.payment-method-icon svg{displ
 
 
 /***/ }),
-/* 161 */
+/* 166 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"payment-method-icon"},[(_vm.value === 'alipay')?_c('svg',{attrs:{"width":"84px","height":"23px","viewBox":"0 0 84 23","version":"1.1","xmlns":"http://www.w3.org/2000/svg","xmlns:xlink":"http://www.w3.org/1999/xlink"}},[_c('defs',[_c('rect',{attrs:{"id":"path-1","x":"0","y":"0","width":"135","height":"41","rx":"8"}}),_vm._v(" "),_c('filter',{attrs:{"x":"-11.9%","y":"-34.1%","width":"123.7%","height":"178.0%","filterUnits":"objectBoundingBox","id":"filter-2"}},[_c('feOffset',{attrs:{"dx":"0","dy":"2","in":"SourceAlpha","result":"shadowOffsetOuter1"}}),_vm._v(" "),_c('feGaussianBlur',{attrs:{"stdDeviation":"5","in":"shadowOffsetOuter1","result":"shadowBlurOuter1"}}),_vm._v(" "),_c('feColorMatrix',{attrs:{"values":"0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.2 0","type":"matrix","in":"shadowBlurOuter1"}})],1)]),_vm._v(" "),_c('g',{attrs:{"id":"Symbols","stroke":"none","stroke-width":"1","fill":"none","fill-rule":"evenodd"}},[_c('g',{attrs:{"id":"payments_visa","transform":"translate(-347.000000, -46.000000)"}},[_c('g',{attrs:{"id":"Group-4","transform":"translate(0.000000, 37.000000)"}},[_c('g',{attrs:{"id":"alipay","transform":"translate(304.000000, 0.000000)"}},[_c('g',{attrs:{"transform":"translate(43.000000, 9.000000)","fill-rule":"nonzero","id":"Shape"}},[_c('path',{attrs:{"d":"M18.550875,0.563325 L4.209675,0.563325 C2.34765,0.563325 0.8436,2.067375 0.8436,3.9294 L0.8436,18.245625 C0.8436,20.132625 2.34765,21.636675 4.209675,21.636675 L18.523125,21.636675 C20.4129,21.636675 21.91695,20.132625 21.91695,18.273375 L21.91695,18.051375 C21.91695,18.051375 16.4724,15.7842 13.705725,14.438325 C11.8437,16.6833 9.46275,18.079125 6.99855,18.079125 C2.811075,18.079125 1.3875,14.41335 3.35775,12.007425 C3.7962,11.485725 4.53435,10.964025 5.658225,10.6893 C7.437,10.253625 10.28415,10.964025 12.93705,11.840925 C13.40325,10.964025 13.81395,9.9789 14.11365,8.938275 L5.9052,8.938275 L5.9052,8.11965 L10.148175,8.11965 L10.148175,6.612825 L5.058825,6.612825 L5.058825,5.791425 L10.175925,5.791425 L10.175925,3.654675 C10.175925,3.654675 10.175925,3.299475 10.531125,3.299475 L12.612375,3.299475 L12.612375,5.78865 L17.67675,5.78865 L17.67675,6.61005 L12.612375,6.61005 L12.612375,8.116875 L16.747125,8.116875 C16.383531,9.6718498 15.7935623,11.1650035 14.9961,12.54855 C16.25595,13.01475 17.37705,13.42545 18.2262,13.72515 C21.237075,14.738025 21.9225,14.793525 21.9225,14.793525 L21.9225,3.9294 C21.9194384,2.06947071 20.4108068,0.563325 18.550875,0.563325","fill":"#00A0E9"}}),_vm._v(" "),_c('path',{attrs:{"d":"M4.0737,12.54855 C2.4309,13.9194 3.416025,16.436325 6.729375,16.436325 C8.644125,16.436325 10.56165,15.25695 12.0657,13.372725 C9.92895,12.357075 8.09745,11.646675 6.15495,11.83815 C5.6055,11.8659 4.620375,12.085125 4.0737,12.54855","fill":"#00A0E9"}}),_vm._v(" "),_c('path',{attrs:{"d":"M30.733125,8.227875 L33.141825,13.428225 L28.2162,13.428225 L30.733125,8.227875 Z M34.3434,16.1616 L37.243275,16.1616 L31.8237,4.392825 L31.03005,4.392825 C30.894075,4.392825 30.783075,4.42335 30.67485,4.503825 C30.566625,4.5843 30.483375,4.670325 30.427875,4.77855 L24.927825,16.164375 L26.870325,16.164375 L27.85545,14.249625 L33.43875,14.249625 L34.3434,16.1616 L34.3434,16.1616 Z M41.078325,16.1616 L38.342175,16.1616 L38.342175,4.886775 C38.3486083,4.74807492 38.410358,4.61773819 38.5136156,4.52491061 C38.6168732,4.43208303 38.7530251,4.38450828 38.891625,4.392825 L41.106075,4.392825 L41.106075,16.1616 L41.078325,16.1616 L41.078325,16.1616 Z M43.2678,8.200125 C43.2678,8.061375 43.3233,7.95315 43.431525,7.84215 C43.5365672,7.74677184 43.6756168,7.69775435 43.81725,7.706175 L46.034475,7.706175 L46.034475,16.464075 L43.298325,16.464075 L43.298325,8.19735 L43.2678,8.19735 L43.2678,8.200125 Z M50.93235,14.055375 C50.9284743,14.463697 51.0848999,14.8572518 51.368025,15.1515 C51.50955,15.29025 51.69825,15.398475 51.889725,15.47895 C52.0812,15.559425 52.328175,15.587175 52.5474,15.587175 C52.766625,15.587175 52.98585,15.5067 53.177325,15.370725 C53.3925403,15.197597 53.5700774,14.9822861 53.699025,14.738025 C53.835,14.466075 53.976525,14.13585 54.057,13.7529 C54.1451909,13.3490077 54.1907653,12.9369776 54.192975,12.523575 C54.192975,11.94915 54.165225,11.457975 54.08475,11.019525 C54.004275,10.581075 53.8905,10.225875 53.754525,9.9234 C53.61855,9.620925 53.4576,9.4017 53.26335,9.265725 C53.0801432,9.12943522 52.858947,9.05376284 52.63065,9.049275 C52.4628338,9.05045123 52.2962111,9.07759764 52.1367,9.12975 C51.9774363,9.1843904 51.8297061,9.26813553 51.701025,9.376725 C51.56505,9.48495 51.423525,9.59595 51.290325,9.731925 C51.157125,9.8679 51.046125,10.00665 50.935125,10.1676 L50.935125,14.055375 L50.93235,14.055375 Z M48.193425,8.089125 C48.193425,7.95315 48.248925,7.8144 48.3294,7.733925 C48.4404,7.622925 48.5514,7.567425 48.687375,7.567425 L50.824125,7.567425 L50.824125,8.25285 C51.123825,8.005875 51.479025,7.78665 51.861975,7.62015 C52.2477,7.456425 52.7139,7.373175 53.23005,7.373175 C53.776725,7.373175 54.298425,7.484175 54.736875,7.7034 C55.203075,7.922625 55.586025,8.2251 55.91625,8.577525 C56.240925,8.96325 56.490675,9.398925 56.6544,9.892875 C56.818125,10.38405 56.929125,10.902975 56.929125,11.480175 C56.929125,12.190575 56.818125,12.84825 56.629425,13.450425 C56.2501341,14.595096 55.4188725,15.5346522 54.32895,16.0506 C53.782275,16.30035 53.15235,16.436325 52.4697,16.436325 C52.111725,16.436325 51.812025,16.436325 51.567825,16.408575 C51.3118725,16.3848732 51.0615586,16.3192478 50.8269,16.214325 L50.8269,19.71915 L48.198975,19.71915 L48.198975,8.089125 L48.193425,8.089125 Z M60.236925,13.455975 C60.2344842,12.4483945 61.0133323,11.6113148 62.018475,11.541225 C62.6484,11.485725 63.028575,11.6217 63.250575,11.76045 L63.250575,14.8518 C62.9276357,15.1856174 62.4829356,15.3739138 62.018475,15.3735007 C61.0044796,15.319799 60.2160344,14.4711765 60.236925,13.455975 L60.236925,13.455975 Z M63.960975,7.6812 C62.701125,7.323225 61.086075,7.24275 58.899375,7.817175 C58.97985,8.0364 59.0631,8.41935 59.143575,8.638575 C62.62065,8.0364 63.278325,8.499825 63.278325,10.00665 L63.278325,10.470075 C62.645625,10.414575 61.879725,10.3341 61.27755,10.30635 C58.899375,10.2786 58.04745,12.140625 58.04745,13.34775 C58.04745,15.426225 60.0177,17.36595 63.278325,15.920175 L63.278325,16.24485 L65.986725,16.24485 L65.986725,9.926175 C65.98395,8.6913 64.91835,7.95315 63.960975,7.6812 L63.960975,7.6812 Z M66.80535,7.40369999 L69.597,7.40369999 L72.363675,12.795525 L74.633625,7.733925 C74.689125,7.622925 74.744625,7.54245 74.85285,7.48695 C74.9523435,7.43231658 75.0640183,7.40369999 75.177525,7.40369999 L76.687125,7.40369999 L72.3054,17.1495 C71.2398,19.8024 68.695125,19.422225 68.228925,19.422225 L68.228925,17.94315 C68.584125,17.94315 69.760725,17.9709 70.276875,17.36595 C70.4058595,17.2007908 70.5079428,17.0162917 70.57935,16.819275 C70.659825,16.65555 70.715325,16.52235 70.798575,16.386375 L71.098275,15.6732 L66.80535,7.40369999 L66.80535,7.40369999 Z","fill":"#000000"}}),_vm._v(" "),_c('path',{attrs:{"d":"M46.00395,5.07825 C46.00395,5.763675 45.40455,6.31035 44.635875,6.31035 C43.869975,6.31035 43.2678,5.763675 43.2678,5.07825 C43.2678,4.392825 43.869975,3.848925 44.635875,3.848925 C45.40455,3.848925 46.00395,4.392825 46.00395,5.07825","fill":"#00A0E9"}}),_vm._v(" "),_c('path',{attrs:{"d":"M79.12635,5.217 L79.12635,5.436225 L79.6425,5.436225 L79.6425,6.8598 L79.9422,6.8598 L79.9422,5.436225 L80.4639,5.436225 L80.4639,5.217 L79.12635,5.217 Z M82.137225,5.217 L81.585,6.2271 L81.038325,5.217 L80.7636,5.217 L80.7636,6.8598 L81.038325,6.8598 L81.038325,5.763675 L81.476775,6.557325 L81.696,6.557325 L82.13445,5.763675 L82.13445,6.8598 L82.4064,6.8598 L82.4064,5.217 L82.137225,5.217 Z","fill":"#000000"}})])])])])])]):_vm._e(),_vm._v(" "),(_vm.value === 'card')?_c('svg',{attrs:{"width":"81px","height":"20px","viewBox":"0 0 81 20","version":"1.1","xmlns":"http://www.w3.org/2000/svg","xmlns:xlink":"http://www.w3.org/1999/xlink"}},[_c('g',{attrs:{"id":"Symbols","stroke":"none","stroke-width":"1","fill":"none","fill-rule":"evenodd"}},[_c('g',{attrs:{"id":"payments_paynow-copy","transform":"translate(-149.000000, -44.000000)"}},[_c('g',{attrs:{"id":"Group-4","transform":"translate(1.000000, 33.000000)"}},[_c('g',{attrs:{"id":"Cards-logo","transform":"translate(140.000000, 0.000000)"}},[_c('g',{attrs:{"id":"Group-2","transform":"translate(8.000000, 11.000000)"}},[_c('text',{attrs:{"id":"CARD","font-family":"SFProText-Regular, SF Pro Text, Helvetica","font-size":"15","font-weight":"normal","letter-spacing":"-0.00201366562","fill":"#000000"}},[_c('tspan',{attrs:{"x":"39","y":"15"}},[_vm._v("CARD")])]),_vm._v(" "),_c('g',{attrs:{"id":"credit-card","fill-rule":"nonzero"}},[_c('path',{attrs:{"d":"M2.91665413,0 L25.0833459,0 C26.6941693,0 28,1.32914778 28,2.96873434 L28,16.0312657 C28,17.6708522 26.6941693,19 25.0833459,19 L2.91665413,19 C1.30583068,19 0,17.6709079 0,16.0312657 L0,2.96879001 C0,1.32914778 1.30583068,0 2.91665413,0 Z","id":"Shape","fill":"#2196F3"}}),_vm._v(" "),_c('rect',{attrs:{"id":"Rectangle-path","fill":"#455A64","x":"0","y":"4","width":"28","height":"5"}}),_vm._v(" "),_c('g',{attrs:{"id":"Group","transform":"translate(4.000000, 12.000000)","fill":"#FAFAFA"}},[_c('path',{attrs:{"d":"M5.33333333,1.22222222 L0.592611111,1.22222222 C0.265333333,1.22222222 0,0.956888889 0,0.629611111 C0,0.302333333 0.265333333,0.037 0.592611111,0.037 L5.33333333,0.037 C5.66061111,0.037 5.92594444,0.302333333 5.92594444,0.629611111 C5.92594444,0.956888889 5.66061111,1.22222222 5.33333333,1.22222222 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M8.88888889,3.59261111 L0.592611111,3.59261111 C0.265333333,3.59261111 0,3.32727778 0,3 C0,2.67272222 0.265333333,2.40738889 0.592611111,2.40738889 L8.88888889,2.40738889 C9.21616667,2.40738889 9.4815,2.67272222 9.4815,3 C9.4815,3.32727778 9.21616667,3.59261111 8.88888889,3.59261111 Z","id":"Shape"}})])])])])])])])]):_vm._e(),_vm._v(" "),(_vm.value === 'paynow_online')?_c('svg',{attrs:{"width":"39px","height":"23px","viewBox":"0 0 39 23","version":"1.1","xmlns":"http://www.w3.org/2000/svg","xmlns:xlink":"http://www.w3.org/1999/xlink"}},[_c('g',{attrs:{"id":"Symbols","stroke":"none","stroke-width":"1","fill":"none","fill-rule":"evenodd"}},[_c('g',{attrs:{"id":"payments_visa","transform":"translate(-48.000000, -47.000000)"}},[_c('g',{attrs:{"id":"Group","transform":"translate(0.000000, 37.000000)"}},[_c('g',{attrs:{"id":"paynow","transform":"translate(48.000000, 10.000000)"}},[_c('image',{attrs:{"width":"39","height":"23","x":"0","y":"0","xlink:href":"data:image/png;base64,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"}})])])])])]):_vm._e(),_vm._v(" "),(_vm.value === 'wechat')?_c('svg',{attrs:{"width":"86px","height":"22px","viewBox":"0 0 86 22","version":"1.1","xmlns":"http://www.w3.org/2000/svg","xmlns:xlink":"http://www.w3.org/1999/xlink"}},[_c('g',{attrs:{"id":"Symbols","stroke":"none","stroke-width":"1","fill":"none","fill-rule":"evenodd"}},[_c('g',{attrs:{"id":"payments_paynow-copy","transform":"translate(-381.000000, -42.000000)","fill-rule":"nonzero"}},[_c('g',{attrs:{"id":"Group-4","transform":"translate(1.000000, 33.000000)"}},[_c('g',{attrs:{"id":"wechat","transform":"translate(372.000000, 0.000000)"}},[_c('g',{attrs:{"id":"wechatpay","transform":"translate(8.000000, 9.000000)"}},[_c('path',{attrs:{"d":"M8.38906337,13.5854975 C8.22457193,13.5854975 8.22457193,13.5854975 8.06008049,13.7574658 C7.73109762,13.7574658 7.56660618,13.5854975 7.40211474,13.4135291 L7.40211474,13.0695925 L5.26372604,8.25447947 C5.26372604,8.25447947 5.26372604,8.08251115 5.26372604,8.08251115 C5.26372604,7.91054282 5.42821748,7.7385745 5.59270891,7.7385745 C5.75720035,7.7385745 5.75720035,7.7385745 5.75720035,7.91054282 L8.22457193,9.63022605 C8.38906337,9.80219437 8.55355481,9.80219437 8.88253769,9.80219437 C9.04702913,9.80219437 9.21152056,9.80219437 9.21152056,9.80219437 L20.8904127,4.29920806 C18.4230411,1.5477149 15.1332124,0 11.5144007,0 C5.0992346,0 0,4.47117638 0,10.146131 C0,13.2415608 1.48042295,15.993054 3.94779453,17.7127372 C4.11228597,17.8847055 4.27677741,18.0566738 4.27677741,18.4006105 C4.27677741,18.4006105 4.27677741,18.5725788 4.27677741,18.5725788 C4.11228597,19.2604521 3.78330309,20.4642303 3.78330309,20.6361987 C3.78330309,20.808167 3.78330309,20.808167 3.78330309,20.9801353 C3.78330309,21.1521036 3.94779453,21.324072 4.11228597,21.324072 C4.11228597,21.324072 4.27677741,21.324072 4.27677741,21.324072 L6.74414899,19.7763571 C6.90864042,19.6043887 7.07313186,19.6043887 7.40211474,19.6043887 C7.56660618,19.6043887 7.56660618,19.6043887 7.73109762,19.6043887 C8.88253769,19.9483254 10.1984692,20.1202937 11.5144007,20.1202937 C17.9295668,20.1202937 23.0288014,15.6491173 23.0288014,9.97416269 C23.0288014,8.42644779 22.5353271,6.87873289 21.7128699,5.50298631 L8.38906337,13.5854975 L8.38906337,13.5854975 Z","id":"Shape","fill":"#39B54A"}}),_vm._v(" "),_c('g',{attrs:{"id":"Group-3","transform":"translate(27.000000, 5.000000)","fill":"#000000"}},[_c('path',{attrs:{"d":"M7.85547096,6.12942365 L7.60402064,6.65518341 C7.35257032,7.18094317 7.35257032,7.70670293 7.10112,8.23246269 C6.84966968,7.44382305 6.84966968,6.65518341 6.59821936,5.86654377 L5.34096777,1.13470594 L5.34096777,1.13470594 L4.58661681,1.13470594 L3.07791489,6.12942365 C2.82646457,6.91806329 2.57501425,7.70670293 2.57501425,8.49534257 L2.32356393,6.65518341 L1.06631233,1.13470594 L1.06631233,1.13470594 L0.0605110477,1.13470594 L2.32356393,10.0726219 L2.32356393,10.0726219 L3.07791489,10.0726219 L4.58661681,5.07790413 C4.83806713,4.28926449 5.08951745,3.50062485 5.08951745,2.97486509 C5.08951745,3.50062485 5.34096777,4.28926449 5.59241809,5.07790413 L6.84966968,10.0726219 L6.84966968,10.0726219 L7.60402064,10.0726219 L10.1185238,1.39758582 L10.1185238,1.39758582 L9.11272256,1.39758582 L7.85547096,6.12942365 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M13.1359277,3.50062485 C11.3757754,3.50062485 10.3699742,4.81502425 10.3699742,6.91806329 C10.1185238,8.49534257 11.3757754,10.0726219 12.8844774,10.0726219 C12.8844774,10.0726219 13.1359277,10.0726219 13.1359277,10.0726219 C13.8902786,10.0726219 14.3931793,10.0726219 15.1475302,9.54686209 L15.3989806,9.54686209 L14.8960799,9.02110233 L14.8960799,9.02110233 C14.3931793,9.28398221 13.8902786,9.28398221 13.387378,9.28398221 C12.1301264,9.28398221 11.3757754,8.49534257 11.3757754,6.91806329 L15.6504309,6.91806329 L15.6504309,6.91806329 C15.6504309,6.91806329 15.6504309,6.65518341 15.6504309,6.65518341 C15.6504309,6.12942365 15.3989806,5.34078401 15.1475302,4.81502425 C14.6446296,4.02638461 13.8902786,3.50062485 13.1359277,3.50062485 L13.1359277,3.50062485 Z M11.1243251,6.12942365 C11.1243251,5.07790413 11.8786761,4.28926449 12.8844774,4.28926449 C13.387378,4.28926449 13.6388283,4.28926449 13.8902786,4.81502425 C14.141729,5.07790413 14.3931793,5.60366389 14.3931793,6.12942365 L11.1243251,6.12942365 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M22.4395895,9.02110233 L22.4395895,9.02110233 C21.9366889,9.28398221 21.1823379,9.28398221 20.6794373,9.28398221 C18.919285,9.28398221 17.4105831,7.96958281 17.4105831,6.39230353 C17.4105831,6.12942365 17.4105831,5.86654377 17.4105831,5.86654377 C17.1591328,4.02638461 18.4163844,2.18622546 20.1765366,2.18622546 C20.427987,2.18622546 20.6794373,2.18622546 20.6794373,2.18622546 C21.1823379,2.18622546 21.6852386,2.18622546 22.1881392,2.44910533 L22.1881392,2.44910533 L22.6910398,1.6604657 L22.6910398,1.6604657 C22.1881392,1.39758582 21.4337882,1.13470594 20.6794373,1.13470594 C18.4163844,1.13470594 16.4047818,2.97486509 16.4047818,5.34078401 C16.4047818,5.60366389 16.4047818,5.60366389 16.4047818,5.86654377 C16.1533315,8.23246269 17.6620334,10.0726219 19.9250863,10.3355017 C20.1765366,10.3355017 20.1765366,10.3355017 20.427987,10.3355017 C21.1823379,10.3355017 21.9366889,10.0726219 22.6910398,9.80974197 L22.6910398,9.80974197 L22.4395895,9.02110233 L22.4395895,9.02110233 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M26.714245,3.50062485 C26.2113443,3.50062485 25.7084437,3.76350473 25.4569934,3.76350473 C25.205543,4.02638461 24.9540927,4.02638461 24.9540927,4.28926449 L24.9540927,0.871826056 L23.9482914,0.871826056 L23.9482914,10.0726219 L24.7026424,10.0726219 L24.7026424,6.12942365 C24.7026424,5.86654377 24.7026424,5.86654377 24.7026424,5.60366389 C24.9540927,4.81502425 25.4569934,4.28926449 26.2113443,4.28926449 C27.4685959,4.28926449 27.7200462,5.60366389 27.7200462,6.12942365 L27.7200462,9.80974197 L28.7258475,9.80974197 L28.7258475,5.86654377 C28.7258475,3.50062485 26.9656953,3.50062485 26.714245,3.50062485","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M37.0237081,2.18622546 L36.0179068,2.18622546 L36.0179068,3.50062485 L35.0121055,3.50062485 L35.0121055,4.28926449 L36.0179068,4.28926449 L36.0179068,7.96958281 C36.0179068,8.49534257 36.0179068,9.02110233 36.5208074,9.54686209 C36.7722578,9.80974197 37.2751584,10.0726219 37.5266087,10.0726219 C37.778059,10.0726219 38.0295093,10.0726219 38.53241,9.80974197 L38.7838603,9.80974197 L38.2809597,9.28398221 L38.2809597,9.28398221 L37.778059,9.28398221 C37.2751584,9.28398221 37.0237081,9.02110233 37.0237081,8.23246269 L37.0237081,4.28926449 L38.7838603,4.28926449 L38.7838603,3.50062485 L37.0237081,3.50062485 L37.0237081,2.18622546 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M44.5672177,1.13470594 C44.064317,1.13470594 43.3099661,1.13470594 42.8070654,1.39758582 L42.8070654,1.39758582 L42.8070654,10.0726219 L43.8128667,10.0726219 L43.8128667,6.39230353 C44.064317,6.39230353 44.3157673,6.39230353 44.5672177,6.39230353 C45.5730189,6.39230353 46.3273699,6.12942365 47.0817209,5.34078401 C47.5846215,4.81502425 47.8360718,4.28926449 47.5846215,3.50062485 C47.5846215,2.71198521 47.3331712,2.18622546 46.8302705,1.6604657 C46.3273699,1.39758582 45.5730189,0.871826056 44.5672177,1.13470594 L44.5672177,1.13470594 Z M43.5614164,1.92334558 C43.8128667,1.92334558 44.3157673,1.92334558 44.5672177,1.92334558 C45.8244693,1.92334558 46.5788202,2.44910533 46.5788202,3.76350473 C46.5788202,5.07790413 45.8244693,5.60366389 44.3157673,5.60366389 C44.064317,5.60366389 43.8128667,5.60366389 43.3099661,5.60366389 L43.5614164,1.92334558 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M57.391184,3.50062485 L55.8824821,7.44382305 C55.8824821,7.70670293 55.6310317,7.96958281 55.6310317,8.49534257 L55.3795814,7.70670293 L53.8708795,3.76350473 L53.8708795,3.76350473 L52.8650782,3.76350473 L55.1281311,9.54686209 C55.1281311,9.54686209 55.1281311,9.80974197 55.1281311,9.80974197 C55.1281311,9.80974197 55.1281311,9.80974197 55.1281311,10.0726219 C54.8766808,10.5983816 54.6252305,11.1241414 54.1223298,11.6499011 C53.8708795,11.912781 53.6194292,12.1756609 53.1165285,12.1756609 L52.8650782,12.1756609 L53.6194292,12.9643005 L53.6194292,12.9643005 C53.8708795,12.7014207 54.1223298,12.4385408 54.3737801,12.4385408 C55.3795814,11.3870213 55.8824821,10.0726219 56.3853827,8.75822245 L58.1455349,4.02638461 L58.1455349,3.76350473 L57.391184,3.50062485 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M34.2577546,8.49534257 L34.2577546,6.12942365 C34.2577546,4.55214437 33.5034036,3.50062485 31.9947017,3.50062485 C31.2403507,3.50062485 30.7374501,3.76350473 30.2345494,4.02638461 L30.2345494,4.02638461 L30.7374501,4.81502425 L30.7374501,4.81502425 C31.2403507,4.55214437 31.491801,4.28926449 31.9947017,4.28926449 L31.9947017,4.28926449 C32.246152,4.28926449 32.7490526,4.28926449 33.000503,4.55214437 C33.2519533,4.81502425 33.5034036,5.34078401 33.2519533,5.86654377 C32.246152,5.86654377 30.9889004,6.12942365 30.2345494,6.91806329 C29.7316488,7.18094317 29.7316488,7.70670293 29.7316488,8.49534257 C29.7316488,9.54686209 30.4859998,10.3355017 31.491801,10.3355017 C31.491801,10.3355017 31.491801,10.3355017 31.7432514,10.3355017 C32.4976023,10.3355017 33.000503,10.0726219 33.5034036,9.54686209 L33.5034036,10.0726219 L34.5092049,10.0726219 L34.5092049,9.80974197 C34.2577546,9.28398221 34.2577546,8.75822245 34.2577546,8.49534257 M31.2403507,7.44382305 C31.9947017,6.91806329 32.7490526,6.65518341 33.5034036,6.91806329 L33.5034036,6.91806329 L33.5034036,7.96958281 C33.5034036,7.96958281 33.5034036,8.23246269 33.5034036,8.23246269 C33.2519533,9.02110233 32.4976023,9.28398221 31.7432514,9.28398221 C31.2403507,9.28398221 30.7374501,8.75822245 30.7374501,8.23246269 C30.7374501,8.23246269 30.7374501,8.23246269 30.7374501,7.96958281 C30.7374501,7.96958281 30.9889004,7.44382305 31.2403507,7.44382305","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M52.1107273,8.49534257 L52.1107273,6.12942365 C52.1107273,4.55214437 51.3563763,3.50062485 49.8476744,3.50062485 C49.3447737,3.50062485 48.5904228,3.76350473 48.0875221,4.02638461 L48.0875221,4.02638461 L48.5904228,4.81502425 L48.5904228,4.81502425 C49.0933234,4.55214437 49.3447737,4.55214437 49.8476744,4.55214437 L49.8476744,4.55214437 C50.0991247,4.55214437 50.6020253,4.55214437 50.8534757,4.81502425 C51.104926,5.07790413 51.3563763,5.60366389 51.3563763,6.12942365 C50.350575,6.12942365 49.0933234,6.39230353 48.3389725,7.18094317 C48.0875221,7.44382305 47.8360718,8.23246269 47.8360718,8.75822245 C47.8360718,9.80974197 48.5904228,10.5983816 49.5962241,10.5983816 C49.5962241,10.5983816 49.5962241,10.5983816 49.8476744,10.5983816 C50.6020253,10.5983816 51.104926,10.3355017 51.6078266,9.80974197 L51.6078266,10.3355017 L52.6136279,10.3355017 L52.6136279,10.0726219 C52.3621776,9.28398221 52.3621776,8.75822245 52.1107273,8.49534257 L52.1107273,8.49534257 Z M51.6078266,7.96958281 C51.6078266,7.96958281 51.6078266,8.23246269 51.6078266,8.23246269 C51.3563763,9.02110233 50.6020253,9.28398221 50.0991247,9.28398221 C49.5962241,9.28398221 49.0933234,9.02110233 49.0933234,8.23246269 C49.0933234,8.23246269 49.0933234,8.23246269 49.0933234,7.96958281 C49.0933234,7.70670293 49.0933234,7.44382305 49.3447737,7.18094317 C50.0991247,6.65518341 50.8534757,6.39230353 51.6078266,6.65518341 L51.6078266,6.65518341 L51.6078266,7.96958281 Z","id":"Shape"}})])])])])])])]):_vm._e(),_vm._v(" "),(_vm.value === 'grabpay' || _vm.value === 'grabpay_direct')?_c('img',{attrs:{"width":"87","height":"23","src":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFcAAAAXCAYAAAB+kNMAAAAAAXNSR0IArs4c6QAAAKhlWElmTU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUAAAABAAAASgEbAAUAAAABAAAAUgExAAIAAAAkAAAAWodpAAQAAAABAAAAfgAAAAAAAABIAAAAAQAAAEgAAAABQWRvYmUgUGhvdG9zaG9wIENDIDIwMTggKE1hY2ludG9zaCkAAAOgAQADAAAAAQABAACgAgAEAAAAAQAAAFegAwAEAAAAAQAAABcAAAAAA52FUwAAAAlwSFlzAAALEwAACxMBAJqcGAAABBdpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDUuNC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iCiAgICAgICAgICAgIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIgogICAgICAgICAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgICAgICAgICAgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIj4KICAgICAgICAgPHhtcE1NOkluc3RhbmNlSUQ+eG1wLmlpZDpBNzczMDU5MDRGNUMxMUU4OEUxNTg3NDE4QTg5MTBBNTwveG1wTU06SW5zdGFuY2VJRD4KICAgICAgICAgPHhtcE1NOkRlcml2ZWRGcm9tIHJkZjpwYXJzZVR5cGU9IlJlc291cmNlIj4KICAgICAgICAgICAgPHN0UmVmOmluc3RhbmNlSUQ+eG1wLmlpZDpBNzczMDU4RTRGNUMxMUU4OEUxNTg3NDE4QTg5MTBBNTwvc3RS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"}}):_vm._e(),_vm._v(" "),(_vm.value === 'grabpay_paylater')?_c('img',{attrs:{"height":"23","src":"data:image/png;base64,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"}}):_vm._e(),_vm._v(" "),(_vm.value === 'shopee_pay')?_c('img',{attrs:{"height":"23","src":"data:image/png;base64,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"}}):_vm._e(),_vm._v(" "),(_vm.value === 'zip')?_c('img',{attrs:{"height":"23","src":"data:image/png;base64,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"}}):_vm._e()])}
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"payment-method-icon"},[(_vm.value === 'alipay')?_c('svg',{attrs:{"width":"84px","height":"23px","viewBox":"0 0 84 23","version":"1.1","xmlns":"http://www.w3.org/2000/svg","xmlns:xlink":"http://www.w3.org/1999/xlink"}},[_c('defs',[_c('rect',{attrs:{"id":"path-1","x":"0","y":"0","width":"135","height":"41","rx":"8"}}),_vm._v(" "),_c('filter',{attrs:{"x":"-11.9%","y":"-34.1%","width":"123.7%","height":"178.0%","filterUnits":"objectBoundingBox","id":"filter-2"}},[_c('feOffset',{attrs:{"dx":"0","dy":"2","in":"SourceAlpha","result":"shadowOffsetOuter1"}}),_vm._v(" "),_c('feGaussianBlur',{attrs:{"stdDeviation":"5","in":"shadowOffsetOuter1","result":"shadowBlurOuter1"}}),_vm._v(" "),_c('feColorMatrix',{attrs:{"values":"0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.2 0","type":"matrix","in":"shadowBlurOuter1"}})],1)]),_vm._v(" "),_c('g',{attrs:{"id":"Symbols","stroke":"none","stroke-width":"1","fill":"none","fill-rule":"evenodd"}},[_c('g',{attrs:{"id":"payments_visa","transform":"translate(-347.000000, -46.000000)"}},[_c('g',{attrs:{"id":"Group-4","transform":"translate(0.000000, 37.000000)"}},[_c('g',{attrs:{"id":"alipay","transform":"translate(304.000000, 0.000000)"}},[_c('g',{attrs:{"transform":"translate(43.000000, 9.000000)","fill-rule":"nonzero","id":"Shape"}},[_c('path',{attrs:{"d":"M18.550875,0.563325 L4.209675,0.563325 C2.34765,0.563325 0.8436,2.067375 0.8436,3.9294 L0.8436,18.245625 C0.8436,20.132625 2.34765,21.636675 4.209675,21.636675 L18.523125,21.636675 C20.4129,21.636675 21.91695,20.132625 21.91695,18.273375 L21.91695,18.051375 C21.91695,18.051375 16.4724,15.7842 13.705725,14.438325 C11.8437,16.6833 9.46275,18.079125 6.99855,18.079125 C2.811075,18.079125 1.3875,14.41335 3.35775,12.007425 C3.7962,11.485725 4.53435,10.964025 5.658225,10.6893 C7.437,10.253625 10.28415,10.964025 12.93705,11.840925 C13.40325,10.964025 13.81395,9.9789 14.11365,8.938275 L5.9052,8.938275 L5.9052,8.11965 L10.148175,8.11965 L10.148175,6.612825 L5.058825,6.612825 L5.058825,5.791425 L10.175925,5.791425 L10.175925,3.654675 C10.175925,3.654675 10.175925,3.299475 10.531125,3.299475 L12.612375,3.299475 L12.612375,5.78865 L17.67675,5.78865 L17.67675,6.61005 L12.612375,6.61005 L12.612375,8.116875 L16.747125,8.116875 C16.383531,9.6718498 15.7935623,11.1650035 14.9961,12.54855 C16.25595,13.01475 17.37705,13.42545 18.2262,13.72515 C21.237075,14.738025 21.9225,14.793525 21.9225,14.793525 L21.9225,3.9294 C21.9194384,2.06947071 20.4108068,0.563325 18.550875,0.563325","fill":"#00A0E9"}}),_vm._v(" "),_c('path',{attrs:{"d":"M4.0737,12.54855 C2.4309,13.9194 3.416025,16.436325 6.729375,16.436325 C8.644125,16.436325 10.56165,15.25695 12.0657,13.372725 C9.92895,12.357075 8.09745,11.646675 6.15495,11.83815 C5.6055,11.8659 4.620375,12.085125 4.0737,12.54855","fill":"#00A0E9"}}),_vm._v(" "),_c('path',{attrs:{"d":"M30.733125,8.227875 L33.141825,13.428225 L28.2162,13.428225 L30.733125,8.227875 Z M34.3434,16.1616 L37.243275,16.1616 L31.8237,4.392825 L31.03005,4.392825 C30.894075,4.392825 30.783075,4.42335 30.67485,4.503825 C30.566625,4.5843 30.483375,4.670325 30.427875,4.77855 L24.927825,16.164375 L26.870325,16.164375 L27.85545,14.249625 L33.43875,14.249625 L34.3434,16.1616 L34.3434,16.1616 Z M41.078325,16.1616 L38.342175,16.1616 L38.342175,4.886775 C38.3486083,4.74807492 38.410358,4.61773819 38.5136156,4.52491061 C38.6168732,4.43208303 38.7530251,4.38450828 38.891625,4.392825 L41.106075,4.392825 L41.106075,16.1616 L41.078325,16.1616 L41.078325,16.1616 Z M43.2678,8.200125 C43.2678,8.061375 43.3233,7.95315 43.431525,7.84215 C43.5365672,7.74677184 43.6756168,7.69775435 43.81725,7.706175 L46.034475,7.706175 L46.034475,16.464075 L43.298325,16.464075 L43.298325,8.19735 L43.2678,8.19735 L43.2678,8.200125 Z M50.93235,14.055375 C50.9284743,14.463697 51.0848999,14.8572518 51.368025,15.1515 C51.50955,15.29025 51.69825,15.398475 51.889725,15.47895 C52.0812,15.559425 52.328175,15.587175 52.5474,15.587175 C52.766625,15.587175 52.98585,15.5067 53.177325,15.370725 C53.3925403,15.197597 53.5700774,14.9822861 53.699025,14.738025 C53.835,14.466075 53.976525,14.13585 54.057,13.7529 C54.1451909,13.3490077 54.1907653,12.9369776 54.192975,12.523575 C54.192975,11.94915 54.165225,11.457975 54.08475,11.019525 C54.004275,10.581075 53.8905,10.225875 53.754525,9.9234 C53.61855,9.620925 53.4576,9.4017 53.26335,9.265725 C53.0801432,9.12943522 52.858947,9.05376284 52.63065,9.049275 C52.4628338,9.05045123 52.2962111,9.07759764 52.1367,9.12975 C51.9774363,9.1843904 51.8297061,9.26813553 51.701025,9.376725 C51.56505,9.48495 51.423525,9.59595 51.290325,9.731925 C51.157125,9.8679 51.046125,10.00665 50.935125,10.1676 L50.935125,14.055375 L50.93235,14.055375 Z M48.193425,8.089125 C48.193425,7.95315 48.248925,7.8144 48.3294,7.733925 C48.4404,7.622925 48.5514,7.567425 48.687375,7.567425 L50.824125,7.567425 L50.824125,8.25285 C51.123825,8.005875 51.479025,7.78665 51.861975,7.62015 C52.2477,7.456425 52.7139,7.373175 53.23005,7.373175 C53.776725,7.373175 54.298425,7.484175 54.736875,7.7034 C55.203075,7.922625 55.586025,8.2251 55.91625,8.577525 C56.240925,8.96325 56.490675,9.398925 56.6544,9.892875 C56.818125,10.38405 56.929125,10.902975 56.929125,11.480175 C56.929125,12.190575 56.818125,12.84825 56.629425,13.450425 C56.2501341,14.595096 55.4188725,15.5346522 54.32895,16.0506 C53.782275,16.30035 53.15235,16.436325 52.4697,16.436325 C52.111725,16.436325 51.812025,16.436325 51.567825,16.408575 C51.3118725,16.3848732 51.0615586,16.3192478 50.8269,16.214325 L50.8269,19.71915 L48.198975,19.71915 L48.198975,8.089125 L48.193425,8.089125 Z M60.236925,13.455975 C60.2344842,12.4483945 61.0133323,11.6113148 62.018475,11.541225 C62.6484,11.485725 63.028575,11.6217 63.250575,11.76045 L63.250575,14.8518 C62.9276357,15.1856174 62.4829356,15.3739138 62.018475,15.3735007 C61.0044796,15.319799 60.2160344,14.4711765 60.236925,13.455975 L60.236925,13.455975 Z M63.960975,7.6812 C62.701125,7.323225 61.086075,7.24275 58.899375,7.817175 C58.97985,8.0364 59.0631,8.41935 59.143575,8.638575 C62.62065,8.0364 63.278325,8.499825 63.278325,10.00665 L63.278325,10.470075 C62.645625,10.414575 61.879725,10.3341 61.27755,10.30635 C58.899375,10.2786 58.04745,12.140625 58.04745,13.34775 C58.04745,15.426225 60.0177,17.36595 63.278325,15.920175 L63.278325,16.24485 L65.986725,16.24485 L65.986725,9.926175 C65.98395,8.6913 64.91835,7.95315 63.960975,7.6812 L63.960975,7.6812 Z M66.80535,7.40369999 L69.597,7.40369999 L72.363675,12.795525 L74.633625,7.733925 C74.689125,7.622925 74.744625,7.54245 74.85285,7.48695 C74.9523435,7.43231658 75.0640183,7.40369999 75.177525,7.40369999 L76.687125,7.40369999 L72.3054,17.1495 C71.2398,19.8024 68.695125,19.422225 68.228925,19.422225 L68.228925,17.94315 C68.584125,17.94315 69.760725,17.9709 70.276875,17.36595 C70.4058595,17.2007908 70.5079428,17.0162917 70.57935,16.819275 C70.659825,16.65555 70.715325,16.52235 70.798575,16.386375 L71.098275,15.6732 L66.80535,7.40369999 L66.80535,7.40369999 Z","fill":"#000000"}}),_vm._v(" "),_c('path',{attrs:{"d":"M46.00395,5.07825 C46.00395,5.763675 45.40455,6.31035 44.635875,6.31035 C43.869975,6.31035 43.2678,5.763675 43.2678,5.07825 C43.2678,4.392825 43.869975,3.848925 44.635875,3.848925 C45.40455,3.848925 46.00395,4.392825 46.00395,5.07825","fill":"#00A0E9"}}),_vm._v(" "),_c('path',{attrs:{"d":"M79.12635,5.217 L79.12635,5.436225 L79.6425,5.436225 L79.6425,6.8598 L79.9422,6.8598 L79.9422,5.436225 L80.4639,5.436225 L80.4639,5.217 L79.12635,5.217 Z M82.137225,5.217 L81.585,6.2271 L81.038325,5.217 L80.7636,5.217 L80.7636,6.8598 L81.038325,6.8598 L81.038325,5.763675 L81.476775,6.557325 L81.696,6.557325 L82.13445,5.763675 L82.13445,6.8598 L82.4064,6.8598 L82.4064,5.217 L82.137225,5.217 Z","fill":"#000000"}})])])])])])]):_vm._e(),_vm._v(" "),(_vm.value === 'card')?_c('svg',{attrs:{"width":"81px","height":"20px","viewBox":"0 0 81 20","version":"1.1","xmlns":"http://www.w3.org/2000/svg","xmlns:xlink":"http://www.w3.org/1999/xlink"}},[_c('g',{attrs:{"id":"Symbols","stroke":"none","stroke-width":"1","fill":"none","fill-rule":"evenodd"}},[_c('g',{attrs:{"id":"payments_paynow-copy","transform":"translate(-149.000000, -44.000000)"}},[_c('g',{attrs:{"id":"Group-4","transform":"translate(1.000000, 33.000000)"}},[_c('g',{attrs:{"id":"Cards-logo","transform":"translate(140.000000, 0.000000)"}},[_c('g',{attrs:{"id":"Group-2","transform":"translate(8.000000, 11.000000)"}},[_c('text',{attrs:{"id":"CARD","font-family":"SFProText-Regular, SF Pro Text, Helvetica","font-size":"15","font-weight":"normal","letter-spacing":"-0.00201366562","fill":"#000000"}},[_c('tspan',{attrs:{"x":"39","y":"15"}},[_vm._v("CARD")])]),_vm._v(" "),_c('g',{attrs:{"id":"credit-card","fill-rule":"nonzero"}},[_c('path',{attrs:{"d":"M2.91665413,0 L25.0833459,0 C26.6941693,0 28,1.32914778 28,2.96873434 L28,16.0312657 C28,17.6708522 26.6941693,19 25.0833459,19 L2.91665413,19 C1.30583068,19 0,17.6709079 0,16.0312657 L0,2.96879001 C0,1.32914778 1.30583068,0 2.91665413,0 Z","id":"Shape","fill":"#2196F3"}}),_vm._v(" "),_c('rect',{attrs:{"id":"Rectangle-path","fill":"#455A64","x":"0","y":"4","width":"28","height":"5"}}),_vm._v(" "),_c('g',{attrs:{"id":"Group","transform":"translate(4.000000, 12.000000)","fill":"#FAFAFA"}},[_c('path',{attrs:{"d":"M5.33333333,1.22222222 L0.592611111,1.22222222 C0.265333333,1.22222222 0,0.956888889 0,0.629611111 C0,0.302333333 0.265333333,0.037 0.592611111,0.037 L5.33333333,0.037 C5.66061111,0.037 5.92594444,0.302333333 5.92594444,0.629611111 C5.92594444,0.956888889 5.66061111,1.22222222 5.33333333,1.22222222 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M8.88888889,3.59261111 L0.592611111,3.59261111 C0.265333333,3.59261111 0,3.32727778 0,3 C0,2.67272222 0.265333333,2.40738889 0.592611111,2.40738889 L8.88888889,2.40738889 C9.21616667,2.40738889 9.4815,2.67272222 9.4815,3 C9.4815,3.32727778 9.21616667,3.59261111 8.88888889,3.59261111 Z","id":"Shape"}})])])])])])])])]):_vm._e(),_vm._v(" "),(_vm.value === 'paynow_online')?_c('svg',{attrs:{"width":"39px","height":"23px","viewBox":"0 0 39 23","version":"1.1","xmlns":"http://www.w3.org/2000/svg","xmlns:xlink":"http://www.w3.org/1999/xlink"}},[_c('g',{attrs:{"id":"Symbols","stroke":"none","stroke-width":"1","fill":"none","fill-rule":"evenodd"}},[_c('g',{attrs:{"id":"payments_visa","transform":"translate(-48.000000, -47.000000)"}},[_c('g',{attrs:{"id":"Group","transform":"translate(0.000000, 37.000000)"}},[_c('g',{attrs:{"id":"paynow","transform":"translate(48.000000, 10.000000)"}},[_c('image',{attrs:{"width":"39","height":"23","x":"0","y":"0","xlink:href":"data:image/png;base64,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"}})])])])])]):_vm._e(),_vm._v(" "),(_vm.value === 'wechat')?_c('svg',{attrs:{"width":"86px","height":"22px","viewBox":"0 0 86 22","version":"1.1","xmlns":"http://www.w3.org/2000/svg","xmlns:xlink":"http://www.w3.org/1999/xlink"}},[_c('g',{attrs:{"id":"Symbols","stroke":"none","stroke-width":"1","fill":"none","fill-rule":"evenodd"}},[_c('g',{attrs:{"id":"payments_paynow-copy","transform":"translate(-381.000000, -42.000000)","fill-rule":"nonzero"}},[_c('g',{attrs:{"id":"Group-4","transform":"translate(1.000000, 33.000000)"}},[_c('g',{attrs:{"id":"wechat","transform":"translate(372.000000, 0.000000)"}},[_c('g',{attrs:{"id":"wechatpay","transform":"translate(8.000000, 9.000000)"}},[_c('path',{attrs:{"d":"M8.38906337,13.5854975 C8.22457193,13.5854975 8.22457193,13.5854975 8.06008049,13.7574658 C7.73109762,13.7574658 7.56660618,13.5854975 7.40211474,13.4135291 L7.40211474,13.0695925 L5.26372604,8.25447947 C5.26372604,8.25447947 5.26372604,8.08251115 5.26372604,8.08251115 C5.26372604,7.91054282 5.42821748,7.7385745 5.59270891,7.7385745 C5.75720035,7.7385745 5.75720035,7.7385745 5.75720035,7.91054282 L8.22457193,9.63022605 C8.38906337,9.80219437 8.55355481,9.80219437 8.88253769,9.80219437 C9.04702913,9.80219437 9.21152056,9.80219437 9.21152056,9.80219437 L20.8904127,4.29920806 C18.4230411,1.5477149 15.1332124,0 11.5144007,0 C5.0992346,0 0,4.47117638 0,10.146131 C0,13.2415608 1.48042295,15.993054 3.94779453,17.7127372 C4.11228597,17.8847055 4.27677741,18.0566738 4.27677741,18.4006105 C4.27677741,18.4006105 4.27677741,18.5725788 4.27677741,18.5725788 C4.11228597,19.2604521 3.78330309,20.4642303 3.78330309,20.6361987 C3.78330309,20.808167 3.78330309,20.808167 3.78330309,20.9801353 C3.78330309,21.1521036 3.94779453,21.324072 4.11228597,21.324072 C4.11228597,21.324072 4.27677741,21.324072 4.27677741,21.324072 L6.74414899,19.7763571 C6.90864042,19.6043887 7.07313186,19.6043887 7.40211474,19.6043887 C7.56660618,19.6043887 7.56660618,19.6043887 7.73109762,19.6043887 C8.88253769,19.9483254 10.1984692,20.1202937 11.5144007,20.1202937 C17.9295668,20.1202937 23.0288014,15.6491173 23.0288014,9.97416269 C23.0288014,8.42644779 22.5353271,6.87873289 21.7128699,5.50298631 L8.38906337,13.5854975 L8.38906337,13.5854975 Z","id":"Shape","fill":"#39B54A"}}),_vm._v(" "),_c('g',{attrs:{"id":"Group-3","transform":"translate(27.000000, 5.000000)","fill":"#000000"}},[_c('path',{attrs:{"d":"M7.85547096,6.12942365 L7.60402064,6.65518341 C7.35257032,7.18094317 7.35257032,7.70670293 7.10112,8.23246269 C6.84966968,7.44382305 6.84966968,6.65518341 6.59821936,5.86654377 L5.34096777,1.13470594 L5.34096777,1.13470594 L4.58661681,1.13470594 L3.07791489,6.12942365 C2.82646457,6.91806329 2.57501425,7.70670293 2.57501425,8.49534257 L2.32356393,6.65518341 L1.06631233,1.13470594 L1.06631233,1.13470594 L0.0605110477,1.13470594 L2.32356393,10.0726219 L2.32356393,10.0726219 L3.07791489,10.0726219 L4.58661681,5.07790413 C4.83806713,4.28926449 5.08951745,3.50062485 5.08951745,2.97486509 C5.08951745,3.50062485 5.34096777,4.28926449 5.59241809,5.07790413 L6.84966968,10.0726219 L6.84966968,10.0726219 L7.60402064,10.0726219 L10.1185238,1.39758582 L10.1185238,1.39758582 L9.11272256,1.39758582 L7.85547096,6.12942365 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M13.1359277,3.50062485 C11.3757754,3.50062485 10.3699742,4.81502425 10.3699742,6.91806329 C10.1185238,8.49534257 11.3757754,10.0726219 12.8844774,10.0726219 C12.8844774,10.0726219 13.1359277,10.0726219 13.1359277,10.0726219 C13.8902786,10.0726219 14.3931793,10.0726219 15.1475302,9.54686209 L15.3989806,9.54686209 L14.8960799,9.02110233 L14.8960799,9.02110233 C14.3931793,9.28398221 13.8902786,9.28398221 13.387378,9.28398221 C12.1301264,9.28398221 11.3757754,8.49534257 11.3757754,6.91806329 L15.6504309,6.91806329 L15.6504309,6.91806329 C15.6504309,6.91806329 15.6504309,6.65518341 15.6504309,6.65518341 C15.6504309,6.12942365 15.3989806,5.34078401 15.1475302,4.81502425 C14.6446296,4.02638461 13.8902786,3.50062485 13.1359277,3.50062485 L13.1359277,3.50062485 Z M11.1243251,6.12942365 C11.1243251,5.07790413 11.8786761,4.28926449 12.8844774,4.28926449 C13.387378,4.28926449 13.6388283,4.28926449 13.8902786,4.81502425 C14.141729,5.07790413 14.3931793,5.60366389 14.3931793,6.12942365 L11.1243251,6.12942365 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M22.4395895,9.02110233 L22.4395895,9.02110233 C21.9366889,9.28398221 21.1823379,9.28398221 20.6794373,9.28398221 C18.919285,9.28398221 17.4105831,7.96958281 17.4105831,6.39230353 C17.4105831,6.12942365 17.4105831,5.86654377 17.4105831,5.86654377 C17.1591328,4.02638461 18.4163844,2.18622546 20.1765366,2.18622546 C20.427987,2.18622546 20.6794373,2.18622546 20.6794373,2.18622546 C21.1823379,2.18622546 21.6852386,2.18622546 22.1881392,2.44910533 L22.1881392,2.44910533 L22.6910398,1.6604657 L22.6910398,1.6604657 C22.1881392,1.39758582 21.4337882,1.13470594 20.6794373,1.13470594 C18.4163844,1.13470594 16.4047818,2.97486509 16.4047818,5.34078401 C16.4047818,5.60366389 16.4047818,5.60366389 16.4047818,5.86654377 C16.1533315,8.23246269 17.6620334,10.0726219 19.9250863,10.3355017 C20.1765366,10.3355017 20.1765366,10.3355017 20.427987,10.3355017 C21.1823379,10.3355017 21.9366889,10.0726219 22.6910398,9.80974197 L22.6910398,9.80974197 L22.4395895,9.02110233 L22.4395895,9.02110233 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M26.714245,3.50062485 C26.2113443,3.50062485 25.7084437,3.76350473 25.4569934,3.76350473 C25.205543,4.02638461 24.9540927,4.02638461 24.9540927,4.28926449 L24.9540927,0.871826056 L23.9482914,0.871826056 L23.9482914,10.0726219 L24.7026424,10.0726219 L24.7026424,6.12942365 C24.7026424,5.86654377 24.7026424,5.86654377 24.7026424,5.60366389 C24.9540927,4.81502425 25.4569934,4.28926449 26.2113443,4.28926449 C27.4685959,4.28926449 27.7200462,5.60366389 27.7200462,6.12942365 L27.7200462,9.80974197 L28.7258475,9.80974197 L28.7258475,5.86654377 C28.7258475,3.50062485 26.9656953,3.50062485 26.714245,3.50062485","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M37.0237081,2.18622546 L36.0179068,2.18622546 L36.0179068,3.50062485 L35.0121055,3.50062485 L35.0121055,4.28926449 L36.0179068,4.28926449 L36.0179068,7.96958281 C36.0179068,8.49534257 36.0179068,9.02110233 36.5208074,9.54686209 C36.7722578,9.80974197 37.2751584,10.0726219 37.5266087,10.0726219 C37.778059,10.0726219 38.0295093,10.0726219 38.53241,9.80974197 L38.7838603,9.80974197 L38.2809597,9.28398221 L38.2809597,9.28398221 L37.778059,9.28398221 C37.2751584,9.28398221 37.0237081,9.02110233 37.0237081,8.23246269 L37.0237081,4.28926449 L38.7838603,4.28926449 L38.7838603,3.50062485 L37.0237081,3.50062485 L37.0237081,2.18622546 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M44.5672177,1.13470594 C44.064317,1.13470594 43.3099661,1.13470594 42.8070654,1.39758582 L42.8070654,1.39758582 L42.8070654,10.0726219 L43.8128667,10.0726219 L43.8128667,6.39230353 C44.064317,6.39230353 44.3157673,6.39230353 44.5672177,6.39230353 C45.5730189,6.39230353 46.3273699,6.12942365 47.0817209,5.34078401 C47.5846215,4.81502425 47.8360718,4.28926449 47.5846215,3.50062485 C47.5846215,2.71198521 47.3331712,2.18622546 46.8302705,1.6604657 C46.3273699,1.39758582 45.5730189,0.871826056 44.5672177,1.13470594 L44.5672177,1.13470594 Z M43.5614164,1.92334558 C43.8128667,1.92334558 44.3157673,1.92334558 44.5672177,1.92334558 C45.8244693,1.92334558 46.5788202,2.44910533 46.5788202,3.76350473 C46.5788202,5.07790413 45.8244693,5.60366389 44.3157673,5.60366389 C44.064317,5.60366389 43.8128667,5.60366389 43.3099661,5.60366389 L43.5614164,1.92334558 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M57.391184,3.50062485 L55.8824821,7.44382305 C55.8824821,7.70670293 55.6310317,7.96958281 55.6310317,8.49534257 L55.3795814,7.70670293 L53.8708795,3.76350473 L53.8708795,3.76350473 L52.8650782,3.76350473 L55.1281311,9.54686209 C55.1281311,9.54686209 55.1281311,9.80974197 55.1281311,9.80974197 C55.1281311,9.80974197 55.1281311,9.80974197 55.1281311,10.0726219 C54.8766808,10.5983816 54.6252305,11.1241414 54.1223298,11.6499011 C53.8708795,11.912781 53.6194292,12.1756609 53.1165285,12.1756609 L52.8650782,12.1756609 L53.6194292,12.9643005 L53.6194292,12.9643005 C53.8708795,12.7014207 54.1223298,12.4385408 54.3737801,12.4385408 C55.3795814,11.3870213 55.8824821,10.0726219 56.3853827,8.75822245 L58.1455349,4.02638461 L58.1455349,3.76350473 L57.391184,3.50062485 Z","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M34.2577546,8.49534257 L34.2577546,6.12942365 C34.2577546,4.55214437 33.5034036,3.50062485 31.9947017,3.50062485 C31.2403507,3.50062485 30.7374501,3.76350473 30.2345494,4.02638461 L30.2345494,4.02638461 L30.7374501,4.81502425 L30.7374501,4.81502425 C31.2403507,4.55214437 31.491801,4.28926449 31.9947017,4.28926449 L31.9947017,4.28926449 C32.246152,4.28926449 32.7490526,4.28926449 33.000503,4.55214437 C33.2519533,4.81502425 33.5034036,5.34078401 33.2519533,5.86654377 C32.246152,5.86654377 30.9889004,6.12942365 30.2345494,6.91806329 C29.7316488,7.18094317 29.7316488,7.70670293 29.7316488,8.49534257 C29.7316488,9.54686209 30.4859998,10.3355017 31.491801,10.3355017 C31.491801,10.3355017 31.491801,10.3355017 31.7432514,10.3355017 C32.4976023,10.3355017 33.000503,10.0726219 33.5034036,9.54686209 L33.5034036,10.0726219 L34.5092049,10.0726219 L34.5092049,9.80974197 C34.2577546,9.28398221 34.2577546,8.75822245 34.2577546,8.49534257 M31.2403507,7.44382305 C31.9947017,6.91806329 32.7490526,6.65518341 33.5034036,6.91806329 L33.5034036,6.91806329 L33.5034036,7.96958281 C33.5034036,7.96958281 33.5034036,8.23246269 33.5034036,8.23246269 C33.2519533,9.02110233 32.4976023,9.28398221 31.7432514,9.28398221 C31.2403507,9.28398221 30.7374501,8.75822245 30.7374501,8.23246269 C30.7374501,8.23246269 30.7374501,8.23246269 30.7374501,7.96958281 C30.7374501,7.96958281 30.9889004,7.44382305 31.2403507,7.44382305","id":"Shape"}}),_vm._v(" "),_c('path',{attrs:{"d":"M52.1107273,8.49534257 L52.1107273,6.12942365 C52.1107273,4.55214437 51.3563763,3.50062485 49.8476744,3.50062485 C49.3447737,3.50062485 48.5904228,3.76350473 48.0875221,4.02638461 L48.0875221,4.02638461 L48.5904228,4.81502425 L48.5904228,4.81502425 C49.0933234,4.55214437 49.3447737,4.55214437 49.8476744,4.55214437 L49.8476744,4.55214437 C50.0991247,4.55214437 50.6020253,4.55214437 50.8534757,4.81502425 C51.104926,5.07790413 51.3563763,5.60366389 51.3563763,6.12942365 C50.350575,6.12942365 49.0933234,6.39230353 48.3389725,7.18094317 C48.0875221,7.44382305 47.8360718,8.23246269 47.8360718,8.75822245 C47.8360718,9.80974197 48.5904228,10.5983816 49.5962241,10.5983816 C49.5962241,10.5983816 49.5962241,10.5983816 49.8476744,10.5983816 C50.6020253,10.5983816 51.104926,10.3355017 51.6078266,9.80974197 L51.6078266,10.3355017 L52.6136279,10.3355017 L52.6136279,10.0726219 C52.3621776,9.28398221 52.3621776,8.75822245 52.1107273,8.49534257 L52.1107273,8.49534257 Z M51.6078266,7.96958281 C51.6078266,7.96958281 51.6078266,8.23246269 51.6078266,8.23246269 C51.3563763,9.02110233 50.6020253,9.28398221 50.0991247,9.28398221 C49.5962241,9.28398221 49.0933234,9.02110233 49.0933234,8.23246269 C49.0933234,8.23246269 49.0933234,8.23246269 49.0933234,7.96958281 C49.0933234,7.70670293 49.0933234,7.44382305 49.3447737,7.18094317 C50.0991247,6.65518341 50.8534757,6.39230353 51.6078266,6.65518341 L51.6078266,6.65518341 L51.6078266,7.96958281 Z","id":"Shape"}})])])])])])])]):_vm._e(),_vm._v(" "),(_vm.value === 'grabpay' || _vm.value === 'grabpay_direct')?_c('img',{attrs:{"width":"87","height":"23","src":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFcAAAAXCAYAAAB+kNMAAAAAAXNSR0IArs4c6QAAAKhlWElmTU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUAAAABAAAASgEbAAUAAAABAAAAUgExAAIAAAAkAAAAWodpAAQAAAABAAAAfgAAAAAAAABIAAAAAQAAAEgAAAABQWRvYmUgUGhvdG9zaG9wIENDIDIwMTggKE1hY2ludG9zaCkAAAOgAQADAAAAAQABAACgAgAEAAAAAQAAAFegAwAEAAAAAQAAABcAAAAAA52FUwAAAAlwSFlzAAALEwAACxMBAJqcGAAABBdpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDUuNC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iCiAgICAgICAgICAgIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIgogICAgICAgICAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgICAgICAgICAgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIj4KICAgICAgICAgPHhtcE1NOkluc3RhbmNlSUQ+eG1wLmlpZDpBNzczMDU5MDRGNUMxMUU4OEUxNTg3NDE4QTg5MTBBNTwveG1wTU06SW5zdGFuY2VJRD4KICAgICAgICAgPHhtcE1NOkRlcml2ZWRGcm9tIHJkZjpwYXJzZVR5cGU9IlJlc291cmNlIj4KICAgICAgICAgICAgPHN0UmVmOmluc3RhbmNlSUQ+eG1wLmlpZDpBNzczMDU4RTRGNUMxMUU4OEUxNTg3NDE4QTg5MTBBNTwvc3RSZWY6aW5zdGFuY2VJRD4KICAgICAgICAgICAgPHN0UmVmOmRvY3VtZW50SUQ+eG1wLmRpZDpBNzczMDU4RjRGNUMxMUU4OEUxNTg3NDE4QTg5MTBBNTwvc3RSZWY6ZG9jdW1lbnRJRD4KICAgICAgICAgPC94bXBNTTpEZXJpdmVkRnJvbT4KICAgICAgICAgPHhtcE1NOkRvY3VtZW50SUQ+eG1wLmRpZDo3MEZCOTQyQzRGNUQxMUU4OEUxNTg3NDE4QTg5MTBBNTwveG1wTU06RG9jdW1lbnRJRD4KICAgICAgICAgPHRpZmY6T3JpZW50YXRpb24+MTwvdGlmZjpPcmllbnRhdGlvbj4KICAgICAgICAgPHhtcDpDcmVhdG9yVG9vbD5BZG9iZSBQaG90b3Nob3AgQ0MgMjAxOCAoTWFjaW50b3NoKTwveG1wOkNyZWF0b3JUb29sPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4K2uce/AAADkNJREFUWAntmX+QVeV5x7/n3HPv3bs/WCESJBCtoDAq1iElxjRpWByrA4G9CxVMxjFpTKxj0ybViR2TacKFMZqJxiSO6YiTaIbURrkR9i4aYrXxYoVAEtDWIiIqRq1YICAs7N6f5/TzvOfeZTfsik2aPzLTd+ec8973PO/zPu/3+fme9TRWi+RJOU/5HZ6eOy/S8pyNRGOR/07jT3QFmlesqZD9OnzeI8/bqihaqmzhI1qzNKFl+fpJ+HvKIeto7Vzkn7jf08ZiqJzC0Uh+X2PBCYxtoxu7Qnk5BAFQ1/J06UQ5Px6PR38P91bJa1cUtqDIce+Qv4EaAe7JFf/OFPUOlz052XFwY+AiZ0EqSoXuSfKi01ULAqX0lgaCVwB28OQsfwcKT3Vgwkr9EIBPZq0asure7GKUsYKVD4Gzj4KaQEfwOyhfW/CE7yub/++hOb8ppvllfilzaeapOTOuUVoObs7ScvY4kWbovRSDm+sKAK7mWBV6rkPAz3NNUOT1KxGGbLdF6cpEFXruV7b30yzsj1jcFFMs+s7iLXyYkOaK5urWzBv2T4y0NB9qBe47t0H7mxvAX8CFC6EjL3bzaeN9AAqHeHYV67yPwbM1rPneVE3MnK9DJSmdkBIxRu5dnf1H6tHR6nL1Zq9QT379CIDNmq15Fnqa4QdPtdYMV/Gv+O4AzQ0fGdkf9j6QAZsDhIeWTFZQe4rNtbKVL7OBnWwww+Ur8AakcJzq0ZmO03BQjiuGXRTllDokZGPdJsjxZAMmph1NeHk1wOiEJAZwzj3VmEtz4/w6wb2jio5WpGpUVbW6D4pfcxloBv7pCvx2Jf0MLPu0dvG5WpLf6QzE4nEznv+E/Zfqp7N/M7gDyvbtcsbhco/jFLl1M6UpyJeArqJFD/8Xb0a2Qjc5I0qrmgxjYI1xuQ6hvxorxbCjW5HrDmdBXhQilAnZzyRLOADYsNz4WcMizmf0JujnkIzSmMoB4FtHQrqFsYgQcx3jfwnNJH6VGdukau1mzXvkZSew9vPKNQCN3ktU+IpCbxPzVqLcy7HMVtz6IO9+yKZvd4AYwBsb8yJCgakik0iqVLtF3YV/1Ko/SWrvtrounP8uVVOrAHixWsAtqt4I5dW6cGtSCzaUta7nQvb7VfZ/Eeu0I6fp1ZLry/C8U17hO7Fo3NPlSQr9Z5TwxqsePo9hnu8M0xTQ9Cbpx/ITFyioH4n9p1zfxNR/ZgPfUMbfA9MpSLFQ6dQ0lVNnqpY4n0VvhuYDbiGzXNucPdf1fFltyf8A+Dbm3UasvBFgn4RutjYsmYKQu1HU7YC0gfEvwZe+Jqs9/ZL6stc6oF6RWYs1XDNarWpAmPL6+N3NZZv7InPWwOcLKPIAa0538y7MxC4NwQltRkds+Qs27Gcfn1EtPCoiHDK838zHAdubvVwt/lZAv0SpRLvaEKOVK8P6gT9D49N3sd7qId5+aEaWVtItmxoaH96JvBS8bCQdYB3X0DkVS/kHpbw9qtRXqqewfDg9/cNc97hrzdIU8TTUvDzaJT63BSuJZxeRR9qxgOux/snyQqy27waA3YtGd6C0uTx5p7/lsqRzhyrhN1HKo6x/GNoHUFZKnfu/pKOdSzQ++awOlq9hThH6FVjSWYC9DT5z+P1V1tkFwKdqQe9b/B7ZLG5be6Gf8sxUghEcQf4WvUYsPkd+vYPxUOsXTuH+gKoAnmBKLWTvtbXM7McQPkwYuURvlSsAfBUybkbGu1GuoUY+ML15TBylWb6II1qI5XrXAextWN71LPAMLrXcBXKLh6O1ZfmKi0WrL20DpO8A7BLmXqRxweNs6yUW3oBwO9D4bUw3Qa5kjefZ5qUA9CDXHnWk/4X4fR5x8ipoV2v9olYssaL+8ZfolJb7SUwXw/OwWpO74WnedT9rzaL3KvRfob+d/vdGE495Mbjjp3nsI66RWwfGsf5UXJmpIuvRosTfoNxEDGz0mJ6efRYAfoFrBcb158h3PQCn2B/ie5+L14qsgon5N2Nx/GLUuwF4FuH5lyz6TZgYIFLHDKIniaQ3+1ms5Cz4ldgUNS4JI+KamP669pcXQLmXGLRbrd5aHSt/UN3rt7j5ditk78OKrwbf78H7Zwh82dA7c7XWYIsGq++D5z7CzkIA3qJxyfU6OLiQtd6lCS1rdGjwYjb7RGPenVjQd5Gnl41/nudjevij47XwkUPQxxuO72VHb8qyZh5Rq9wFUB3EVAP35248Uhd8zGJD+cFnXYi7r6tFlf669i6qqzv3LfZwJSFjDjTTnaUnM4MqVUzZTYhdd6ybgUtFEJbk+S084wzR/4LZvWlsGndLVgOAkECwCRqfuUj7SnnoAT16VkH0pypHu5UF2CcQbl6xpEeWnKFanaq1tg9X/BAB/lJjJxN+UibSgsJWFPef8v25uNAv4H0eYeWTOlReqUTioDpTm3V44M/g+ZR+PJ8ESbPkE3krsJtdGIOVeEeowWfw3MrlOQs0K5NuBJRlyJ5EPurcykzi52TnqhYCRF6wZhWJhQPhDYmBV62jTyG7tVViLl7n6RkqJUvSKdUTEzQIbSyNI9Pc+DHW3cAdZOEWLMEOCKc6QotXroWbsL5XkKTCxo6pjGUdKu1qvKMc8SqkoDS1MKWaa3FdW6EK8REuAAZ5VdzR7Vq/6qqojfInbsS2MMUGbF3in7cSL/DVGWzWwdI1zHnDAetAhcpaBb9OJ0ooJYnMNZRyfKux8VaUSZ4NzdkOTBurNULjACJUw4+rp+9ZF4e9cjM6m6s3m60TqZkMrcI3M2tK3KSyZ2x+w0dO6JuJv4q7nMOzCJdPOooZHS7d0b8C5Vv2v0HtwQ+UrFItuGjeeI/0AaWahYzhLe2ba2LpVrNGSUBOuddnFFNqP2oKNYFtDpHL5vqDhI2thJfN6q/coCD4qRLBvztrNdpiVwxixiWUFrK+KSuAfxwCjMaJxVip9iaJaIeOVHbpSHmnjlW36Fjt27w/mxBjibP5raLWUMA4ZdrNUuGRi2EcbFQhntfmxke7GaUdjKwcNX8yvnEbUgUb8+5ng58j7n2NOPgR9fVc5VzbCLN9V1Crns7GZxLYGxbL0TLwY72BKwIOMXOL2bwFa1/nXkdpk3k+CRi32rBzO7NEa82EEKIES16F7gdVDh9TnRKsVmtz4Pe5pKgheer+Cmbu5rKNdHDoeYGnNQ7NiJQJyAu6GZlnUUL+sbbPnkX/g5wq/469vDgMAKZ4v3LgpvyJKGGZ4+K+p9AzGV1Cj+ahLDMEVkCxy/JUTdHRhjecyfrTXaxWTq40tE8Giqa5CgSLCfTma7frtKk5JetLNRBdrM6Wn1J/zkPT34IlhwFONj6lSdqbqXLtGLGWUFBvWKo9Gm5HT0s5kz+xP/7CJe9eNkwRHs1Gup3E2Ofok9zg5XsPw59DAZbmET8jnYIsPweEO1h7EyyfJlZ/QO2UZIWeC6B7FKHtMEHJV59GfP4hc/pcMrN1vdhsYxB4Y+05ykWrw02JxS4OHF2hluXqMWi8j9RLvdqNp7C+dzfyRaqk8nhWVWHrFB2p3Ul4mcLhooYxIWfYCEHeduZdhu2w+fABPbz4E0pu3qMfLXwPXO9WKiApmqZBStdug5l3mcalKcf8s9U/eI5zIXlP8X4HsXgbTG5hwg3oYpBT0BmcoCxO0lxIgJGZMM0+T9rZ39rTvXYSonkU/66MWkc/CxCBqpXHeWHCGi0XoSPb+w36JKDoJp2S/mtYztWvj03n95sMU+7pF5CeARAroZutVOXTPOPmUXNabWl7aup6ciNv2MnJjt/NI/u8hnw9hfvwxu3qSJmCPbUk7uX7yYuc5naQiHfixR9lz8afyAvTqPExyPNvdQGtjkIT3mzePatS5nkA30G8v7hh1c6bfafJxb1FHS7NJzOuwlK/y3ULSeMytPUXXAASXsUi78Zqtmmgdjdn6t0sNpGxNNZEvBoWm2wz9iEnh1CV0ix+nUbYeQmQLMpSiGOVQTDNzZVvAHO0JRtbW7M0g/s+Sby8HGHvgm4dyuDwQP6OvP0YwS9Z61KeM3HdI0OVhJjfihhtJgqKstZMSu7HiFscJ22o5s1nrW1qN4DBoy05CbCnqzOdYp9HWfcN1+9AvGb93L1uowbr1wIsCgksFBGgUlOhS2qw1o+SX6Hsg15kddOq+4DS9xNqzYm43B1Y64MQoS7fShNmu9LkOTZ1iRb3/qvJxWIv896qgzdghHXT7FOd8rzLxcfjZXlz/ZnE06sZvBobpUSyv6jIOtsB/HXeU6nomE2nVVxc7M4/xJzT+H0ToH4GBfIxie8VHqezbOHbjtISCNHP9cNor94q7XR9k8eaJZuxWvP4viS/D5I5rHUl4C4CzPdyGTAv4p23ctB4P+B/nDGA9g44dhZmvN57CCM/00D1E7ybxQRyQLgHo8Sqwy8C+F8xr+lDTBt+IjPB+xadp7WLPqz1iy9g8Q7H2G72rpmMhgbH6Fgm/W2afWl7u3Y8M78d1cnf/Tby/dP8cXxZe/eYzAvdRT1+OR+rsgdcbBgizGFDc7t8Z81Dg41Oc0PNT3Sm37gRBkyb3MdqpriNvFxOvLNvvcc/Rjd52MyR85uyNL8DH/9GbIFwJG08O+b1dnIY3YktPibbuP0ryJph0NXFt2frF/lOzXM5v80j1/X8EZ79KBJ8DQ/8EWGs36a4tj77KYW6l/gtPl/+2/DNNUnsGf9Pyr53WgVg/+753ws9nN8fft+UbXnkoSVT1RK95uLqQO11RgmXhDXPI9HrfS6cdqZ99Zc/Nha4f/hg/F/voOmddoSf0Pk4SexD5IyRq1i1Yt8vjlVvIzf8/f+DOxKet//VBNiehSz/DtPH6J3LM0OkepOk9zShYhWh4jFj9D+pqhIe/CEWIwAAAABJRU5ErkJggg=="}}):_vm._e(),_vm._v(" "),(_vm.value === 'grabpay_paylater')?_c('img',{attrs:{"height":"23","src":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIUAAAAXCAYAAAAldIx0AAAAAXNSR0IArs4c6QAAAIRlWElmTU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAIdpAAQAAAABAAAAWgAAAAAAAACQAAAAAQAAAJAAAAABAAOgAQADAAAAAQABAACgAgAEAAAAAQAAAIWgAwAEAAAAAQAAABcAAAAAzT7ybgAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAAVlpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDUuNC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2JlLmNvbS90aWZmLzEuMC8iPgogICAgICAgICA8dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KTMInWQAAEnFJREFUaAXtmgl0ltWZgO/9/iVbEwgGNJElJGFJwuIx6szBnmkckZbWBFB/LYPiQKl0zrRn1FO101H81RbLqD12tWBdBrc2qRAIghwtxg2qgCgQCKuURTZlC1n+7fvmee/3f8mfRanLOXbOcM+5ufe+993u+773vfd+f5T63MXRH8+i55yjesI+nv7szJdhAX9vQu+9cUe5reLnK622h58s3RMOO1Y4rO3wzKaCRCwxQTtWsxWxV4Zry08rpR2Fo8PTt0ylU+Ek1PJ7nyn/szhfMxee1lhma+tO7TiHtRW7Xz+lj4QrX/GHGy6L9yb7LOzLt4DVXYX7bthUatuJy5XtlKm4M/4nM3YOMgEx7S85dsy5UTt6gnKckEpX19x007qA0M+5vunbtqPvcRw9RVnWQ+Hpm8ZIQPw8tC/D1vqPfbLOm5qVmXdzwgnMN/IqK+1wONxDdnddzo6/HAt4juk4AqJ2oJ9sceWo08ryBSOx9n5GNV92X4KhP5nhFNNttq3Pz2kLBM2cdopobeoRskaW0lahwE9lnOqvtTXqZMtBFY23wVSVzieQJMhUw9c82YJ6tvwdWcBzDJnfLQk7ttOx7ePa0hkcIQd8Eb1LZu5eWLYPZ6/R2iE7OO2OshoefGpsi8xZOlGPxwWvL0HzlvKrNwQeXli+l0D6ddCfqaKxFttR+vezF1wUM4Fx9vgQE/3fKXeE1vW574amoeF/fT9dtA6FHJ+0ck+4a2pj+Z3X7SiWsZSa5Fx42nsDwzc0/XN42o4cgcs9RFopc/5l89fvmtZ0qTty+Xj9/9ctuwRDWaZK/4sqwsurXwTP7me959zurwZ37L4kvMDw5IdCNSaIXF6dr40kr9TFSz917LH4e2mt8vJyOSI7AvwLUcwhEOZXmPtYF36vVPpNgHQBfqpBT1t+hmDryQQnhcrDgfMGX6IjR+rsBesX2JWVlbqhuUGHimrs8blF1nr0XMAxkKquXDoLouf4yloKY9fW6oQ3J4GR0/idtFNZcSf8ZGEE9t5RJbI9Y8t9xIN7pH9rKzyE1+fh0Zss4ZmqU/dxbzRnhonjL2v45JeXOFL2+qcpHk1NyBdIb7/QSThZFi++6FUvbP00bARXFppa/paFixPEAZ+n9CanN9iZZHj6fzoDnolr57wePXp035aWFnv37t0nO8GfsYfD1LW1ZsME6qsu5LJeZlm6j3Jsi9fbMdLrpuihA1vV7PUxk/4lMITmK6f96nCbVln9beijZm7FRPeSL6rsO2Kr4dmOCbbVoQz/0cjTSush3OdWxCctvQseGUmNo578T1pB9+8UzqhRo0rj8fhXLctqg9ChJOi3JhKJjU1NTXuAERAhX0XFbuvkyZNWnz597Pb2dh2JRPTOnTsle9iScjGk5ff7HWBkB1N0SUlJEFxr//79bfQHMn85M2la63Vbt259x8OjNU4WPsK3NxmhUMhXW+saWOgKCwvTs7Ky7MbGxmiSjw8Z/rS0NEd4SMuc6Ce8LfCDSfwYckwqT9J2BOfIkSOns+45gUBgDjTPFBUV9cEW7d46gRkZAwcOTDQ0dO7+ioqKgNgGPNHFDdgwWVECAif70yJ38Xwfi8/zsG8mVzVbhBItewP5BT+LqfVrVW3IUjVKgkh4dGRec7zUNmrgnl2ZpriOj6vIUcdROSd43+Uj2t2819aKL91SEwpC69nBg3ZpvZ3WYYjS0tLbMMJ/ExjK5/MRcFphGGXb9j4WcB+B8WgXDl0Hwkdqaibp4J2KipwpGHgRgaFw2kPw/WFy/oyZiOPML07Aaeeg3+3Q9YvFYvfghP0EQlp3J6XINXcdxp1Gdo+wVH075KPjb9PT0/+tra3tB+j36xQ+Shy/fj07urN46/Rab8Y9CJLHgW9J9W9BuIhIeR8EP/19tHHGuYTPYKz3cGLS0hfUE5XpakZDu2GypLok6PMFopHWE+rqlQcNbPHkQr8/MZDDOBJzdJOatLTZwAkOX1rkMeD9uOovSjhqiT9hF2ntb4tNqXvX4MidRoXdq6gBdP3TPVOI86NUSRHERfxt2m0YfjyBMigajT6CI7ZjoFfZXeKIYtjl4dwENHu3b9/exNgZNmxYaTAYlAzQvHnz5l1JkRa0JfDLyc/Pf/fQoUOt0PD6NZuka9S7geXg4BwCcziBk0dg2vT3s5u3JHcl7PV05NwuAUy7mt3/HFnFYt7ww6mjkD1YdjeOXe8dAbLjMzIyhsKzlbVsHzFixFB4D9yyZcubon9SX9kQJ1mjtPsFxpovoH+QNR2WgOBoyW1tbQ0IXjIjmoAoKCjIzM3NzSFbntizZ087jha48i2tmoqzLiNLrAJwLqCH4wnfThWMWgHbGsCb/WJL6Q9NxEpALJtS6rft76KQrN/PZSHif2HK/Yl44koSeIWydQ5zMSK9WdVVrUxMrn9W5ZzKsCJpfEBWf0FWMXMPKZ/F5wU7TkAeZbwgqsMbWaWEaa93F9kVXQoLTN1FT2O0mTju+wTEEVIwPNUYCQhgr+CIt6nLMehK6utlZWVmt9O/mfl3WMgSjiNZvGKuFN6rcdDyo0ePloshqSiPZjSeEvCWQHUkCxCIK6lrmV8hMuD5GnBJ5Yp2AvCfo5cEcRv9x3H0MpzVKsFEQDwC2kYC6gXaP6Pnq8DGCy27fxw0a+nWwudGdHoTPRaTYdKAdehC32wa5kLgvUG7gTVtZi33M6cImEvQbxO858qYIrRypD4B/2UcT3y3McWRtM/X4Ovg8R4HSUnc0T+MT17yurp60UFVtexAbNLSDYkpSxfEJi95y1DUVw32xeMPw/JCjDSUILpQ23ZTPBH/ETu2ivUOYu/0w635JHOqvs1XN+k69Y2Vx7jLr6ZezLFUjOeHwG8wOAXwGWlr5xfBJdVjTEjIEdVLMYvuBoe/G9i0bkpSag99c2PGgDEWXAjNEAwk9wB5jFyK08pY8APsuufBXYEzbmJcDs4E5p+CphqnncOdYie7/T0MezlwCQjJSkagjDmLJfDk6DoXGk+GpL2xwCrAvQcHvcR4G1Uy00hqFPhWeK2ir3BUmAD+HsfSLuSLw76K42bgRDn6hsLXD46fuTGMn4SvIts040wf9x1AHSUm+lHHUSUo+XinZ0L7I3TYDc0K+gOQfSvB/Ajr2kngXcDar2VuDeNDHZwu2VigYuo86PcBa1JT6vaYe0AwmhfwOVdx+ucgiM++Tj7Oq+U3pAmMLQ5iyTRv4uA1fAYopB2CtY7B4zjBtYj5XDxbzS9NLdqxZ6qnJ66A17n83JDHlYL7iF4Dzxehq3AsqwzewzkrZxC+tyrt3nHMXadDUfc8TRkSlziIKjAa5+ss8gYC4WfUAknTLOoDuRQyV0xbQRXn34GBj4Mj8+OB1YG7Ncm4KtlOEXrKQvmDgfuIAOmnFpxiUj+4+8AZkZTxHVB/gIwTIoNyBRlsD+0ccShFGM8m/c/FOZfQnyWyoPkdsMfh8ygBsRdnFeLM4dC0MO8tspa5SnC/0b9/f/cMF44UYD7WI+1v4PM9ZN4G+FvCG/iP5Q7D3FwCTtZj1gn8miStmz1CXBalRGzJQqK8jA9TFc5ow1lBnHgZjq/C8GNx8jhb6X/HgQXA2h3L+SDeP+1BssrLCK3AyafZQXkJfmtKVC1Zzv3jGXb/82ibx4IO+7IDcwmQQSjNa0k38Pq4I15dv4r2Afj/FanHqUPV0upiUaG3YiycOoHRPVic7vUYciG7YaLg4JRfknpXSB/DjiFg/oe6AUPMB5SFYcRYuTJPWUZf2ovJHiH6F2NM2dEvC5AikwzN8WEyFuk7Y8yYMfJ88m3btq0Z+eXwf1RkAKuhfiWJH6Qv+nhBZQQlYSXIymYuQXsvtFHaV+A1mHWIfkMEj1aKKDAPZ79KXZ28q3jrFxye+kbEB0IjhQDaAKyJucLhw4fn0T4v66Z8kyr4V7POY5xqrwtQlSePI8dk3SgSY+C4DuGbRTCgM1D+NFiHkcTvRs4BDtMjKJYOrJ9lq01qXOfrAZXlHrFTTV6yTy2fmAOOTvgCb9H6CbkIvFrR6QTBFtBxZzEaOKr+yvONLmQbWj+8M4KOFjsrtaXcLND0k386DOABWaCHZNFfzgLvpP4YG19Ge7tcsNht32VhqwiM6dDJ7nqN2oIyYkhzJ8EJz4IvvDjP9DzG4oC1GF8Uk765uQsNxRxT8lTduHGj/J6SwJnfpl2DjFmCAN4qGlmwDI2O9E1wCIBi+vCVwJOxxbwE5q+oz7KWB7hsPkxdS981iGAl6Sp50bhDl3ey7zVZ0iELBTmWAvCXIqAcMtk7rFOOsnEcibciazj9P3iXWkEy5arFR6DZjQ/TWUI+l75q+a4QvXLxZu4T15PqboEjWUTngS/HTitG8rPrA2r+Te7XT7I4u/0IFhiBllp9c8Up/joqlpCo5ImoZJcMhE7C9E+2T99qAoc7i9FB2aNpfXBpi/oSblYs43nbrXiG6ADjPJPjAfCrt36OtPl0x2SyA/wKSZncD17EyRNlh2dnZ++WaRZu6DlP38Wxq+B3ObChYkQcvMjjRV92DP6xJTBLCDS5L+SA78PQLyOjiiwlO3M140uFDn6HBIe5jsuw8KXQdATZ+4w/hH8evLei/92CIAWnlvAaOEHm8kmQSgEHRyhFlujgKWMp8PQCvFXGrCmKnqOh5d8L7CY2ymmBU55Bp3vBv08GtJ7N+G0DV4kDcZ72qQUcFQsZ1Ghtz/LXVV1AtK9xbH5Zdpwr6B9mOewefQDvZzLmZeNEVe5x13GWWuvY+nqemjsCS6v/aC91nsDHfOcwR/FJVpQJ/X4OvXd9tnOljSK+aPAXum7S43D9JyxFMDlyPH+g2jL+Krr2VlzLdJ0JiMFYZJCFd+wQ2UnebkLWaeYEZyxGmktArKAvlyjh1LF74SMpX4wk9SNo6mUshb6feS8ob4R2HY6UIHoJp40BX5wrhQ1YJpfLF8E5V2QwZ36oo98qujKW8/o5cOR7x3r6v4OX0M4hkDZQF1PXIHMrKZ83u26XeaGldN8pqWOd5P9T6G+nzgK/Ro4h4I/t2rWLfxUwa6lBhz3ARa/X0EFeNp0lyTFeVf+G5eh54F6D7w+zY4s5KmaS06aS2LJBu4hM0JiIBhczl48TswmidO4e5oNcorr+MY6X4+AMJRO0wmsGATGF8TBoMwmWc7iDbOCu8SzzOQTfIIKKu4Vzi+BgqCzwBrDqxw3PlC+sncq6F5/UsThL3uZtKL6XanaCfJ2U87a5udksD4M+CM7bGCaf3fyfMJAPWy+RRiO0HZ+Duf3/AX5tScPKjt8hKVgEApPvFAek4qT9gA5Ce5TxccYB2nnIeBW8vtQ5wE6B8zy7My54woOjoAGcPzHvQ48C2n8QOHLu5kyfA95hYBeg72Taf2RqF44TR0bgc5T6EX03jdJJFnzhFuhb4COpt456CzIeRY9CYPMGDBjAc5FcTZbk/iPfckwgoDeXPnPxlWmvsCvc4OPJOV/b1mwchdNUCc4fSUugOoUgL4lH0/9LLqA48SDjdY7lS6Z+lxWXzmn0VkNTjKK8Jszrq5kd+h5W3cKcOYoT/vgsJMpRPY62iH05ChkBstDNHFfrDLdQLbHTs8C7a5FF9u3bN4ejwcbJzebjS1cUoXHkAw0ZQj5GReWjFV/4MqHJ4SJ6Sr4VyIcdHPYfGOtuHCLBNh1nPSX85e4gwUHQ9IGHOFc+TDk4SUsLvEU+BgkO/IeJeI6BxkL3U3ZfT0ZSLfklswhdfdAfg+5D0U/m5HsFd4CBdIPMn8SpB+QIAJ6G3ByRR5Acl3uS4HcvZKxs9A+y8z+Cpj9HpsjZz3qNo0QfsU9xcfEA5t6CfjDrLCFG3qcvaair0ZPHiJHDLk3PlCd3TP6JKRGznH2qql50R/uwpWobJYv61PHcuJq9wNXP/Znd5cnlkQ9ePF91a3RvdJcqAVt+H4k2J/jtRI5wN7jrJg0KOAl55rZG45nbvazjHWng9Sg9gqIHhpteXQGdkyYwOoc9ehYp/zUcbO4CGPJ1AuJrYAmfnsbqQW4AZ5LxSfOfda53TXqHyvmU4MiaStD/hOAqIoP8hnV+P4ne+zrdwBCU7jZ1yVIDJ8moS3OmeRdZrp/iud5kiG2k9DZnJkTx3ooQfhKxK9LF8XClNfy4e8jTLIdg+JBs8Ut25FXMCY0YMnX3pNKm9kFLLqunDMGT4i0qlS51rjvcG3enc7l9/F+PLrWVdRg+ZJLrCIoistuvCIw7kmwEN3WdndxdR3nHieC5RZzd1eGePA/DbQXLw/UgXW0kUBejO56MXb09G7gcuv39XwnEiF1RfvuZAAAAAElFTkSuQmCC"}}):_vm._e(),_vm._v(" "),(_vm.value === 'shopee_pay')?_c('img',{attrs:{"height":"23","src":"data:image/png;base64,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"}}):_vm._e(),_vm._v(" "),(_vm.value === 'zip')?_c('img',{attrs:{"height":"23","src":"data:image/png;base64,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"}}):_vm._e(),_vm._v(" "),(_vm.value === 'fpx')?_c('img',{attrs:{"height":"23","src":"data:image/png;base64,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"}}):_vm._e()])}
 var staticRenderFns = []
 var esExports = { render: render, staticRenderFns: staticRenderFns }
 /* harmony default export */ __webpack_exports__["a"] = (esExports);
 
 /***/ }),
-/* 162 */
+/* 167 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_CheckMark_vue__ = __webpack_require__(65);
 /* unused harmony namespace reexport */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_cf7c9dec_hasScoped_false_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_CheckMark_vue__ = __webpack_require__(163);
-var normalizeComponent = __webpack_require__(19)
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_cf7c9dec_hasScoped_false_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_CheckMark_vue__ = __webpack_require__(168);
+var normalizeComponent = __webpack_require__(14)
 /* script */
 
 
@@ -22922,7 +23135,7 @@ var Component = normalizeComponent(
 
 
 /***/ }),
-/* 163 */
+/* 168 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -22932,17 +23145,17 @@ var esExports = { render: render, staticRenderFns: staticRenderFns }
 /* harmony default export */ __webpack_exports__["a"] = (esExports);
 
 /***/ }),
-/* 164 */
+/* 169 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_CheckoutButton_vue__ = __webpack_require__(66);
 /* unused harmony namespace reexport */
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_18fb8db0_hasScoped_true_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_CheckoutButton_vue__ = __webpack_require__(167);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_18fb8db0_hasScoped_true_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_CheckoutButton_vue__ = __webpack_require__(172);
 function injectStyle (ssrContext) {
-  __webpack_require__(165)
+  __webpack_require__(170)
 }
-var normalizeComponent = __webpack_require__(19)
+var normalizeComponent = __webpack_require__(14)
 /* script */
 
 
@@ -22969,23 +23182,23 @@ var Component = normalizeComponent(
 
 
 /***/ }),
-/* 165 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(166);
+var content = __webpack_require__(171);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(18)("977999c2", content, true, {});
+var update = __webpack_require__(13)("977999c2", content, true, {});
 
 /***/ }),
-/* 166 */
+/* 171 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(17)(false);
+exports = module.exports = __webpack_require__(12)(false);
 // imports
 
 
@@ -22996,7 +23209,7 @@ exports.push([module.i, ".checkout-button[data-v-18fb8db0]{width:100%;border-rad
 
 
 /***/ }),
-/* 167 */
+/* 172 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -23006,7 +23219,7 @@ var esExports = { render: render, staticRenderFns: staticRenderFns }
 /* harmony default export */ __webpack_exports__["a"] = (esExports);
 
 /***/ }),
-/* 168 */
+/* 173 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -23027,44 +23240,118 @@ var esExports = { render: render, staticRenderFns: staticRenderFns }
 });
 
 /***/ }),
-/* 169 */
+/* 174 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function(e,t){ true?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.VMoney=t():e.VMoney=t()})(this,function(){return function(e){function t(r){if(n[r])return n[r].exports;var i=n[r]={i:r,l:!1,exports:{}};return e[r].call(i.exports,i,i.exports,t),i.l=!0,i.exports}var n={};return t.m=e,t.c=n,t.i=function(e){return e},t.d=function(e,n,r){t.o(e,n)||Object.defineProperty(e,n,{configurable:!1,enumerable:!0,get:r})},t.n=function(e){var n=e&&e.__esModule?function(){return e.default}:function(){return e};return t.d(n,"a",n),n},t.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},t.p=".",t(t.s=9)}([function(e,t,n){"use strict";t.a={prefix:"",suffix:"",thousands:",",decimal:".",precision:2}},function(e,t,n){"use strict";var r=n(2),i=n(5),u=n(0);t.a=function(e,t){if(t.value){var o=n.i(i.a)(u.a,t.value);if("INPUT"!==e.tagName.toLocaleUpperCase()){var a=e.getElementsByTagName("input");1!==a.length||(e=a[0])}e.oninput=function(){var t=e.value.length-e.selectionEnd;e.value=n.i(r.a)(e.value,o),t=Math.max(t,o.suffix.length),t=e.value.length-t,t=Math.max(t,o.prefix.length+1),n.i(r.b)(e,t),e.dispatchEvent(n.i(r.c)("change"))},e.onfocus=function(){n.i(r.b)(e,e.value.length-o.suffix.length)},e.oninput(),e.dispatchEvent(n.i(r.c)("input"))}}},function(e,t,n){"use strict";function r(e){var t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:m.a;"number"==typeof e&&(e=e.toFixed(o(t.precision)));var n=e.indexOf("-")>=0?"-":"",r=u(e),i=c(r,t.precision),a=d(i).split("."),p=a[0],l=a[1];return p=f(p,t.thousands),t.prefix+n+s(p,l,t.decimal)+t.suffix}function i(e,t){var n=e.indexOf("-")>=0?-1:1,r=u(e),i=c(r,t);return parseFloat(i)*n}function u(e){return d(e).replace(/\D+/g,"")||"0"}function o(e){return a(0,e,20)}function a(e,t,n){return Math.max(e,Math.min(t,n))}function c(e,t){var n=Math.pow(10,t);return(parseFloat(e)/n).toFixed(o(t))}function f(e,t){return e.replace(/(\d)(?=(?:\d{3})+\b)/gm,"$1"+t)}function s(e,t,n){return t?e+n+t:e}function d(e){return e?e.toString():""}function p(e,t){var n=function(){e.setSelectionRange(t,t)};e===document.activeElement&&(n(),setTimeout(n,1))}function l(e){var t=document.createEvent("Event");return t.initEvent(e,!0,!0),t}var m=n(0);n.d(t,"a",function(){return r}),n.d(t,"d",function(){return i}),n.d(t,"b",function(){return p}),n.d(t,"c",function(){return l})},function(e,t,n){"use strict";function r(e,t){t&&Object.keys(t).map(function(e){a.a[e]=t[e]}),e.directive("money",o.a),e.component("money",u.a)}Object.defineProperty(t,"__esModule",{value:!0});var i=n(6),u=n.n(i),o=n(1),a=n(0);n.d(t,"Money",function(){return u.a}),n.d(t,"VMoney",function(){return o.a}),n.d(t,"options",function(){return a.a}),n.d(t,"VERSION",function(){return c});var c="0.8.1";t.default=r,"undefined"!=typeof window&&window.Vue&&window.Vue.use(r)},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(1),i=n(0),u=n(2);t.default={name:"Money",props:{value:{required:!0,type:[Number,String],default:0},masked:{type:Boolean,default:!1},precision:{type:Number,default:function(){return i.a.precision}},decimal:{type:String,default:function(){return i.a.decimal}},thousands:{type:String,default:function(){return i.a.thousands}},prefix:{type:String,default:function(){return i.a.prefix}},suffix:{type:String,default:function(){return i.a.suffix}}},directives:{money:r.a},data:function(){return{formattedValue:""}},watch:{value:{immediate:!0,handler:function(e,t){var r=n.i(u.a)(e,this.$props);r!==this.formattedValue&&(this.formattedValue=r)}}},methods:{change:function(e){this.$emit("input",this.masked?e.target.value:n.i(u.d)(e.target.value,this.precision))}}}},function(e,t,n){"use strict";t.a=function(e,t){return e=e||{},t=t||{},Object.keys(e).concat(Object.keys(t)).reduce(function(n,r){return n[r]=void 0===t[r]?e[r]:t[r],n},{})}},function(e,t,n){var r=n(7)(n(4),n(8),null,null);e.exports=r.exports},function(e,t){e.exports=function(e,t,n,r){var i,u=e=e||{},o=typeof e.default;"object"!==o&&"function"!==o||(i=e,u=e.default);var a="function"==typeof u?u.options:u;if(t&&(a.render=t.render,a.staticRenderFns=t.staticRenderFns),n&&(a._scopeId=n),r){var c=a.computed||(a.computed={});Object.keys(r).forEach(function(e){var t=r[e];c[e]=function(){return t}})}return{esModule:i,exports:u,options:a}}},function(e,t){e.exports={render:function(){var e=this,t=e.$createElement;return(e._self._c||t)("input",{directives:[{name:"money",rawName:"v-money",value:{precision:e.precision,decimal:e.decimal,thousands:e.thousands,prefix:e.prefix,suffix:e.suffix},expression:"{precision, decimal, thousands, prefix, suffix}"}],staticClass:"v-money",attrs:{type:"tel"},domProps:{value:e.formattedValue},on:{change:e.change}})},staticRenderFns:[]}},function(e,t,n){e.exports=n(3)}])});
 
 /***/ }),
-/* 170 */
+/* 175 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"hipay-checkout-dropin"},[_c('div',{staticClass:"container d-flex flex-column align-items-center"},[_c('div',{staticClass:"top-line row d-flex justify-content-center font-14-m"},[_vm._v("\n      "+_vm._s(_vm.business.name)+"\n\n      "),_c('div',{staticClass:"close-button",on:{"click":_vm.doClose}},[_vm._v("CLOSE\n      ")])]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.page === 'method' || _vm.page === 'select'),expression:"page === 'method' || page === 'select'"}],staticClass:"amount-line row d-flex justify-content-between align-items-center"},[_c('div',{staticClass:"d-flex flex-column"},[_c('span',{staticClass:"font-12"},[_vm._v("Amount")]),_vm._v(" "),_c('span',{staticClass:"font-14-m"},[_vm._v(_vm._s(_vm.currency)+" "+_vm._s(_vm.checkout.charge_amount))])]),_vm._v(" "),(_vm.mode === 'default')?_c('span',{staticClass:"change-method",on:{"click":function($event){_vm.page = 'amount'}}},[_vm._v("\n        CHANGE\n      ")]):_vm._e()]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.page === 'method'),expression:"page === 'method'"}],staticClass:"selected-method row flex-grow-1 d-flex flex-column justify-content-between"},[_c('div',{staticClass:"d-flex justify-content-between mb-3"},[_c('PaymentMethodIcon',{attrs:{"value":_vm.charges.chosen_method}}),_vm._v(" "),_c('span',{directives:[{name:"show",rawName:"v-show",value:(_vm.orderedMethods.length > 0 && !_vm.busy && !_vm.changingMethod),expression:"orderedMethods.length > 0 && !busy && !changingMethod"}],staticClass:"change-method",on:{"click":function($event){_vm.page = 'select'}}},[_vm._v("\n          CHANGE\n        ")])],1),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'paynow_online'),expression:"charges.chosen_method === 'paynow_online'"}],key:"options-paynow",staticClass:"options"},[(_vm.qrGeneration)?_c('div',{staticClass:"qr-spinner bg-white text-center mb-3"},[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})]):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.qrGeneration && _vm.in_progress && _vm.charges.charge_status !== 'succeeded'),expression:"!qrGeneration && in_progress && charges.charge_status !== 'succeeded'"}],staticClass:"qr-code d-flex justify-content-center mb-3",class:{ samsung: _vm.isSamsungBrowser }},[_c('img',{ref:"paynowQrCode"})]),_vm._v(" "),_c('span',{staticClass:"font-12-m text-center mb-3"},[_vm._v("Scan above QR code image using your internet banking app")]),_vm._v(" "),_c('div',{staticClass:"d-flex justify-content-center align-items-center mb-3"},[_vm._l((_vm.bankImages),function(image,index){return _c('img',{key:("mobile-bank-image-" + index),staticClass:"bank-image",attrs:{"src":image}})}),_vm._v(" "),_c('span',{staticClass:"font-12-l mb-1 ml-2",attrs:{"data-toggle":"tooltip","data-placement":"top","data-html":"true","data-trigger":"click","title":_vm.bankImagesOther}},[_vm._v("& Other banks")])],2)]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'card'),expression:"charges.chosen_method === 'card'"}],key:"options-card",staticClass:"options"},[_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.cards.error),expression:"cards.error"}],staticClass:"alert alert-danger"},[_vm._v("\n          "+_vm._s(_vm.cards.error)+"\n        ")]),_vm._v(" "),_c('div',{attrs:{"id":"card-element"}}),_vm._v(" "),(_vm.in_progress && _vm.charges.charge_status !== 'succeeded')?[_c('p',{staticClass:"mb-0 mt-2 text-center font-weight-bold"},[_vm._v("Please wait while we process your payment.")]),_vm._v(" "),_vm._m(0)]:_vm._e()],2),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'wechat'),expression:"charges.chosen_method === 'wechat'"}],key:"options-wechat",staticClass:"options"},[(_vm.qrGeneration)?_c('div',{staticClass:"qr-spinner bg-white text-center mb-3"},[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})]):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.qrGeneration && _vm.in_progress && _vm.charges.charge_status !== 'succeeded'),expression:"!qrGeneration && in_progress && charges.charge_status !== 'succeeded'"}],staticClass:"qr-code mb-3 text-center",class:{ samsung: _vm.isSamsungBrowser }},[_c('img',{ref:"wechatQrCode"})]),_vm._v(" "),_c('span',{staticClass:"font-12-m"},[_vm._v("Scan above WeChatPay QR code.")]),_vm._v(" "),(_vm.in_progress && _vm.charges.charge_status !== 'succeeded')?_c('span',{staticClass:"my-2 font-12-m text-center"},[_vm._v("Awaiting payment. Please do not close this window until you receive payment confirmation.")]):_vm._e()]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'alipay'),expression:"charges.chosen_method === 'alipay'"}],key:"options-alipay",staticClass:"options"},[_c('p',{staticClass:"mb-1 mt-2 text-center font-12-m"},[_vm._v("Scan AliPay QR or authenticate using your AliPay credentials. Clicking the below button will redirect you to AliPay payment page.")]),_vm._v(" "),_c('p',{staticClass:"mt-2 text-center font-12-m"},[_vm._v("Please do not close this window until you receive payment confirmation.")]),_vm._v(" "),(_vm.in_progress)?_c('div',{staticClass:"bg-white text-center mt-2 mb-5"},[_vm._m(1)]):_vm._e()]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'grabpay' || _vm.charges.chosen_method === 'grabpay_direct' || _vm.charges.chosen_method === 'grabpay_paylater'),expression:"charges.chosen_method === 'grabpay' || charges.chosen_method === 'grabpay_direct' || charges.chosen_method === 'grabpay_paylater'"}],key:"options-grabpay",staticClass:"options"},[_c('p',{staticClass:"mt-2 text-center font-12-m"},[_vm._v("Please do not close this window until you receive payment confirmation.")]),_vm._v(" "),(_vm.in_progress)?_c('div',{staticClass:"bg-white text-center mt-2 mb-5"},[_vm._m(2)]):_vm._e()]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'shopee_pay'),expression:"charges.chosen_method === 'shopee_pay'"}],key:"options-shopee",staticClass:"options"},[(_vm.qrGeneration)?_c('div',{staticClass:"qr-spinner bg-white text-center mb-3"},[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})]):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.qrGeneration && _vm.in_progress && _vm.charges.charge_status !== 'succeeded'),expression:"!qrGeneration && in_progress && charges.charge_status !== 'succeeded'"}],staticClass:"qr-code mb-3 text-center",class:{ samsung: _vm.isSamsungBrowser }},[_c('img',{ref:"shopeeQrCode"})]),_vm._v(" "),_c('span',{staticClass:"text-center font-12-m"},[_vm._v("Scan above Shopee Pay QR code.")]),_vm._v(" "),(_vm.in_progress && _vm.charges.charge_status !== 'succeeded')?_c('span',{staticClass:"my-2 text-center font-12-m"},[_vm._v("Awaiting payment. Please do not close this window until you receive payment confirmation.")]):_vm._e()]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'zip'),expression:"charges.chosen_method === 'zip'"}],key:"options-zip",staticClass:"options"},[_c('p',{staticClass:"mt-2 text-center font-12-m"},[_vm._v("Please do not close this window until you receive payment confirmation.")]),_vm._v(" "),(_vm.in_progress)?_c('div',{staticClass:"bg-white text-center mt-2 mb-5"},[_vm._m(3)]):_vm._e()]),_vm._v(" "),(_vm.showDisabledButton)?_c('CheckoutButton',{staticClass:"mt-3",attrs:{"title":_vm.payButtonTitle,"dots":_vm.in_progress,"disabled":_vm.payButtonDisabled},on:{"click":function($event){return _vm.payButtonOnClick()},"disabledClick":function($event){return _vm.payButtonOnDisabledClick()}}}):_vm._e()],1),_vm._v(" "),(_vm.page === 'select')?_c('div',{staticClass:"methods d-flex flex-column row flex-grow-1"},[_c('span',{staticClass:"font-12 mb-2"},[_vm._v("Select Payment Method")]),_vm._v(" "),_vm._l((_vm.orderedMethods),function(method,index){return _c('div',{key:index,staticClass:"payment-method d-flex justify-content-center align-items-center",class:{ selected: _vm.charges.chosen_method === method },on:{"click":function($event){return _vm.changeMethod(method)}}},[_c('PaymentMethodIcon',{attrs:{"value":method}}),_vm._v(" "),(!_vm.methodEnabled(method))?_c('div',{staticClass:"disabler d-flex align-items-center justify-content-center",on:{"click":function($event){$event.stopPropagation();}}},[_vm._v("\n          Minimum amount: "+_vm._s(_vm.minAmounts[method].toFixed(2))+"\n        ")]):_vm._e()],1)})],2):_vm._e(),_vm._v(" "),(_vm.page === 'amount')?_c('div',{staticClass:"row flex-grow-1 d-flex flex-column justify-content-between amount"},[_c('div',{staticClass:"d-flex flex-column"},[_c('span',{staticClass:"input-label"},[_vm._v("Amount")]),_vm._v(" "),_c('div',{staticClass:"amount-container w-100 d-flex flex-column"},[_c('input',{directives:[{name:"model",rawName:"v-model.lazy",value:(_vm.checkout.charge_amount),expression:"checkout.charge_amount",modifiers:{"lazy":true}},{name:"money",rawName:"v-money",value:(_vm.money),expression:"money"}],staticClass:"amount",class:{ error: _vm.shakingErrors.amount },attrs:{"disabled":_vm.mode === 'payment-request'},domProps:{"value":(_vm.checkout.charge_amount)},on:{"change":function($event){return _vm.$set(_vm.checkout, "charge_amount", $event.target.value)}}}),_vm._v(" "),_c('div',{staticClass:"currency d-flex align-items-center justify-content-center font-14"},[_vm._v("\n            "+_vm._s(_vm.currency)+"\n          ")])]),_vm._v(" "),_c('span',{staticClass:"input-label"},[_vm._v("Email")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.checkout.email),expression:"checkout.email"}],class:{ error: _vm.shakingErrors.email },domProps:{"value":(_vm.checkout.email)},on:{"input":function($event){if($event.target.composing){ return; }_vm.$set(_vm.checkout, "email", $event.target.value)}}}),_vm._v(" "),_c('span',{staticClass:"input-sublabel",class:{ error: _vm.shakingErrors.email }},[_vm._v("\n          "+_vm._s(_vm.shakingErrors.email ? _vm.errors.email : 'Enter your email')+"\n        ")]),_vm._v(" "),_c('span',{staticClass:"input-label"},[_vm._v("Remark")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.checkout.description),expression:"checkout.description"}],domProps:{"value":(_vm.checkout.description)},on:{"input":function($event){if($event.target.composing){ return; }_vm.$set(_vm.checkout, "description", $event.target.value)}}}),_vm._v(" "),_c('span',{staticClass:"input-sublabel"},[_vm._v("(Optional)")])]),_vm._v(" "),_c('CheckoutButton',{attrs:{"title":"NEXT"},on:{"click":_vm.onNextClick}})],1):_vm._e(),_vm._v(" "),(_vm.page === 'error')?_c('div',{staticClass:"row flex-grow-1 d-flex flex-column align-items-center justify-content-center"},[_c('h3',[_vm._v("Something gone wrong")]),_vm._v(" "),_c('span',{staticClass:"text-center mt-5"},[_vm._v(_vm._s(_vm.fatalError))])]):_vm._e(),_vm._v(" "),(_vm.page === 'loading')?_c('div',{staticClass:"row flex-grow-1 d-flex align-items-center justify-content-center"},[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})]):_vm._e(),_vm._v(" "),(_vm.page === 'already-paid')?_c('div',{staticClass:"row flex-grow-1 w-100 success-row d-flex flex-column align-items-center"},[_c('CheckMark'),_vm._v(" "),_c('span',{staticClass:"font-14-m text-center mt-4"},[_vm._v("\n        Already paid\n      ")])],1):_vm._e(),_vm._v(" "),(_vm.page === 'timeout')?_c('div',{staticClass:"row flex-grow-1 w-100 success-row d-flex flex-column align-items-center"},[_c('i',{staticClass:"far fa-frown font-50"}),_vm._v(" "),_vm._m(4)]):_vm._e(),_vm._v(" "),(_vm.page === 'success')?_c('div',{staticClass:"row flex-grow-1 w-100 success-row d-flex flex-column align-items-center justify-content-between"},[_c('CheckMark'),_vm._v(" "),_c('div',{staticClass:"d-flex flex-column align-items-center w-100"},[_c('span',{staticClass:"font-14-sb"},[_vm._v("Payment Successfull")]),_vm._v(" "),_c('table',{staticClass:"success w-100 mt-4"},[_c('tr',[_c('td',[_vm._v("Amount")]),_vm._v(" "),_c('td',[_vm._v(_vm._s(_vm.checkout.charge_amount))])]),_vm._v(" "),_c('tr',[_c('td',[_vm._v("Email")]),_vm._v(" "),_c('td',[_vm._v(_vm._s(_vm.checkout.email))])]),_vm._v(" "),_c('tr',[_c('td',[_vm._v("Payment Type")]),_vm._v(" "),_c('td',[_vm._v(_vm._s(_vm.methodNames[_vm.charges.chosen_method]))])])])]),_vm._v(" "),_c('span',{staticClass:"font-12"},[_vm._v("Popup will close in "+_vm._s(_vm.successTimeoutValue)+" sec...")])],1):_vm._e(),_vm._v(" "),_vm._m(5)])])}
-var staticRenderFns = [function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"bg-white text-center mt-2 mb-5"},[_c('p',[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})])])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('span',{staticClass:"font-14-m text-center mt-4"},[_vm._v("\n        Checkout page timed out."),_c('br'),_c('br'),_vm._v("Please retry completing order from merchant website and ensure you complete payment within 3 minutes.\n      ")])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"bottom-line row d-flex justify-content-center"},[_c('a',{staticClass:"font-12",attrs:{"href":"https://hit-pay.com","target":"_blank"}},[_vm._v("\n        Powered by HitPay\n      ")])])}]
-var esExports = { render: render, staticRenderFns: staticRenderFns }
-/* harmony default export */ __webpack_exports__["a"] = (esExports);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_CheckoutDivider_vue__ = __webpack_require__(68);
+/* unused harmony namespace reexport */
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_1b8d7289_hasScoped_true_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_CheckoutDivider_vue__ = __webpack_require__(178);
+function injectStyle (ssrContext) {
+  __webpack_require__(176)
+}
+var normalizeComponent = __webpack_require__(14)
+/* script */
+
+
+/* template */
+
+/* template functional */
+var __vue_template_functional__ = false
+/* styles */
+var __vue_styles__ = injectStyle
+/* scopeId */
+var __vue_scopeId__ = "data-v-1b8d7289"
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __WEBPACK_IMPORTED_MODULE_0__babel_loader_node_modules_vue_loader_lib_selector_type_script_index_0_CheckoutDivider_vue__["a" /* default */],
+  __WEBPACK_IMPORTED_MODULE_1__node_modules_vue_loader_lib_template_compiler_index_id_data_v_1b8d7289_hasScoped_true_buble_transforms_node_modules_vue_loader_lib_selector_type_template_index_0_CheckoutDivider_vue__["a" /* default */],
+  __vue_template_functional__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+
+/* harmony default export */ __webpack_exports__["a"] = (Component.exports);
+
 
 /***/ }),
-/* 171 */
+/* 176 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(172);
+var content = __webpack_require__(177);
 if(typeof content === 'string') content = [[module.i, content, '']];
 if(content.locals) module.exports = content.locals;
 // add the styles to the DOM
-var update = __webpack_require__(18)("533b64c8", content, true, {});
+var update = __webpack_require__(13)("3cd22eb2", content, true, {});
 
 /***/ }),
-/* 172 */
+/* 177 */
 /***/ (function(module, exports, __webpack_require__) {
 
-exports = module.exports = __webpack_require__(17)(false);
+exports = module.exports = __webpack_require__(12)(false);
 // imports
 
 
 // module
-exports.push([module.i, ".d-flex{display:flex}.flex-column{flex-direction:column}.align-items-center{align-items:center}.justify-content-center{justify-content:center}.justify-content-between{justify-content:space-between}.flex-grow-1{flex-grow:1}.w-100{width:100%}.font-12,.font-12-m{font-size:12px}.font-12-m{font-weight:500}.font-12-l{font-size:12px;font-weight:300}.font-14,.font-14-m{font-size:14px}.font-14-m{font-weight:500}.font-14-sb{font-size:14px;font-weight:600}.font-50{font-size:50px}.mb-2{margin-bottom:8px}.ml-2{margin-left:8px}.my-2{margin-top:16px}.mb-3,.my-2{margin-bottom:16px}.mt-3{margin-top:16px}.mt-4{margin-top:24px}.mt-5{margin-top:32px}.text-center{text-align:center}.error{color:red!important}", ""]);
+exports.push([module.i, ".checkout-divider[data-v-1b8d7289]{width:100%;display:flex;justify-content:center;position:relative;height:18px;margin:16px 0}.checkout-divider .line[data-v-1b8d7289]{left:0;right:0;top:9px;position:absolute;height:1px;background-color:#cacaca}.checkout-divider span[data-v-1b8d7289]{z-index:2;font-size:18px;background-color:#fff;color:#39393a;padding:0 9px}", ""]);
+
+// exports
+
+
+/***/ }),
+/* 178 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"checkout-divider"},[(_vm.text)?_c('span',[_vm._v(_vm._s(_vm.text))]):_vm._e(),_vm._v(" "),_c('div',{staticClass:"line"})])}
+var staticRenderFns = []
+var esExports = { render: render, staticRenderFns: staticRenderFns }
+/* harmony default export */ __webpack_exports__["a"] = (esExports);
+
+/***/ }),
+/* 179 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+var render = function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"hipay-checkout-dropin"},[_c('div',{staticClass:"container d-flex flex-column align-items-center"},[_c('div',{staticClass:"top-line row d-flex justify-content-center font-14-m"},[_vm._v("\n      "+_vm._s(_vm.business.name)+"\n\n      "),_c('div',{staticClass:"close-button",on:{"click":_vm.doClose}},[_vm._v("CLOSE\n      ")])]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.page === 'method' || _vm.page === 'select'),expression:"page === 'method' || page === 'select'"}],staticClass:"amount-line row d-flex justify-content-between align-items-center"},[_c('div',{staticClass:"d-flex flex-column"},[_c('span',{staticClass:"font-12"},[_vm._v("Amount")]),_vm._v(" "),_c('span',{staticClass:"font-14-m"},[_vm._v(_vm._s(_vm.currency)+" "+_vm._s(_vm.totalAmount))])]),_vm._v(" "),(_vm.customerPaysFee && _vm.charges.chosen_method)?_c('div',{staticClass:"d-flex flex-column"},[_c('span',{staticClass:"font-12"},[_vm._v(_vm._s(_vm.adminFeeText))]),_vm._v(" "),_c('span',{staticClass:"font-14-m"},[_vm._v(_vm._s(_vm.currency)+" "+_vm._s(_vm.adminFee))])]):_vm._e(),_vm._v(" "),(_vm.mode === 'default')?_c('span',{staticClass:"change-method",on:{"click":function($event){_vm.page = 'amount'}}},[_vm._v("\n        CHANGE\n      ")]):_vm._e()]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.page === 'method'),expression:"page === 'method'"}],staticClass:"selected-method row flex-grow-1 d-flex flex-column justify-content-between"},[_c('div',{staticClass:"d-flex justify-content-between mb-3"},[_c('PaymentMethodIcon',{attrs:{"value":_vm.charges.chosen_method}}),_vm._v(" "),_c('span',{directives:[{name:"show",rawName:"v-show",value:(_vm.orderedMethods.length > 0 && !_vm.busy && !_vm.changingMethod),expression:"orderedMethods.length > 0 && !busy && !changingMethod"}],staticClass:"change-method",on:{"click":function($event){_vm.page = 'select'}}},[_vm._v("\n          CHANGE\n        ")])],1),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'paynow_online'),expression:"charges.chosen_method === 'paynow_online'"}],key:"options-paynow",staticClass:"options"},[(_vm.qrGeneration)?_c('div',{staticClass:"qr-spinner bg-white text-center mb-3"},[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})]):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.qrGeneration && _vm.in_progress && _vm.charges.charge_status !== 'succeeded'),expression:"!qrGeneration && in_progress && charges.charge_status !== 'succeeded'"}],staticClass:"qr-code d-flex justify-content-center mb-3",class:{ samsung: _vm.isSamsungBrowser }},[_c('img',{ref:"paynowQrCode"})]),_vm._v(" "),_c('span',{staticClass:"font-12-m text-center mb-3"},[_vm._v("Scan above QR code image using your internet banking app")]),_vm._v(" "),_c('div',{staticClass:"d-flex justify-content-center align-items-center mb-3"},[_vm._l((_vm.bankImages),function(image,index){return _c('img',{key:("mobile-bank-image-" + index),staticClass:"bank-image",attrs:{"src":image}})}),_vm._v(" "),_c('span',{staticClass:"font-12-l mb-1 ml-2",attrs:{"data-toggle":"tooltip","data-placement":"top","data-html":"true","data-trigger":"click","title":_vm.bankImagesOther}},[_vm._v("& Other banks")])],2)]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'card'),expression:"charges.chosen_method === 'card'"}],key:"options-card",staticClass:"options"},[_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.psElementMounted),expression:"psElementMounted"}],staticClass:"apple-pay w-100 text-center",class:{ 'mb-4': !_vm.in_progress }},[_c('div',{staticClass:"inner"},[_c('div',{attrs:{"id":"payment-request-button"}}),_vm._v(" "),_c('CheckoutDivider',{staticStyle:{"min-height":"18px"},attrs:{"text":"Or"}})],1)]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.cards.error),expression:"cards.error"}],staticClass:"alert alert-danger"},[_vm._v("\n          "+_vm._s(_vm.cards.error)+"\n        ")]),_vm._v(" "),_c('div',{attrs:{"id":"card-element"}}),_vm._v(" "),(_vm.in_progress && _vm.charges.charge_status !== 'succeeded')?[_c('p',{staticClass:"mb-0 mt-2 text-center font-weight-bold"},[_vm._v("Please wait while we process your payment.")]),_vm._v(" "),_vm._m(0)]:_vm._e()],2),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'fpx'),expression:"charges.chosen_method === 'fpx'"}],key:"options-fpx",staticClass:"options options-fpx"},[_c('div',{attrs:{"id":"fpx-bank-element"}})]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'wechat'),expression:"charges.chosen_method === 'wechat'"}],key:"options-wechat",staticClass:"options"},[(_vm.qrGeneration)?_c('div',{staticClass:"qr-spinner bg-white text-center mb-3"},[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})]):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.qrGeneration && _vm.in_progress && _vm.charges.charge_status !== 'succeeded'),expression:"!qrGeneration && in_progress && charges.charge_status !== 'succeeded'"}],staticClass:"qr-code mb-3 text-center",class:{ samsung: _vm.isSamsungBrowser }},[_c('img',{ref:"wechatQrCode"})]),_vm._v(" "),_c('span',{staticClass:"font-12-m"},[_vm._v("Scan above WeChatPay QR code.")]),_vm._v(" "),(_vm.in_progress && _vm.charges.charge_status !== 'succeeded')?_c('span',{staticClass:"my-2 font-12-m text-center"},[_vm._v("Awaiting payment. Please do not close this window until you receive payment confirmation.")]):_vm._e()]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'alipay'),expression:"charges.chosen_method === 'alipay'"}],key:"options-alipay",staticClass:"options"},[_c('p',{staticClass:"mb-1 mt-2 text-center font-12-m"},[_vm._v("Scan AliPay QR or authenticate using your AliPay credentials. Clicking the below button will redirect you to AliPay payment page.")]),_vm._v(" "),_c('p',{staticClass:"mt-2 text-center font-12-m"},[_vm._v("Please do not close this window until you receive payment confirmation.")]),_vm._v(" "),(_vm.in_progress)?_c('div',{staticClass:"bg-white text-center mt-2 mb-5"},[_vm._m(1)]):_vm._e()]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'grabpay' || _vm.charges.chosen_method === 'grabpay_direct' || _vm.charges.chosen_method === 'grabpay_paylater'),expression:"charges.chosen_method === 'grabpay' || charges.chosen_method === 'grabpay_direct' || charges.chosen_method === 'grabpay_paylater'"}],key:"options-grabpay",staticClass:"options"},[_c('p',{staticClass:"mt-2 text-center font-12-m"},[_vm._v("Please do not close this window until you receive payment confirmation.")]),_vm._v(" "),(_vm.in_progress)?_c('div',{staticClass:"bg-white text-center mt-2 mb-5"},[_vm._m(2)]):_vm._e()]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'shopee_pay'),expression:"charges.chosen_method === 'shopee_pay'"}],key:"options-shopee",staticClass:"options"},[(_vm.qrGeneration)?_c('div',{staticClass:"qr-spinner bg-white text-center mb-3"},[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})]):_vm._e(),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(!_vm.qrGeneration && _vm.in_progress && _vm.charges.charge_status !== 'succeeded'),expression:"!qrGeneration && in_progress && charges.charge_status !== 'succeeded'"}],staticClass:"qr-code mb-3 text-center",class:{ samsung: _vm.isSamsungBrowser }},[_c('img',{ref:"shopeeQrCode"})]),_vm._v(" "),_c('span',{staticClass:"text-center font-12-m"},[_vm._v("Scan above Shopee Pay QR code.")]),_vm._v(" "),(_vm.in_progress && _vm.charges.charge_status !== 'succeeded')?_c('span',{staticClass:"my-2 text-center font-12-m"},[_vm._v("Awaiting payment. Please do not close this window until you receive payment confirmation.")]):_vm._e()]),_vm._v(" "),_c('div',{directives:[{name:"show",rawName:"v-show",value:(_vm.charges.chosen_method === 'zip'),expression:"charges.chosen_method === 'zip'"}],key:"options-zip",staticClass:"options"},[_c('p',{staticClass:"mt-2 text-center font-12-m"},[_vm._v("Please do not close this window until you receive payment confirmation.")]),_vm._v(" "),(_vm.in_progress)?_c('div',{staticClass:"bg-white text-center mt-2 mb-5"},[_vm._m(3)]):_vm._e()]),_vm._v(" "),(_vm.showDisabledButton)?_c('CheckoutButton',{staticClass:"mt-3",attrs:{"title":_vm.payButtonTitle,"dots":_vm.in_progress,"disabled":_vm.payButtonDisabled},on:{"click":function($event){return _vm.payButtonOnClick()},"disabledClick":function($event){return _vm.payButtonOnDisabledClick()}}}):_vm._e()],1),_vm._v(" "),(_vm.page === 'select')?_c('div',{staticClass:"methods d-flex flex-column row flex-grow-1"},[_c('span',{staticClass:"font-12 mb-2"},[_vm._v("Select Payment Method")]),_vm._v(" "),_vm._l((_vm.orderedMethods),function(method,index){return _c('div',{key:index,staticClass:"payment-method d-flex justify-content-center align-items-center",class:{ selected: _vm.charges.chosen_method === method },on:{"click":function($event){return _vm.changeMethod(method)}}},[_c('PaymentMethodIcon',{attrs:{"value":method}}),_vm._v(" "),(!_vm.methodEnabled(method))?_c('div',{staticClass:"disabler d-flex align-items-center justify-content-center",on:{"click":function($event){$event.stopPropagation();}}},[_vm._v("\n          Minimum amount: "+_vm._s(_vm.minAmounts[method].toFixed(2))+"\n        ")]):_vm._e()],1)})],2):_vm._e(),_vm._v(" "),(_vm.page === 'amount')?_c('div',{staticClass:"row flex-grow-1 d-flex flex-column justify-content-between amount"},[_c('div',{staticClass:"d-flex flex-column"},[_c('span',{staticClass:"input-label"},[_vm._v("Amount")]),_vm._v(" "),_c('div',{staticClass:"amount-container w-100 d-flex flex-column"},[_c('input',{directives:[{name:"model",rawName:"v-model.lazy",value:(_vm.totalAmount),expression:"totalAmount",modifiers:{"lazy":true}},{name:"money",rawName:"v-money",value:(_vm.money),expression:"money"}],staticClass:"amount",class:{ error: _vm.shakingErrors.amount },attrs:{"disabled":_vm.mode === 'payment-request'},domProps:{"value":(_vm.totalAmount)},on:{"change":function($event){_vm.totalAmount=$event.target.value}}}),_vm._v(" "),_c('div',{staticClass:"currency d-flex align-items-center justify-content-center font-14"},[_vm._v("\n            "+_vm._s(_vm.currency)+"\n          ")])]),_vm._v(" "),_c('span',{staticClass:"input-label"},[_vm._v("Email")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.checkout.email),expression:"checkout.email"}],class:{ error: _vm.shakingErrors.email },domProps:{"value":(_vm.checkout.email)},on:{"input":function($event){if($event.target.composing){ return; }_vm.$set(_vm.checkout, "email", $event.target.value)}}}),_vm._v(" "),_c('span',{staticClass:"input-sublabel",class:{ error: _vm.shakingErrors.email }},[_vm._v("\n          "+_vm._s(_vm.shakingErrors.email ? _vm.errors.email : 'Enter your email')+"\n        ")]),_vm._v(" "),_c('span',{staticClass:"input-label"},[_vm._v("Remark")]),_vm._v(" "),_c('input',{directives:[{name:"model",rawName:"v-model",value:(_vm.checkout.description),expression:"checkout.description"}],attrs:{"maxlength":_vm.descriptionMaxLen},domProps:{"value":(_vm.checkout.description)},on:{"input":function($event){if($event.target.composing){ return; }_vm.$set(_vm.checkout, "description", $event.target.value)}}}),_vm._v(" "),_c('span',{staticClass:"input-sublabel"},[_vm._v(_vm._s(_vm.descriptionLengthText))])]),_vm._v(" "),_c('CheckoutButton',{attrs:{"title":"NEXT"},on:{"click":_vm.onNextClick}})],1):_vm._e(),_vm._v(" "),(_vm.page === 'error')?_c('div',{staticClass:"row flex-grow-1 d-flex flex-column align-items-center justify-content-center"},[_c('h3',[_vm._v("Something gone wrong")]),_vm._v(" "),_c('span',{staticClass:"text-center mt-5"},[_vm._v(_vm._s(_vm.fatalError))])]):_vm._e(),_vm._v(" "),(_vm.page === 'loading')?_c('div',{staticClass:"row flex-grow-1 d-flex align-items-center justify-content-center"},[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})]):_vm._e(),_vm._v(" "),(_vm.page === 'already-paid')?_c('div',{staticClass:"row flex-grow-1 w-100 success-row d-flex flex-column align-items-center"},[_c('CheckMark'),_vm._v(" "),_c('span',{staticClass:"font-14-m text-center mt-4"},[_vm._v("\n        Already paid\n      ")])],1):_vm._e(),_vm._v(" "),(_vm.page === 'timeout')?_c('div',{staticClass:"row flex-grow-1 w-100 success-row d-flex flex-column align-items-center"},[_c('i',{staticClass:"far fa-frown font-50"}),_vm._v(" "),_vm._m(4)]):_vm._e(),_vm._v(" "),(_vm.page === 'success')?_c('div',{staticClass:"row flex-grow-1 w-100 success-row d-flex flex-column align-items-center justify-content-between"},[_c('CheckMark'),_vm._v(" "),_c('div',{staticClass:"d-flex flex-column align-items-center w-100"},[_c('span',{staticClass:"font-14-sb"},[_vm._v("Payment Successfull")]),_vm._v(" "),_c('table',{staticClass:"success w-100 mt-4"},[_c('tr',[_c('td',[_vm._v("Amount")]),_vm._v(" "),_c('td',[_vm._v(_vm._s(_vm.totalAmount))])]),_vm._v(" "),_c('tr',[_c('td',[_vm._v("Email")]),_vm._v(" "),_c('td',[_vm._v(_vm._s(_vm.checkout.email))])]),_vm._v(" "),_c('tr',[_c('td',[_vm._v("Payment Type")]),_vm._v(" "),_c('td',[_vm._v(_vm._s(_vm.methodNames[_vm.charges.chosen_method]))])])])]),_vm._v(" "),_c('span',{staticClass:"font-12"},[_vm._v("Popup will close in "+_vm._s(_vm.successTimeoutValue)+" sec...")])],1):_vm._e(),_vm._v(" "),_vm._m(5)])])}
+var staticRenderFns = [function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"bg-white text-center mt-0 mb-0"},[_c('p',[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})])])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('p',[_c('i',{staticClass:"fas fa-spinner fa-spin fa-3x text-primary"})])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('span',{staticClass:"font-14-m text-center mt-4"},[_vm._v("\n        Checkout page timed out."),_c('br'),_c('br'),_vm._v("Please retry completing order from merchant website and ensure you complete payment within 3 minutes.\n      ")])},function () {var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;return _c('div',{staticClass:"bottom-line row d-flex justify-content-center"},[_c('a',{staticClass:"font-12",attrs:{"href":"https://hit-pay.com","target":"_blank"}},[_vm._v("\n        Powered by HitPay\n      ")])])}]
+var esExports = { render: render, staticRenderFns: staticRenderFns }
+/* harmony default export */ __webpack_exports__["a"] = (esExports);
+
+/***/ }),
+/* 180 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(181);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var update = __webpack_require__(13)("533b64c8", content, true, {});
+
+/***/ }),
+/* 181 */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(12)(false);
+// imports
+
+
+// module
+exports.push([module.i, ".d-flex{display:flex}.flex-column{flex-direction:column}.align-items-center{align-items:center}.justify-content-center{justify-content:center}.justify-content-between{justify-content:space-between}.flex-grow-1{flex-grow:1}.w-100{width:100%}.font-12,.font-12-m{font-size:12px}.font-12-m{font-weight:500}.font-12-l{font-size:12px;font-weight:300}.font-14,.font-14-m{font-size:14px}.font-14-m{font-weight:500}.font-14-sb{font-size:14px;font-weight:600}.font-50{font-size:50px}.mb-2{margin-bottom:8px}.mb-4{margin-bottom:24px}.ml-2{margin-left:8px}.my-2{margin-top:16px}.mb-3,.my-2{margin-bottom:16px}.mt-3{margin-top:16px}.mt-4{margin-top:24px}.mt-5{margin-top:32px}.text-center{text-align:center}.error{color:red!important}", ""]);
 
 // exports
 

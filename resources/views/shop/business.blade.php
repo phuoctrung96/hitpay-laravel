@@ -36,7 +36,7 @@
            -khtml-user-select: none;
            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
         }
-        
+
         category__link:hover,
         category__link:focus {
            outline: none;
@@ -94,7 +94,7 @@
         @endif
     </div>
     @isset ($cover_image)
-    <div class="app-cover-image" style="background: url({{ $cover_image }}); background-size: cover; background-repeat: no-repeat; background-size: cover; -webkit-background-size: cover; -moz-background-size: cover; -o-background-size: cover;">        
+    <div class="app-cover-image" style="background: url({{ $cover_image }}); background-size: cover; background-repeat: no-repeat; background-size: cover; -webkit-background-size: cover; -moz-background-size: cover; -o-background-size: cover;">
     </div>
     @endisset
     <div class="main-app-content homepage">

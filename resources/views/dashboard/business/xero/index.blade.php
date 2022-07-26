@@ -115,12 +115,12 @@
     </div>
     @push('body-stack')
         <script>
+            window.pluginProviders = @json($pluginProviders);
             window.xeroAccountTypes = @json(\App\Business\Xero::XERO_ACCOUT_TYPES);
             window.xeroInvoiceGrouping = @json(\App\Business\Xero::INVOICE_GROUPING_VARIANTS);
             window.xeroAccounts = @json($xeroAccounts);
             window.bankAccounts = @json($bankAccounts);
             window.xeroBrandingThemes = @json($brandingThemes);
-            window.Business = @json($business);
             window.showDisconnetPopup = {{!isset($business->xero_refresh_token) ? 1 : 0}};
         </script>
     @endpush

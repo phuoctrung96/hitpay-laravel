@@ -17,7 +17,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business->toArray());
         window.StripePublishableKey = '{{ $stripePublishableKey }}';
     </script>
     <script src="https://js.stripe.com/v3/"></script>

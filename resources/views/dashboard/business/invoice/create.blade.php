@@ -29,7 +29,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         window.Tax_Settings = @json($tax_settings);
         window.Invoice = @json($invoice ?? null);
         window.Customer = @json($customer ?? null);

@@ -11,6 +11,7 @@ use App\Mail\OnboardingSuccess;
 use Exception;
 use HitPay\Business\Contracts\Ownable as OwnableContract;
 use HitPay\Business\Ownable;
+use HitPay\Data;
 use HitPay\Model\UsesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -78,8 +79,8 @@ class PaymentProvider extends Model implements OwnableContract
      * @throws \Exception
      */
     public function getRateFor(
-        string $homeCountry, string $homeCurrency, string $chargeCurrency, string $channel = null, string $method = null,
-        string $cardCountry = null, string $cardBrand = null, int $amount = null
+        string $chargeCurrency, string $channel = null, string $method = null, string $cardCountry = null,
+        string $cardBrand = null, int $amount = null
     ) {
         // TODO - 2022-02-13
         //   ----------------->>>
@@ -94,28 +95,36 @@ class PaymentProvider extends Model implements OwnableContract
         ];
 
         $eligibleMethods = [
+            // Stripe ones
             PaymentMethodType::ALIPAY,
             PaymentMethodType::WECHAT,
-            PaymentMethodType::GRABPAY,
             PaymentMethodType::FPX,
+            PaymentMethodType::GRABPAY, // Old GrabPay via Stripe
+            // Non-Stripe ones
             PaymentMethodType::PAYNOW,
-            'direct_debit',
+            PaymentMethodType::DIRECT_DEBIT,
             PaymentMethodType::SHOPEE,
             PaymentMethodType::GRABPAY_DIRECT,
-            PaymentMethodType::GRABPAY_PAYLATER
+            PaymentMethodType::GRABPAY_PAYLATER,
+            PaymentMethodType::ZIP
         ];
 
+        $homeCountry = $this->business->country;
+        $homeCurrency = $this->business->currency;
+
+        $chargeCurrency = strtolower($chargeCurrency);
+        $cardBrand = strtolower($cardBrand);
+        $cardCountry = strtolower($cardCountry);
+
         // Only if the business is from Singapore and the home currency is SGD can do the charge.
-        if (strtolower($homeCountry) === 'sg' && strtolower($homeCurrency) === 'sgd') {
+        if ($homeCountry === 'sg') {
             $allRateModels = $this->rates()->where('channel', $channel)->get();
 
             // Only if the charge is in SGD.
-            if (strtolower($chargeCurrency) === 'sgd') {
+            if ($chargeCurrency === $homeCurrency) {
                 // If the charge is using a Visa/Master card and the card is issued in Singapore OR the charge is using
                 // Alipay/WeChatPay/PayNowOnline, then only they will have custom rate.
-                $cardBrand = strtolower($cardBrand);
-
-                if ((in_array($cardBrand, $eligibleCards) && strtolower($cardCountry) === 'sg')
+                if ((in_array($cardBrand, $eligibleCards) && $cardCountry === 'sg')
                     || in_array($method, $eligibleMethods)) {
                     $rateModels = $allRateModels->where('method', $method)->whereNull('scenario');
 
@@ -195,13 +204,11 @@ class PaymentProvider extends Model implements OwnableContract
             }
 
             return [50, 0.0365];
-        } elseif (strtolower($homeCountry) === 'my' && strtolower($homeCurrency) === 'myr') {
+        } elseif ($homeCountry === 'my') {
             $allRateModels = $this->rates()->where('channel', $channel)->get();
 
             // Only if the charge is in MYR.
-            if (strtolower($chargeCurrency) === 'myr') {
-                $cardBrand = strtolower($cardBrand);
-                $cardCountry = strtolower($cardCountry);
+            if ($chargeCurrency === $homeCurrency) {
 
                 if (( in_array($cardBrand, $eligibleCards) && $cardCountry === 'my' )
                     || in_array($method, $eligibleMethods)) {
@@ -224,7 +231,7 @@ class PaymentProvider extends Model implements OwnableContract
                     } elseif ($method === PaymentMethodType::GRABPAY) {
                         return [ 0, 0.033 ];
                     } elseif ($method === PaymentMethodType::FPX) {
-                        return [ 100, 0.03 ];
+                        return [ 40, 0.02 ];
                     }
                 }
             }
@@ -246,6 +253,145 @@ class PaymentProvider extends Model implements OwnableContract
             }
 
             return [ 100, 0.039 ];
+        } elseif ($homeCountry === 'us') {
+            if (!in_array($method, [
+                PaymentMethodType::CARD,
+                PaymentMethodType::CARD_PRESENT,
+                PaymentMethodType::ALIPAY,
+            ])) {
+                throw new Exception("Invalid request, we can only make `card` / `card_present` / `alipay` payments for US Platform, method `{$method}` requested.");
+            }
+
+            $allRateModels = $this->rates()->where('channel', $channel)->get();
+
+            if ($method === PaymentMethodType::ALIPAY) {
+                $rateModels = $allRateModels->where('method', $method)->whereNull('scenario');
+
+                foreach ($rateModels->sortByDesc('starts_at') as $rate) {
+                    if ($rate->starts_at && !$rate->starts_at->isPast()) {
+                        continue;
+                    } elseif ($rate->ends_at && $rate->ends_at->isPast()) {
+                        continue;
+                    }
+
+                    return [ $rate->fixed_amount, $rate->percentage ];
+                }
+
+                return [ 40, 0.035 ];
+            }
+
+            $rateModels = $allRateModels->where('method', 'others')->where('scenario', 'others');
+
+            foreach ($rateModels->sortByDesc('starts_at') as $rate) {
+                if ($rate->starts_at && !$rate->starts_at->isPast()) {
+                    continue;
+                } elseif ($rate->ends_at && $rate->ends_at->isPast()) {
+                    continue;
+                }
+
+                return [ $rate->fixed_amount, $rate->percentage ];
+            }
+
+            return [ 40, 0.024 ];
+        } elseif ($homeCountry === 'au') {
+            $allRateModels = $this->rates()->where('channel', $channel)->get();
+
+            // Only if the charge is in MYR.
+            if ($chargeCurrency === $homeCurrency) {
+                $auEligibleCards = $eligibleCards;
+
+                $auEligibleCards[] = 'amex';
+                $auEligibleCards[] = 'jcb';
+                $auEligibleCards[] = 'unionpay';
+
+                if ((
+                        $method === PaymentMethodType::CARD
+                        && in_array($cardBrand, $auEligibleCards)
+                        && $cardCountry === $homeCountry
+                    ) || $method === PaymentMethodType::ALIPAY) {
+                    $rateModels = $allRateModels->where('method', $method)->whereNull('scenario');
+
+                    foreach ($rateModels->sortByDesc('starts_at') as $rate) {
+                        if ($rate->starts_at && !$rate->starts_at->isPast()) {
+                            continue;
+                        } elseif ($rate->ends_at && $rate->ends_at->isPast()) {
+                            continue;
+                        }
+
+                        return [ $rate->fixed_amount, $rate->percentage ];
+                    }
+
+                    if ($method === PaymentMethodType::CARD) {
+                        return [ 50, 0.015 ];
+                    } elseif ($method === PaymentMethodType::ALIPAY) {
+                        return [ 50, 0.035 ];
+                    }
+                }
+            }
+
+            if ($method !== PaymentMethodType::CARD) {
+                throw new Exception("Invalid request, non-currency payment for Malaysia Platform only available for method `card`, method `{$method}` requested.");
+            }
+
+            $rateModels = $allRateModels->where('method', 'others')->where('scenario', 'others');
+
+            foreach ($rateModels->sortByDesc('starts_at') as $rate) {
+                if ($rate->starts_at && !$rate->starts_at->isPast()) {
+                    continue;
+                } elseif ($rate->ends_at && $rate->ends_at->isPast()) {
+                    continue;
+                }
+
+                return [ $rate->fixed_amount, $rate->percentage ];
+            }
+
+            return [ 50, 0.03 ];
+        } elseif ($homeCountry === 'nz') {
+            $allRateModels = $this->rates()->where('channel', $channel)->get();
+
+            if ($chargeCurrency === $homeCurrency) {
+                if ((
+                        $method === PaymentMethodType::CARD
+                        && in_array($cardBrand, $eligibleCards)
+                        && $cardCountry === $homeCountry
+                    ) || $method === PaymentMethodType::ALIPAY) {
+                    $rateModels = $allRateModels->where('method', $method)->whereNull('scenario');
+
+                    foreach ($rateModels->sortByDesc('starts_at') as $rate) {
+                        if ($rate->starts_at && !$rate->starts_at->isPast()) {
+                            continue;
+                        } elseif ($rate->ends_at && $rate->ends_at->isPast()) {
+                            continue;
+                        }
+
+                        return [ $rate->fixed_amount, $rate->percentage ];
+                    }
+
+                    if ($method === PaymentMethodType::CARD) {
+                        return [ 50, 0.024 ];
+                    } elseif ($method === PaymentMethodType::ALIPAY) {
+                        return [ 50, 0.035 ];
+                    }
+                }
+            }
+
+            if ($method !== PaymentMethodType::CARD) {
+                throw new Exception("Invalid request, non-currency payment for Malaysia Platform only available for method `card`, method `{$method}` requested.");
+            }
+
+            $rateModels = $allRateModels->where('method', 'others')->where('scenario', 'others');
+
+            foreach ($rateModels->sortByDesc('starts_at') as $rate) {
+                if ($rate->starts_at && !$rate->starts_at->isPast()) {
+                    continue;
+                } elseif ($rate->ends_at && $rate->ends_at->isPast()) {
+                    continue;
+                }
+
+                return [ $rate->fixed_amount, $rate->percentage ];
+            }
+
+            return [ 50, 0.03 ];
         }
 
         throw new Exception('Invalid country, the rate for this country is not set.');
@@ -279,7 +425,7 @@ class PaymentProvider extends Model implements OwnableContract
             return PaymentProviderStatus::PENDING_APPROVAL;
         }
 
-        return true;
+        throw new Exception('Invalid status');
     }
 
     /**
@@ -297,6 +443,40 @@ class PaymentProvider extends Model implements OwnableContract
         foreach ($payment_providers as $payment_provider) {
             if ($this->payment_provider === $payment_provider->code) {
                 return $payment_provider->methods->toArray();
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Returns array of payment methods for current payment provider
+     * @return array
+     * @throws Exception
+     */
+    public function getPaymentMethodCurrencies(string $selectedMethod) : array
+    {
+        $business_country = $this->business->country;
+
+        $country_data = \HitPay\Data\Countries::get($business_country);
+        $payment_providers = $country_data::paymentProviders();
+
+        foreach ($payment_providers as $payment_provider) {
+            if ($this->payment_provider === $payment_provider->code) {
+                foreach ($payment_provider->methods as $method) {
+                    if ($method->code === $selectedMethod) {
+                        $currencies = [];
+
+                        // turn them into a hash map
+                        foreach ($method->currencies as $currency) {
+                            $currencies[$currency->code] = [
+                                'minimum_amount' => $currency->minimum_amount ?? 0
+                            ];
+                        }
+
+                        return $currencies;
+                    }
+                }
             }
         }
 
@@ -367,5 +547,16 @@ class PaymentProvider extends Model implements OwnableContract
             'id',
             'id'
         );
+    }
+
+    /**
+     * Get the configuration for the payment provider.
+     *
+     * @return \HitPay\Data\Countries\Objects\PaymentProvider
+     * @throws \Exception
+     */
+    public function getConfiguration() : Data\Countries\Objects\PaymentProvider
+    {
+        return Data\PaymentProviders::all()->where('code', $this->payment_provider)->first();
     }
 }

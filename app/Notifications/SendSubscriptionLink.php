@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Actions\Business\EmailTemplates\ConvertEmailTemplate;
+use App\Business\EmailTemplate;
 use App\Business\RecurringBilling;
 use App\Enumerations\Business\RecurringPlanStatus;
 use Illuminate\Bus\Queueable;
@@ -34,16 +36,69 @@ class SendSubscriptionLink extends Notification implements ShouldQueue
      * @param mixed $notifiable
      *
      * @return \Illuminate\Notifications\Messages\MailMessage
+     * @throws \Exception
      */
     public function toMail(RecurringBilling $notifiable)
     {
-        if ($notifiable->status === RecurringPlanStatus::ACTIVE) {
-            $title = 'Recurring Payment Invoice from '.$notifiable->business->getName();
+        $isHaveTemplateEmail = false;
+
+        $businessEmailTemplate = $notifiable->business->emailTemplate()->first();
+
+        if ($businessEmailTemplate instanceof EmailTemplate) {
+            $isHaveTemplateEmail = true;
+        }
+
+        $subtitle = null;
+        $footer = null;
+        $buttonText = null;
+        $buttonBackgroundColor = null;
+        $buttonTextColor = null;
+
+        if ($isHaveTemplateEmail) {
+            $emailTemplate = ConvertEmailTemplate::withBusiness($notifiable->business)
+                ->setEmailTemplateData($businessEmailTemplate->recurring_invoice_template)
+                ->process();
+
+            $emailSubject = $emailTemplate['email_subject'] ?? null;
+
+            if ($emailSubject === null) {
+                if ($notifiable->status === RecurringPlanStatus::ACTIVE) {
+                    $emailSubject = 'Recurring Payment Invoice from '.$notifiable->business->getName();
+                } else {
+                    $emailSubject = 'New Recurring Payment Invoice from '.$notifiable->business->getName();
+                }
+            }
+
+            $title = $emailTemplate['title'] ?? null;
+
+            if ($title === null) {
+                if ($notifiable->status === RecurringPlanStatus::ACTIVE) {
+                    $title = 'Recurring Payment Invoice from '.$notifiable->business->getName();
+                } else {
+                    $title = 'New Recurring Payment Invoice from '.$notifiable->business->getName();
+                }
+            }
+
+            $subtitle = $emailTemplate['subtitle'] ?? null;
+
+            $footer = $emailTemplate['footer'] ?? null;
+
+            $buttonText = $emailTemplate['button_text'] ?? null;
+            $buttonBackgroundColor = $emailTemplate['button_background_color'] ?? null;
+            $buttonTextColor = $emailTemplate['button_text_color'] ?? null;
         } else {
-            $title = 'New Recurring Payment Invoice from '.$notifiable->business->getName();
+            if ($notifiable->status === RecurringPlanStatus::ACTIVE) {
+                $emailSubject = 'Recurring Payment Invoice from '.$notifiable->business->getName();
+            } else {
+                $emailSubject = 'New Recurring Payment Invoice from '.$notifiable->business->getName();
+            }
+
+            $title = $emailSubject;
         }
 
         $title = App::environment('production') ? $title : '['.App::environment().'] '.$title;
+
+        $emailSubject = App::environment('production') ? $emailSubject : '['.App::environment().'] '.$emailSubject;
 
         return (new MailMessage)->view('hitpay-email.recurring.plan', [
             'title' => $title,
@@ -66,6 +121,12 @@ class SendSubscriptionLink extends Notification implements ShouldQueue
                 'name' => $notifiable->customer_name,
                 'email' => $notifiable->customer_email,
             ],
-        ])->subject($title);
+            'subtitle' => $subtitle,
+            'footer' => $footer,
+            'button_text' => $buttonText,
+            'button_background_color' => $buttonBackgroundColor,
+            'button_text_color' => $buttonTextColor,
+            'isHaveTemplateEmail' => $isHaveTemplateEmail
+        ])->subject($emailSubject);
     }
 }

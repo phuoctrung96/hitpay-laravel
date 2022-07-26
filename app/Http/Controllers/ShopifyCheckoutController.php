@@ -58,19 +58,19 @@ class ShopifyCheckoutController extends Controller
                 'required',
             ],
             'customer' => [
-                'required',
+                'nullable',
             ],
             'customer.billing_address' => [
-                'required',
+                'nullable',
             ],
             'customer.billing_address.given_name' => [
-                'required',
+                'nullable',
             ],
             'customer.billing_address.family_name' => [
-                'required',
+                'nullable',
             ],
             'customer.email' => [
-                'required',
+                'nullable',
             ],
             'customer.phone_number' => [
                 'nullable',

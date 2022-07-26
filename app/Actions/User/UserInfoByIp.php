@@ -52,7 +52,7 @@ trait UserInfoByIp
             try {
                 $ipData = json_decode(file_get_contents("http://www.geoplugin.net/json.gp?ip=" . $ip));
             } catch (\Exception $exception) {
-                Log::critical("Cant get information from geoplugin.net with IP " . $ip . ".
+                Log::info("Cant get information from geoplugin.net with IP " . $ip . ".
                     Default data information set as Singapore");
 
                 return null;

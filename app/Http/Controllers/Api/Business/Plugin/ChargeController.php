@@ -18,13 +18,23 @@ use App\Http\Resources\Business\PaymentIntent as PaymentIntentResource;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use App\Business\PaymentRequest;
+use App\Business\PaymentIntent;
+use HitPay\Business\PaymentProviderUtil;
+use App\Helpers\Rates;
+use App\Helpers\Currency;
+use App\Enumerations\Business\PaymentMethodType;
 use Stripe\Exception\CardException;
+use HitPay\Data\FeeCalculator;
 
 class ChargeController extends Controller
 {
+    use PaymentProviderUtil;
+
     /**
      * ChargeController constructor.
      */
@@ -72,13 +82,19 @@ class ChargeController extends Controller
         ChargeManagerInterface $chargeManager
     ) {
         Gate::inspect('operate', [$charge, $business])->authorize();
+
         // re-check charge info
         if ($charge->status === 'succeeded') {
           return Response::json([
             'alreadyPaid' => true,
           ]);
         } else {
-          $stripePaymentIntentManager = $factory->create($request->input('method'));
+          // validate method
+          $validatedData = $request->validate([
+            'method' => [ 'required', Rule::in(PaymentMethodType::getPaymentMethods()) ],
+          ]);
+
+          $stripePaymentIntentManager = $factory->create($validatedData['method']);
 
           // We try to look into database for customer, sometimes there's a collision and error thrown, if three times
           // we can't get the customer, then only we throw error.
@@ -106,18 +122,122 @@ class ChargeController extends Controller
               $chargeManager->updateRemark($charge, $request->input('description'));
           }
 
-          if ($request->has('amount')) {
-              $chargeManager->updateAmount($charge, str_replace(',', '', $request->input('amount')));
+          // amount handling
+          $paymentRequest = PaymentRequest::find($charge->plugin_provider_reference);
+
+          if ($paymentRequest) {
+            $chargeUpdateData = [
+              'payment_provider_charge_method' => $validatedData['method']
+            ];
+
+            $provider = Rates::getProviderForMethod($business, $validatedData['method']);
+
+            // minimum amount handling
+            $allowedCurrencies = $provider->getPaymentMethodCurrencies($validatedData['method']);
+            $usedCurrencyRules = $allowedCurrencies[$charge->currency] ?? null;
+
+            if ($usedCurrencyRules) {
+                if ($paymentRequest->is_default === 1 && $request->has('amount')) {
+                    $amount = $request->get('amount');
+                    $amount = getRealAmountForCurrency($charge->currency, $amount);
+                } else {
+                    $amount = $charge->amount;
+                }
+              // Throw minimum amount error based on the selected currency and payment provider
+              if ($amount < $usedCurrencyRules['minimum_amount']) {
+                  return Response::json([
+                      'error_message' => 'Transaction Failed. Minimum amount allowed to be charged is ' . getFormattedAmount($charge->currency, $usedCurrencyRules['minimum_amount']),
+                  ], 400);
+              }
+            } else {
+              // Currency not allowed for this payment provider
+              Facades\Log::critical("The business (ID : {$business->getKey()}) is trying to create a charge with unsupported currency ({$charge->currency}) using {$provider->payment_provider}. Please check.");
+
+              return Response::json([
+                  'error_message' => 'Business is not configured properly, our support team has been notified.',
+              ], 400);
+            }
+
+
+            if ($paymentRequest->is_default === 1) {
+              // For default checkouts amount can be changed by user
+              if ($request->has('amount')) {
+                $chargeUpdateData['amount'] = getRealAmountForCurrency($charge->currency, str_replace(',', '', $request->input('amount')));
+
+                // Default links do not support admin fees customization, so use standard fees for each method
+                [ $fixed, $percent ] = $provider->getRateFor(
+                  $charge->currency,
+                  $paymentRequest->channel,
+                  $validatedData['method'],
+                  null,
+                  null,
+                  $chargeUpdateData['amount']
+                );
+
+                $chargeUpdateData['admin_fee'] = false;
+                $chargeUpdateData['fixed_fee'] = $fixed;
+                $chargeUpdateData['discount_fee_rate'] = $percent;
+                $chargeUpdateData['discount_fee'] = round($chargeUpdateData['amount'] * $percent);
+              }
+            } else {
+              $rate = Rates::getRatesForMethod(
+                $business,
+                $validatedData['method'],
+                $charge->currency,
+                $paymentRequest->channel,
+                $paymentRequest->amount,
+                $paymentRequest->add_admin_fee === 1
+              );
+
+              $chargeUpdateData['admin_fee'] = $rate['addFee'];
+
+              // Total amount in charge currency
+              $charge->amount = Currency::isZeroDecimal($charge->currency)
+                ? $rate['total']
+                : (int) bcmul($rate['total'], "100");
+
+              $fees = FeeCalculator::forBusinessCharge($charge, $provider, $validatedData['method'])
+                ->calculate()->toArray();
+
+              $chargeUpdateData['exchange_rate'] = $fees['exchange_rate'];
+              $chargeUpdateData['discount_fee_rate'] = $fees['discount_fee_rate'];
+
+              $homeCurrencyBreakdown = $fees['breakdown']['home_currency'];
+
+              $chargeUpdateData['fixed_fee'] = $homeCurrencyBreakdown['fixed_fee_amount'];
+              $chargeUpdateData['discount_fee'] = $homeCurrencyBreakdown['discount_fee_amount'];
+            }
+
+            $charge->update($chargeUpdateData);
+          } else {
+            // Old scheme without Payment Request, woocommerce, shopify
+            $provider = Rates::getProviderForMethod($business, $validatedData['method']);
+
+            [ $fixed, $percent ] = $provider->getRateFor(
+              $charge->currency,
+              $charge->plugin_provider,
+              $validatedData['method'],
+              null,
+              null,
+              $charge->amount
+            );
+
+            $chargeUpdateData['admin_fee'] = false;
+            $chargeUpdateData['fixed_fee'] = $fixed;
+            $chargeUpdateData['discount_fee_rate'] = $percent;
+            $chargeUpdateData['discount_fee'] = round($charge->amount * $percent);
+
+            $charge->update($chargeUpdateData);
           }
 
           $chargeManager->assignCustomer($charge, $customer);
 
           try {
-              return $stripePaymentIntentManager->create($charge, $business);
+            return $stripePaymentIntentManager->create($charge, $business);
           } catch (BadRequest $exception) {
-              return Response::json([
-                  'error_message' => $exception->getMessage(),
-              ], 400);
+            return Response::json([
+              'error_message' => $exception->getMessage(),
+            ], 400);
           }
         }
     }

@@ -38,7 +38,7 @@ class RemindFinishVerification extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         if (App::environment('production')) {
             $businesses = Business::where('verified_wit_my_info_sg', false)->whereNull('deleted_at')->has('paymentProviders')->get();
@@ -47,5 +47,7 @@ class RemindFinishVerification extends Command
                 $business->notify(new RemindFinishVerificationNotification());
             }
         }
+
+        return 0;
     }
 }

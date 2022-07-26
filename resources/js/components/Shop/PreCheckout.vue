@@ -484,7 +484,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div v-if="business.enabled_shipping" class="shipping-option">
+                                <div v-if="business.enabled_shipping || business.can_pick_up" class="shipping-option">
                                     <div class="row">
                                         <div class="col-lg-6">
                                             <h6 class="p-title">Select Delivery Option</h6>
@@ -492,7 +492,7 @@
                                                 <div v-if="available_shipping_options.length > 0">
                                                     <label class="label-checkbox">Shipping
                                                         <input type="radio" :value="true" v-model="has_shipping"
-                                                               @change="updateTotalAmount()" :disabled="is_processing">
+                                                               @change="updateTotalAmount(false, 'shipping')" :disabled="is_processing">
                                                         <span class="checkmark"></span>
                                                     </label>
                                                 </div>
@@ -509,7 +509,7 @@
                                                 <div v-if="business.can_pick_up">
                                                     <label class="label-checkbox">Self pickup
                                                         <input type="radio" :value="false" v-model="has_shipping"
-                                                               @change="updateTotalAmount(true)"
+                                                               @change="updateTotalAmount(true, 'self pickup')"
                                                                :disabled="is_processing">
                                                         <span class="checkmark"></span>
                                                     </label>
@@ -557,7 +557,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div v-if="business.enabled_shipping" class="delivery-information">
+                        <div v-if="business.enabled_shipping || checkout.customer_pickup" class="delivery-information">
                             <div class="row">
                                 <div class="col-12">
                                     <h6 class="p-title">Delivery Information</h6>
@@ -576,9 +576,7 @@
                                         </div>
                                     </div>
                                     <div v-if="checkout.customer_pickup">
-                                        <span class="form-text text-muted">Pickup Address: {{
-                                                business.address_line
-                                            }}</span>
+                                        <span class="form-text text-muted">Pickup Address: {{business.address_line}}</span>
                                     </div>
                                     <div v-if="!checkout.customer_pickup">
                                         <div class="row">
@@ -622,13 +620,13 @@
                                 </div>
                             </div>
                         </div>
-                        <div v-if="!business.enabled_shipping" class="pt-1">
+                        <div v-if="!business.enabled_shipping && !checkout.customer_pickup" class="pt-1">
                             <div class="row">
                                 <div class="form-group col-md-12 col-sm-12">
                                     <input type="text" class="form-control" v-model="checkout.last_name"
-                                                   id="last_name"
-                                                   :disabled="is_processing"
-                                                   placeholder="Name">
+                                        id="last_name"
+                                        :disabled="is_processing"
+                                        placeholder="Name">
                                 </div>
                             </div>
                         </div>
@@ -650,49 +648,64 @@
                     <button class="btn btn-normal btn-larger checkout-pay-button" type="button" :style="buttonStyle"
                             @click="payNow()"
                             :disabled="is_processing">Pay
-                        {{ business.currency.toUpperCase() }}{{ (order.total_amount ? order.total_amount : totalCartAmount).toFixed(2) }}
+                        {{ displayTotalAmount }}
+                        <i class="fas fa-spin fa-spinner" :class="{'d-none' : !is_processing}"></i>
                     </button>
                 </div>
             </div>
             <div class="col-md-5 col-lg-5 r-precart">
                 <div class="ctn-inner">
-                    <div class="pre-cart-detail d-none d-md-block d-lg-block">
-                        <div v-for="(variation,key) in variations" class="item">
-                            <div class="row">
-                                <div class="checkout-product">
-                                    <div class="col-12">
-                                        <template v-if="variation.model.product.images_count > 0">
-                                            <img :src="variation.image"
-                                                 :alt="variation.model.product.name" class="img-precheckout">
-                                        </template>
-                                        <template v-else>
-                                            <img src="/hitpay/images/product.jpg" class="img-precheckout" alt="product">
-                                        </template>
-                                        <span class="f-bold">
-                                            {{ variation.cart.quantity }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row d-flex align-items-center">
-                                <div class="col-7 text-left">
-                                    <h6 class="p-title">{{ variation.model.product.name }}</h6>
-                                    <span v-if="variation.model.description"
-                                          class="variation-name">{{ variation.model.description }}</span>
-                                </div>
-                                <div class="col-5 text-right">
-                                    <span class="price">{{ business.currency.toUpperCase() }}{{ variation.model.price }}</span>
-                                </div>
-                            </div>
+                  <div class="pre-cart-detail d-none d-md-block d-lg-block">
+                    <div v-for="(variation,index) in variations" :key="index" class="item">
+                      <div class="row">
+                        <div class="checkout-product">
+                          <div class="col-12">
+                            <template v-if="variation.model.product.images_count > 0">
+                              <img :src="variation.image"
+                                   :alt="variation.model.product.name" class="img-precheckout">
+                            </template>
+                            <template v-else>
+                              <img src="/hitpay/images/product.jpg" class="img-precheckout" alt="product">
+                            </template>
+                            <span class="f-bold">{{ variation.cart.quantity }}</span>
+                          </div>
                         </div>
+                      </div>
+                      <div class="row d-flex align-items-center">
+                        <div class="col-7 text-left">
+                          <h6 class="p-title">{{ variation.model.product.name }}</h6>
+                          <span v-if="variation.model.description"
+                                class="variation-name">{{ variation.model.description }}</span>
+                        </div>
+                        <div class="col-5 text-right">
+                          <span class="price" :style="isProductPriceUpdated(variation) ? 'text-decoration: line-through;' : ''">
+                            {{ displayProductPrice(variation) }}
+                          </span>
+                        </div>
+                      </div>
+                      <div v-if="is_product_price_changes_by_coupon">
+                        <div v-for="(couponUpdatedPrice, idx) in coupon_updated_price" :key="idx" class="row d-flex align-items-center">
+                          <template v-if="couponUpdatedPrice.product_variation_id === variation.model.id">
+                            <div class="col-7 text-left">
+                              <h6 class="p-title">Coupon: </h6>
+                              <span class="variation-name">{{ couponUpdatedPrice.coupon_name }}</span>
+                            </div>
+                            <div class="col-5 text-right">
+                              <span class="price">{{ getFormattedAmount(business.currency, couponUpdatedPrice.product_price_changed) }}</span>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
                     </div>
+                  </div>
+
                     <div class="meta-price">
                         <div class="row pb-2 pt-3 cart-total">
                             <div class="col-5 text-left">
                                 <span>Cart:</span>
                             </div>
                             <div class="col-7 text-right">
-                                <span class="price">{{ business.currency.toUpperCase() }}{{ totalCartAmount }}</span>
+                                <span class="price">{{ displayTotalCartAmount }}</span>
                             </div>
                         </div>
                         <div v-if="business.enabled_shipping" class="row d-flex align-items-center pb-2">
@@ -700,23 +713,25 @@
                                 <span>Shipping</span>
                             </div>
                             <div class="col-7 text-right">
-                                <span class="price">{{ business.currency.toUpperCase() }}{{ checkout.customer_pickup ? '0.00' : shippingRate  }}</span>
+                                <span class="price">{{ displayShippingRate }}</span>
                             </div>
                         </div>
-                        <div class="row d-flex align-items-center pb-2" v-if="discount.amount">
+
+                        <div class="row d-flex align-items-center pb-2" v-if="discount.status === 'success'">
                             <div class="col-5">
-                                <span>Discount {{ discount.name }}</span>
+                                <span>Discount {{ getDiscountNameApplied }}</span>
                             </div>
                             <div class="col-7 text-right">
-                                <span class="price">- {{ business.currency.toUpperCase() }}{{ discount.displayAmount }}</span>
+                                <span class="price">- {{ getDiscountAmountApplied }}</span>
                             </div>
                         </div>
+
                         <div class="row d-flex align-items-center pb-2" v-if="coupon.amount">
                             <div class="col-5">
                                 <span>Coupon discount</span>
                             </div>
                             <div class="col-7 text-right">
-                                <span class="price">- {{ business.currency.toUpperCase() }}{{ couponAmount }}</span>
+                                <span class="price">- {{ displayCouponAmount }}</span>
                             </div>
                         </div>
                     </div>
@@ -726,7 +741,7 @@
                                 <span>Total:</span>
                             </div>
                             <div class="col-7 text-right">
-                                <span class="price">{{ business.currency.toUpperCase() }}{{ (order.total_amount ? order.total_amount : totalCartAmount).toFixed(2) }}</span>
+                                <span class="price">{{ displayTotalAmount }}</span>
                             </div>
                         </div>
                     </div>
@@ -737,7 +752,7 @@
                             <button class="btn btn-normal checkout-pay-button" type="button" :style="buttonStyle"
                                     @click="payNow()"
                                     :disabled="is_processing">Pay
-                                {{ business.currency.toUpperCase() }}{{ (order.total_amount ? order.total_amount : totalCartAmount).toFixed(2) }}
+                                {{ displayTotalAmount }}
                             </button>
                         </div>
                     </div>
@@ -764,11 +779,13 @@
 
 
 <script>
-import GetTextColor from '../../mixins/GetTextColor'
+import GetTextColor from '../../mixins/GetTextColor';
+import CurrencyNumber from '../../mixins/CurrencyNumber';
 
 export default {
     mixins: [
-        GetTextColor
+        GetTextColor,
+        CurrencyNumber
     ],
     props: {
         customisation: {
@@ -804,6 +821,7 @@ export default {
             handler(option) {
                 if (this.business.enabled_shipping) {
                     this.is_processing = true;
+
                     let tempShippingOption = _.find(this.available_shipping_options, [
                         'id',
                         option,
@@ -815,7 +833,7 @@ export default {
                         this.add_to_cart.shipping_rate_stored = tempShippingOption.rate_stored;
                     }
 
-                    this.updateTotalAmount(this.checkout.customer_pickup);
+                    this.updateTotalAmount(this.checkout.customer_pickup, 'shipping option');
 
                     if (tempShippingOption.slots != null) {
                         this.setTimeSlots(tempShippingOption.slots);
@@ -888,10 +906,13 @@ export default {
                 displayAmount: 0,
             },
             coupon: {
+                id: '',
                 code: '',
                 amount: 0,
                 type: '',
             },
+            is_product_price_changes_by_coupon: false,
+            coupon_updated_price: [],
             shipping_discount: null,
             themeColors: {
                 hitpay: {
@@ -941,30 +962,25 @@ export default {
         if (this.business.enabled_shipping) {
             this.shipping_options = CheckoutOptions.shippings;
             this.has_shipping = Object.keys(this.shipping_options).length > 0;
+            this.checkout.customer_pickup = false;
+        }else if(!this.business.enabled_shipping && this.business.can_pick_up) {
+            this.checkout.customer_pickup = true;
         }
-        this.totalCartAmount = (TotalCartAmount / 100).toFixed(2);
-        this.discount = Discount;
-        this.discount.displayAmount = (this.discount.amount / 100).toFixed(2);
+
+        this.totalCartAmount = TotalCartAmount;
         this.variations = Variations;
+        this.discount = Discount;
 
         let vars = [];
         let i = 0;
         _.each(this.variations, (variation) => {
             this.errors[i] = [];
-            variation.model.price = (variation.model.price / 100).toFixed(2);
             vars.push(variation);
             i++;
         });
         this.variations = vars;
 
         if (this.business.enabled_shipping) {
-            if (this.has_shipping === false) {
-                this.checkout.customer_pickup = true;
-            }
-        }
-
-        if (this.business.enabled_shipping) {
-
             this.checkout.shipping.country = this.business.country;
 
             for (const [key, value] of Object.entries(this.shipping_options)) {
@@ -976,12 +992,13 @@ export default {
             if (ShippingDiscount) {
                 this.shipping_discount = ShippingDiscount;
             }
+        }
 
-            if (this.business.slots != null && this.business.slots != '') {
-                this.business.slots = JSON.parse(this.business.slots);
-            }
+        if (this.business.slots != null && this.business.slots !== '') {
+            this.business.slots = JSON.parse(this.business.slots);
+        }
 
-            if (this.business.can_pick_up && this.business.slots != null) {
+        if (this.business.can_pick_up && this.business.slots != null) {
                 for (let i = 0; i < 3; i++) {
                     _.each(this.business.slots, slot => {
                         var today = new Date();
@@ -1000,28 +1017,62 @@ export default {
                     return a.date.getTime() - b.date.getTime()
                 });
             }
-        }
 
         this.order.total_quantity = TotalCartQuantity;
         this.order.total_amount_calculated = TotalCartAmount;
-        this.updateTotalAmount(this.checkout.customer_pickup);
+        this.order.total_amount = TotalCartAmount;
+        this.updateTotalAmount(this.checkout.customer_pickup, 'initial');
+
     },
     methods: {
-        updateTotalAmount(selfPickUp = false) {
-            let couponAmount = this.coupon.type == 'fixed' ? (this.coupon.amount / 100).toFixed(2) : this.totalCartAmount * this.coupon.amount;
-            if (selfPickUp || !this.business.enabled_shipping) {
-                this.checkout.customer_pickup = true;
+      calculateCartTotalAmountByVariant() {
+        let totalCartTotalAmount = 0;
 
-                this.order.total_amount = (this.order.total_amount_calculated / 100) - this.discount.displayAmount - couponAmount;
-                this.order.total_amount_stored = this.order.total_amount_calculated - this.discount.amount - (couponAmount * 100);
-            } else {
+        _.each(this.variations, (itemVariation) => {
+          if (this.is_product_price_changes_by_coupon) {
+            let productPrice = itemVariation.model.price;
+
+            _.each(this.coupon_updated_price, (itemVariationChanges) => {
+              if (itemVariationChanges.product_variation_id === itemVariation.model.id) {
+                productPrice = itemVariationChanges.product_price_changed;
+              }
+            });
+
+            totalCartTotalAmount = totalCartTotalAmount + (productPrice * itemVariation.cart.quantity);
+          } else {
+            totalCartTotalAmount = totalCartTotalAmount + (itemVariation.model.price * itemVariation.cart.quantity);
+          }
+        });
+
+        this.totalCartAmount = totalCartTotalAmount;
+      },
+        updateTotalAmount(selfPickUp = false, flag='') {
+            if (this.is_product_price_changes_by_coupon) {
+              this.calculateCartTotalAmountByVariant();
+
+              if (selfPickUp) {
+                this.order.total_amount = this.totalCartAmount - this.getDiscountRealAmount;
+              } else {
                 let shipping_rate = this.shippingRate * 1;
-                let shipping_rate_stored = this.shippingRate * 100;
 
                 this.checkout.customer_pickup = false;
 
-                this.order.total_amount = (this.order.total_amount_calculated / 100) + shipping_rate - this.discount.displayAmount - couponAmount;
-                this.order.total_amount_stored = this.order.total_amount_calculated + shipping_rate_stored - this.discount.amount - (couponAmount * 100);
+                this.order.total_amount = (this.totalCartAmount + shipping_rate) - this.getDiscountRealAmount;
+              }
+            } else {
+              let couponAmount = this.coupon.type === 'fixed' ? this.coupon.amount : this.totalCartAmount * this.coupon.amount;
+
+              if (selfPickUp) {
+                this.checkout.customer_pickup = true;
+
+                this.order.total_amount = this.order.total_amount_calculated - this.getDiscountRealAmount - couponAmount;
+              } else {
+                let shipping_rate = this.shippingRate * 1;
+
+                this.checkout.customer_pickup = false;
+
+                this.order.total_amount = (this.order.total_amount_calculated + shipping_rate) - this.getDiscountRealAmount - couponAmount;
+              }
             }
         },
 
@@ -1031,9 +1082,7 @@ export default {
             this.errors.buyer_details = [];
             this.errors.shipping_details = [];
 
-            if (this.business.enabled_shipping) {
-                document.getElementById('last_name').setAttribute('class', 'form-control');
-            }
+            document.getElementById('last_name').setAttribute('class', 'form-control');
             document.getElementById('email').setAttribute('class', 'form-control');
             document.getElementById('phone').setAttribute('class', 'form-control');
 
@@ -1056,12 +1105,25 @@ export default {
                 }
             }
 
+            if (!this.business.enabled_shipping) {
+                if (this.checkout.last_name === '') {
+                    this.errors.buyer_details.push('You must enter your name.');
+                    document.getElementById('last_name').setAttribute('class', 'form-control field-required');
+                }
+            }
+
             if (this.checkout.email === '') {
                 this.errors.buyer_details.push('You must enter your email.');
                 document.getElementById('email').setAttribute('class', 'form-control field-required');
+            } else if (!this.validateEmail(this.checkout.email)) {
+                this.errors.buyer_details.push('The email field must be a valid email address.');
+                document.getElementById('email').setAttribute('class', 'form-control field-required');
+            } else if (this.checkout.email.length > 255) {
+                this.errors.buyer_details.push('The email may not be greater than 255 characters.');
+                document.getElementById('email').setAttribute('class', 'form-control field-required');
             }
 
-            if (this.checkout.phone_number == '') {
+            if (this.checkout.phone_number === '') {
                 this.errors.buyer_details.push('You must enter your phone number.');
                 document.getElementById('phone').setAttribute('class', 'form-control field-required');
             } else if (this.checkout.phone_number.length > 14) {
@@ -1106,7 +1168,7 @@ export default {
                     if (this.shipping_timeslots.length > 0 && this.timeslot_index === null) {
                         this.errors.shipping_details.push('Please choose date slot for your delivery');
                     }
-                } else if (this.checkout.customer_pickup && this.pickup_slot_index === null && this.business.slots) {
+                } else if (this.checkout.customer_pickup && this.pickup_slot_index === null && this.business.slots.length > 0) {
                     this.errors.shipping_details.push('Please choose date slot for your pickup');
                 }
             }
@@ -1117,6 +1179,9 @@ export default {
 
                 return;
             }
+
+            let shippingSlot = [];
+
             if (this.business.enabled_shipping) {
                 if (this.errors.shipping_details.length > 0) {
                     this.scrollTo('#shipping_details_errors');
@@ -1125,7 +1190,6 @@ export default {
                     return;
                 }
 
-                var shippingSlot = [];
                 let slot = null
 
                 if (this.timeslot_index != null && !this.checkout.customer_pickup) {
@@ -1149,7 +1213,11 @@ export default {
                 } else shippingSlot = null;
             }
 
-            let couponAmount = this.coupon.type == 'fixed' ? (this.coupon.amount / 100).toFixed(2) : this.totalCartAmount * this.coupon.amount;
+            let couponAmount = 0;
+
+            if (!this.is_product_price_changes_by_coupon) {
+              couponAmount = this.coupon.type === 'fixed' ? this.coupon.amount : this.totalCartAmount * this.coupon.amount;
+            }
 
             let submissionData = {
                 first_name: this.checkout.first_name,
@@ -1157,14 +1225,28 @@ export default {
                 email: this.checkout.email,
                 phone_number: this.checkout.phone_number,
                 remark: this.checkout.remark,
-                discount: {
-                    name: this.discount.name,
-                    amount: this.discount.amount
-                },
-                coupon_amount: couponAmount * 100,
+                discount: this.discount,
+                coupon:{
+                  amount: couponAmount,
+                  id: this.coupon.id
+                }
             };
 
-            if (this.business.enabled_shipping){
+            if (this.discount.status === 'success') {
+              submissionData.discount = {
+                name: this.getDiscountNameApplied,
+                amount: this.getDiscountRealAmount,
+                data: this.getDiscountData,
+              };
+            } else {
+              submissionData.discount = {
+                name: '',
+                amount: 0,
+                data: null,
+              };
+            }
+
+            if (this.business.enabled_shipping) {
                 submissionData.customer_pickup = this.checkout.customer_pickup;
                 submissionData.date_slot = shippingSlot;
                 submissionData.shipping = {
@@ -1177,16 +1259,32 @@ export default {
                     },
                     option: this.checkout.shipping.option,
                 };
-                submissionData.shipping_rate = this.shippingRate * 100;
+                submissionData.shipping_rate = this.shippingRate;
             }
 
             umami('click_pay');
 
             return axios.post(this.getDomain(this.business.id + '/checkout', 'shop'), submissionData).then(({data}) => {
-                window.location = data;
-            });
+                this.is_processing = false;
 
-            this.is_processing = false;
+                window.location = data;
+            }).catch(({response}) => {
+                this.is_processing = false;
+
+                if (response.status === 422) {
+                    _.forEach(response.data.errors, (value, key) => {
+                        if (key === 'email') {
+                            this.errors.buyer_details.push(_.first(value));
+                            document.getElementById('email').setAttribute('class', 'form-control field-required');
+                        }
+
+                        if (key === 'phone_number') {
+                            this.errors.buyer_details.push(_.first(value));
+                            document.getElementById('phone_number').setAttribute('class', 'form-control field-required');
+                        }
+                    });
+                }
+            });
         },
 
         applyCoupon() {
@@ -1198,21 +1296,55 @@ export default {
                 this.errors.coupon = 'Please enter your coupon code';
                 this.coupon.amount = 0;
                 this.coupon.type = '';
-                this.updateTotalAmount(this.checkout.customer_pickup);
+                this.updateTotalAmount(this.checkout.customer_pickup, 'applycoupon 1');
                 this.is_processing = false;
             } else {
-                return axios.get(this.getDomain(this.business.id + '/getJsonCoupon/' + this.coupon.code, 'shop')).then(({data}) => {
-                    if (Object.keys(data).length > 0) {
-                        this.coupon.amount = data.fixed_amount ? data.fixed_amount : data.percentage;
-                        this.coupon.type = data.fixed_amount ? 'fixed' : 'percent';
-                        this.updateTotalAmount(this.checkout.customer_pickup);
-                    } else {
-                        this.coupon.amount = 0;
-                        this.coupon.type = '';
-                        this.updateTotalAmount(this.checkout.customer_pickup);
-                        this.errors.coupon = 'There is no coupon with such code.';
+                return axios.get(this.getDomain(this.business.id + '/getJsonCoupon/' + this.coupon.code, 'shop'))
+                  .then(({data}) => {
+                    if (Object.keys(data).length <= 0) {
+                      this.coupon.amount = 0;
+                      this.coupon.type = '';
+                      this.updateTotalAmount(this.checkout.customer_pickup, 'applycoupon 3');
+                      this.errors.coupon = 'There is no coupon with such code.';
+                      this.is_processing = false;
+                      return;
                     }
-                    this.is_processing = false
+
+                    if (data.status === 'failed') {
+                      this.coupon.amount = 0;
+                      this.coupon.type = '';
+                      this.updateTotalAmount(this.checkout.customer_pickup, 'applycoupon 3');
+                      this.errors.coupon = data.message;
+                      this.is_processing = false;
+                      return;
+                    }
+
+                    if (data.coupon.coupons_left && data.coupon.coupons_left <= 0) {
+                      this.errors.coupon = 'This coupon is not available anymore.';
+                      this.is_processing = false;
+                      return;
+                    }
+
+                    this.is_product_price_changes_by_coupon = data.is_product_price_changed;
+
+                    if (!data.is_product_price_changed) {
+                      this.coupon.amount = data.fixed_amount ? data.fixed_amount : data.percentage;
+                      this.coupon.type = data.fixed_amount ? 'fixed' : 'percent';
+                      this.coupon.id = data.id;
+                      this.is_processing = false;
+
+                      this.updateTotalAmount(this.checkout.customer_pickup, 'applycoupon 2');
+                      return;
+                    }
+
+                    if (data.is_product_price_changed) {
+                      this.coupon_updated_price = data.coupon_information;
+                      this.coupon.id = data.coupon.id;
+                      this.coupon.amount = 0;
+                      this.is_processing = false;
+
+                      this.updateTotalAmount(this.checkout.customer_pickup, 'is product price changed 3');
+                    }
                 });
             }
         },
@@ -1237,6 +1369,7 @@ export default {
                 return a.date.getTime() - b.date.getTime()
             });
         },
+
         getSlotName(slot) {
             return slot.date.getDate() + ' ' + this.usable_data.monthList[slot.date.getMonth()] + ' ' + slot.times.from + '-' + slot.times.to;
         },
@@ -1254,6 +1387,28 @@ export default {
                 month = '0' + month;
             }
             return year + '-' + month + '-' + day;
+        },
+
+        displayProductPrice(variation) {
+          return this.getFormattedAmount(this.business.currency, variation.model.price);
+        },
+
+        isProductPriceUpdated(variation) {
+          if (!this.is_product_price_changes_by_coupon) {
+            return false;
+          }
+
+          let isProductPriceUpdated = false;
+
+          if (this.is_product_price_changes_by_coupon) {
+            _.each(this.coupon_updated_price, (itemVariationChanges) => {
+              if (itemVariationChanges.product_variation_id === variation.model.id) {
+                isProductPriceUpdated = true;
+              }
+            });
+          }
+
+          return isProductPriceUpdated;
         }
     }
     ,
@@ -1281,28 +1436,114 @@ export default {
         }
         ,
         shippingRate() {
+            if (this.checkout.customer_pickup) {
+                return 0.00;
+            }
+
             let shipping_price;
+
             if (this.add_to_cart.shipping_calculation === 'fee_per_unit') {
                 shipping_price = this.add_to_cart.shipping_rate_stored * this.order.total_quantity;
-            } else shipping_price = this.add_to_cart.shipping_rate_stored;
+            }else{
+                shipping_price = this.add_to_cart.shipping_rate_stored;
+            }
 
             if (this.shipping_discount != null) {
                 if (this.order.total_amount_calculated > this.shipping_discount.minimum_cart_amount) {
-                    if (this.shipping_discount.type === 'free') shipping_price = 0.00;
-                    else if (this.shipping_discount.type === 'fixed') shipping_price -= this.shipping_discount.fixed_amount;
-                    else if (this.shipping_discount.type === 'percent') shipping_price -= this.add_to_cart.shipping_rate_stored * this.shipping_discount.percentage;
+                    if (this.shipping_discount.type === 'free')
+                        shipping_price = 0.00;
+                    else if (this.shipping_discount.type === 'fixed'){
+                        if(this.shipping_discount.fixed_amount > shipping_price){
+                            shipping_price = 0.00
+                        }else {
+                            shipping_price -= this.shipping_discount.fixed_amount;
+                        }
+                    }
+                    else if (this.shipping_discount.type === 'percent') {
+                        shipping_price -= shipping_price * this.shipping_discount.percentage;
+                    }
                 }
-
             }
 
-            return (shipping_price / 100).toFixed(2);
+            return shipping_price;
         },
-        couponAmount() {
-            if (this.coupon.type == 'fixed') return (this.coupon.amount / 100).toFixed(2);
-            else return (this.totalCartAmount * this.coupon.amount).toFixed(2);
+
+        displayCouponAmount() {
+            if (this.coupon.type === 'fixed') {
+                return this.getFormattedAmount(this.business.currency, this.coupon.amount);
+            } else {
+                return this.getFormattedAmount(this.business.currency, (this.totalCartAmount * this.coupon.amount));
+            }
+        },
+
+        displayTotalAmount() {
+            return this.getFormattedAmount(this.business.currency, this.order.total_amount);
+        },
+
+        displayTotalCartAmount() {
+            return this.getFormattedAmount(this.business.currency, this.totalCartAmount);
+        },
+
+        displayShippingRate() {
+            if (this.checkout.customer_pickup) {
+                return '0';
+            } else {
+                return this.getFormattedAmount(this.business.currency, this.shippingRate);
+            }
+        },
+
+        getDiscountNameApplied() {
+          if (this.discount.status !== 'success') {
+            return '';
+          }
+
+          let name = '';
+
+          _.each(this.discount.discount_information, discount => {
+            if (name === '') {
+              name += ' ' + discount.discount_applied.name;
+            } else {
+              name += ' & ' + discount.discount_applied.name;
+            }
+          });
+
+          name = name.trim();
+
+          return '[' + name + ']';
+        },
+        getDiscountAmountApplied() {
+          if (this.discount.status !== 'success') {
+            return this.getFormattedAmount(this.business.currency, 0);
+          }
+
+          let discountAmount = this.getDiscountRealAmount;
+
+          return this.getFormattedAmount(this.business.currency, discountAmount);
+        },
+
+        getDiscountRealAmount() {
+          let discountAmount = 0;
+
+          _.each(this.discount.discount_information, discount => {
+            discountAmount = discountAmount + parseInt(discount.discount_amount);
+          });
+
+          return discountAmount;
+        },
+
+        getDiscountData() {
+          let discountInfoCollection = [];
+
+          _.each(this.discount.discount_information, discount => {
+            let discountData = {}
+            discountData.id = discount.discount_applied.id;
+            discountData.data = discount;
+
+            discountInfoCollection.push(discountData);
+          });
+
+          return discountInfoCollection;
         }
     }
-
 }
-
 </script>

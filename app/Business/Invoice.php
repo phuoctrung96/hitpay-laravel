@@ -76,6 +76,12 @@ class Invoice extends Model
 
             if ($products) {
                 foreach ($products as $product) {
+                    $business = $model->business;
+
+                    if (!$business) {
+                        continue;
+                    }
+
                     $productVariation = $model->business->productVariations()->with('product')->find($product->variation_id);
 
                     if ($productVariation) {

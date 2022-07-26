@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div ref="container">
         <div>
             <template v-if="charges.charge_status === 'succeeded'">
                 <div class="checkout-success col-md-12">
@@ -19,7 +19,7 @@
                             <p class="mb-3"><img src="/hitpay/logo-000036.png" height="50" alt="HitPay"></p>
                             <p><img :src="loadImage('icons/sentiment.png')" height="100" alt=""></p>
                             <h5>{{ timeoutText }}</h5>
-                            <a :href="referer" class="btn btn-success mt-5">Back to Merchant Page</a>
+                            <a :href="referer" class="btn btn-success mt-5">Back to Merchant Page testing1</a>
                         </div>
                     </div>
                 </div>
@@ -39,29 +39,39 @@
                             <BackSign/>
                         </a>
 
-                        <div class="d-flex justify-content-center flex-grow-1">
+                        <div class="d-flex justify-content-center align-items-start flex-grow-1">                          
                           <span
-                              class="sign font-weight-light"
-                              :class="{ error: shakingErrors.amount }">{{ symbol }}</span>
+                            class="sign font-weight-light"
+                            :class="{ error: shakingErrors.amount }">{{ symbol }}</span>
 
-                                        <input
-                                            v-model.lazy="checkout.charge_amount"
-                                            v-money="money"
-                                            :readonly="!show_amount_input"
-                                            :style="amountStyleMobile"
-                                            class="font-weight-medium"/>
+                          <SlidingNumber
+                            v-if="useAdminFee"
+                            :value="Number(totalAmount)"
+                            class="font-weight-medium"
+                            :style="amountStyleMobile"
+                            :height="28"
+                            :zeroDecimal="zero_decimal"/>
 
-                                        <span
-                                            class="currency"
-                                            :style="leftPanelFore2Styles">
+                          <input
+                              v-else
+                              v-model.lazy="totalAmount"
+                              v-money="money"
+                              :readonly="!show_amount_input"
+                              :style="amountStyleMobile"
+                              class="font-weight-medium"/>
+
+                          <span
+                              class="currency"
+                              :style="leftPanelFore2Styles">
+
                             {{ currency }}
                           </span>
 
                           <!-- Hidden div to accurately measure size -->
                           <div
-                              ref="measureAmountMobile"
-                              class="input-amount-mobile hidden">
-                              {{ checkout.charge_amount }}
+                            ref="measureAmountMobile"
+                            class="input-amount-mobile font-weight-medium hidden">
+                              {{ totalAmount }}
                           </div>
                         </div>
                     </div>
@@ -125,36 +135,51 @@
                                         </span>
 
                                         <div class="amount-currency">
-                                            <div
-                                                class="amount"
-                                                :class="{ shaking: shakingErrors.amount }">
+                                          <div
+                                            class="amount"
+                                            :class="{ shaking: shakingErrors.amount }">
 
                                             <span
-                                                class="sign font-weight-light"
-                                                :class="{ error: shakingErrors.amount }">{{ symbol }}</span>
+                                              class="sign font-weight-light"
+                                              :class="{ error: shakingErrors.amount }">{{ symbol }}</span>
 
-                                                                  <input
-                                                                      v-model.lazy="checkout.charge_amount"
-                                                                      v-money="money"
-                                                                      :readonly="!show_amount_input"
-                                                                      :style="amountStyle"
-                                                                      class="input-amount font-weight-medium"
-                                                                      :class="{ error: shakingErrors.amount }"/>
+                                            <SlidingNumber
+                                              v-if="useAdminFee"
+                                              :value="Number(totalAmount)"
+                                              class="font-weight-medium"
+                                              :style="amountStyle"
+                                              :zeroDecimal="zero_decimal"/>
 
-                                                                  <!-- Hidden div to accurately measure size -->
-                                                                  <div
-                                                                      ref="measureAmount"
-                                                                      class="input-amount hidden">
-                                                                      {{ checkout.charge_amount }}
-                                                                  </div>
-                                                              </div>
+                                            <input
+                                              v-else
+                                              v-model.lazy="totalAmount"
+                                              v-money="money"
+                                              :readonly="!show_amount_input"
+                                              :style="amountStyle"
+                                              class="input-amount font-weight-medium"
+                                              :class="{ error: shakingErrors.amount }"/>
 
-                                                              <span
-                                                                  class="currency"
-                                                                  :style="leftPanelFore2Styles">
-                                            {{ currency }}
-                                        </span>
+                                            <!-- Hidden div to accurately measure size -->
+                                            <div
+                                                ref="measureAmount"
+                                                class="input-amount hidden">
+                                                {{ totalAmount }}
+                                            </div>
+                                          </div>
+
+                                          <span
+                                              class="currency"
+                                              :style="leftPanelFore2Styles">
+                                              {{ currency }}
+                                          </span>
                                         </div>
+                                    </div>
+
+                                    <div
+                                      v-if="customerPaysFee && charges.chosen_method"
+                                      class="rates desktop-flex justify-content-between mt-3">
+                                      <span>{{ adminFeeText }}</span>
+                                      <span class="ml-4">{{ currency }} {{ adminFee }}</span>
                                     </div>
 
                                     <div class="name">{{ business.name }}</div>
@@ -167,7 +192,16 @@
                                     :class="descriptionClass"
                                     :style="descriptionStyle"
                                     :placeholder="descriptionPlaceholder"
-                                    @change="updatePaymentIntent"/>
+                                    @change="updatePaymentIntent"
+                                    :maxlength="descriptionMaxLen"/>
+
+                                <!--
+                                <div class="description-length">
+                                  <template v-if="checkout.description && checkout.description.length > 0">
+                                    {{ checkout.description.length }} of {{ descriptionMaxLen }} characters
+                                  </template>
+                                </div>
+                                -->
 
                                 <!-- Hidden div to accurately measure size -->
                                 <div
@@ -203,6 +237,14 @@
                                 <a href="https://www.hitpayapp.com/termsofservice" target="_blank"
                                    class="copyright desktop-flex align-items-center">Terms</a>
                             </div>
+                        </div>
+
+                        <div
+                          v-if="customerPaysFee && charges.chosen_method"
+                          class="mobile-rates mobile-flex justify-content-between"
+                          :style="adminFeeStyles">
+                          <span>{{ adminFeeText }}</span>
+                          <span class="ml-4">{{ currency }} {{ adminFee }}</span>
                         </div>
 
                         <div class="main-body">
@@ -542,15 +584,17 @@ import PaymentMethod from './PaymentMethod'
 import BackSign from './BackSign'
 import GetTextColor from '../../mixins/GetTextColor'
 import DeepLinkPanel from './DeepLinkPanel'
+import SlidingNumber from '../UI/SlidingNumber'
 import QRCodeNew from 'qrcode'
 
 export default {
     components: {
-        CheckoutButton,
-        CheckoutDivider,
-        PaymentMethod,
-        BackSign,
-        DeepLinkPanel
+      CheckoutButton,
+      CheckoutDivider,
+      PaymentMethod,
+      BackSign,
+      DeepLinkPanel,
+      SlidingNumber
     },
     mixins: [
         numberMixin,
@@ -564,7 +608,7 @@ export default {
             type: Object,
             required: true
         },
-        business: {
+        business: { 
             type: Object,
             required: true
         },
@@ -635,6 +679,10 @@ export default {
         show_test_payment: {
             type: Boolean,
             default: false
+        },
+        rates: {
+            type: Object,
+            default: null
         },
         zero_decimal: {
             type: Boolean,
@@ -747,20 +795,23 @@ export default {
                     leftPanelFore: 'white',
                     leftPanelFore2: 'white',
                     buttonBack: '#011B5F',
-                    buttonFore: 'white'
+                    buttonFore: 'white',
+                    adminFee: '#011B5F'
                 },
                 light: {
                     leftPanelBack: 'white',
                     leftPanelFore: 'black',
                     leftPanelFore2: '#545454',
                     buttonBack: '#011B5F',
-                    buttonFore: 'white'
+                    buttonFore: 'white',
+                    adminFee: 'black'
                 },
                 custom: {
                     leftPanelBack: this.customisation.tint_color,
                     leftPanelFore: this.getTextColor(this.customisation.tint_color),
                     buttonBack: this.customisation.tint_color,
-                    buttonFore: this.getTextColor(this.customisation.tint_color)
+                    buttonFore: this.getTextColor(this.customisation.tint_color),
+                    adminFee: 'black'
                 }
             },
             psElementMounted: false,
@@ -800,7 +851,9 @@ export default {
             shopeeQrUrl: '',
             orderStatusPoll: null,
             fpxBankOk: false,
-            timeoutText: 'Checkout page timed out.'
+            timeoutText: 'Checkout page timed out.',
+            descriptionMaxLen: 255,
+            observer: null
         }
     },
     async created() {
@@ -824,17 +877,31 @@ export default {
         if (this.expire_date) {
           const now = new Date()
           const exp = new Date(this.expire_date)
-          const msec = exp.getTime() - now.getTime()
+          let msec = exp.getTime() - now.getTime()
 
           if (msec <= 0) {
             // Already expire, this should not happen
             this.isTimedOut = true
           } else {
+            // Max value for setTimeout is max 32bit positive int
+            // otherwise it will fire immediately
+            const maxMsec = Math.pow(2, 31) - 1
+
+            if (msec > maxMsec) {
+              msec = maxMsec
+            }
+
             this.expireDateTimer = window.setTimeout(this.timeoutHandler, msec, 'Payment request timed out. Please retry completing order from merchant website.')
           }
         }
 
         if (!this.isTimedOut) {
+          this.observer = new ResizeObserver(p => {
+            this.measureInputs()
+          })
+
+          this.observer.observe(this.$refs.container)
+
           // Select the lowest value for timeout if any
           this.timeoutValue = parseInt(this.getPaymentGatewayValue('timeout')) * 1000
            
@@ -918,9 +985,27 @@ export default {
         }
     },
     beforeDestroy() {
-        this.clearTimeoutTimer(true)
+      this.clearTimeoutTimer(true)
+
+      if (this.observer) {
+        this.observer.unobserve(this.$refs.container)
+      }        
     },
     computed: {
+        totalAmount: {
+          get () {
+            const amount = this.customerPaysFee
+              ? this.charges.chosen_method
+                ? this.rates[this.charges.chosen_method].total
+                : this.amount
+              : this.checkout.charge_amount
+
+            return Number(String(amount).replace(',', '')).toFixed(this.money.precision)
+          },
+          set (value) {
+            this.checkout.charge_amount = value
+          }
+        },
         amountStyle() {
             return {
                 width: this.amountWidth + 'px',
@@ -948,7 +1033,7 @@ export default {
                 ? 'Click to pay with GrabPay'
                 : this.charges.chosen_method === 'hoolah'
                   ? 'Click to pay with Hoolah'
-                  : `Pay ${this.symbol}${this.checkout.charge_amount}`
+                  : `Pay ${this.symbol}${this.totalAmount}`
         },
         payButtonDisabled() {
             switch (this.charges.chosen_method) {
@@ -984,7 +1069,7 @@ export default {
                     if (deviceMethod && deviceMethod.enabled &&
                         ((deviceMethod.options.type === 'mobile' && this.isMobileOS) ||
                             (deviceMethod.options.type === 'desktop' && !this.isMobileOS))) {
-                        available = deviceMethod.methods
+                        available = this.getMethodsArray(deviceMethod.methods)
                     }
                 }
 
@@ -997,7 +1082,7 @@ export default {
                         if (amountMethod && amountMethod.enabled && !this.show_amount_input &&
                             Number(filteredAmount) >= Number(amountMethod.options.min) &&
                             (!amountMethod.options.max || Number(filteredAmount) <= Number(amountMethod.options.max))) {
-                            available = amountMethod.methods
+                            available = this.getMethodsArray(amountMethod.methods)
                             break
                         }
                     }
@@ -1031,7 +1116,7 @@ export default {
             if (this.errors.amount) {
               if (this.errors.amountMin) {
                 if (this.minAmounts.hasOwnProperty(this.charges.chosen_method)) {
-                  res.push(`Minimum amount allowed for this method is ${this.minAmounts[this.charges.chosen_method].toFixed(2)}`)
+                  res.push(`Minimum amount allowed for this method is ${this.minAmounts[this.charges.chosen_method].toFixed(this.money.precision)}`)
                 }                
               } else {
                 res.push('Enter a valid amount')
@@ -1070,6 +1155,12 @@ export default {
                 'background-color': this.currentThemeColors.leftPanelFore2
             }
         },
+        adminFeeStyles () {
+            return {
+              'color': this.currentThemeColors.adminFee,
+              'border-color': this.currentThemeColors.adminFee
+            }
+        },        
         safeTheme() {
             let theme = this.customisation.theme
 
@@ -1095,6 +1186,7 @@ export default {
         },
         showMobileTopPanel() {
             return this.scrollPos > 100 || this.deepLinkVisible
+            // return true
         },
         getMobileOperatingSystem() {
             const userAgent = navigator.userAgent || navigator.vendor || window.opera
@@ -1129,11 +1221,32 @@ export default {
         campaignCashbackAmount(){
             return (this.campaign_rule.cashback_amt_percent > 0 ? this.campaign_rule.cashback_amt_percent  + "%" : '') + (this.campaign_rule.cashback_amt_fixed ?' +$' + this.campaign_rule.cashback_amt_fixed : '');
         },
+        useAdminFee () {
+          return Boolean(this.rates) && Object.keys(this.rates).some(key => {
+            return this.rates[key].addFee
+          })
+        },
+        customerPaysFee () {
+          return Boolean(this.rates) &&
+            this.charges.chosen_method &&
+            this.rates[this.charges.chosen_method] &&
+            this.rates[this.charges.chosen_method].addFee
+        },
+        adminFee () {
+          return this.customerPaysFee && this.charges.chosen_method
+            ? this.rates[this.charges.chosen_method].adminFee
+            : ''
+        },
         isSamsungBrowser () {
           return navigator.userAgent.match(/SAMSUNG|Samsung|SGH-[I|N|T]|GT-[I|N]|SM-[A|N|P|T|Z]|SHV-E|SCH-[I|J|R|S]|SPH-L/i)
         },
         qrMargin () {
           return this.isSamsungBrowser ? 4 : 0
+        },
+        adminFeeText () {
+          return this.customisation.admin_fee_settings && this.customisation.admin_fee_settings.customText
+            ? this.customisation.admin_fee_settings.customText
+            : 'Admin Fees'
         }
     },
     watch: {
@@ -1161,6 +1274,9 @@ export default {
                     this.shakingErrors.amount = false
                 }
             }
+        },
+        totalAmount () {
+          this.measureInputs()
         },
         'checkout.email': {
             handler(value) {
@@ -1209,10 +1325,10 @@ export default {
             const amount = this.getStripeAmount()
 
             if (this.methods.includes('card') || this.methods.includes('fpx')) {
-                if (this.show_payment_request_button === false) {
-                    this.show_payment_request_button = true;
+                if (!this.show_payment_request_button) {
+                    this.show_payment_request_button = true
                     this.createStripePaymentRequest(amount)
-                } else if (this.show_amount_input === true) {
+                } else if (this.show_amount_input || this.customerPaysFee) {
                     if (this.cards.payment_request && await this.cards.payment_request.canMakePayment()) {
                         this.cards.payment_request.update({
                             total: {
@@ -1307,28 +1423,29 @@ export default {
 
                 // without setTimeout (even with zero delay) sometimes spinner will not be shown during QR generation
                 window.setTimeout(async () => {
-                  let result;
+                  let data
 
                   try {
-                      result = await axios.post(
+                      const result = await axios.post(
                           this.base_url + 'charge/' + this.charges.charge_object.id + '/create-payment-intent', {
                               method : this.charges.chosen_method,
                               email : this.checkout.email,
                               description : this.checkout.description,
-                              amount : this.checkout.charge_amount
+                              amount : this.totalAmount
                           })
+
+                      data = result.data
+
                   } catch ({ response }) {
                       if (response.status === 400) {
-                          that.errorMessage = response.data.error_message;
-                          that.in_progress = false;
+                          this.errorMessage = response.data.error_message;
+                          this.in_progress = false;
                       } else {
                           console.error(response);
                       }
 
                       return;
-                  }
-
-                  let data = result.data;
+                  }                  
 
                   if (data.alreadyPaid) {
                       this.alreadyPaid()
@@ -1414,7 +1531,7 @@ export default {
                               payment_method: {
                                 fpx: this.cards.fpx
                               },
-                              return_url: this.getDomain(`/redirect/fpx/${this.existing_charge.id}`, 'securecheckout')
+                              return_url: this.getDomain(`redirect/fpx/${this.existing_charge.id}`, 'securecheckout')
                             })
 
                             if (res.error) {
@@ -1459,11 +1576,11 @@ export default {
                               case 'grabpay': {
                                 const response = await this.cards.stripe.confirmGrabPayPayment(
                                   data.payment_intent.client_secret,
-                                  { return_url: this.getDomain('close', 'dashboard') },
+                                  { return_url: this.getDomain(`/redirect/grabpay/${this.existing_charge.id}`, 'securecheckout') },
                                   { handleActions: false }
                                 )
 
-                                window.open(response.paymentIntent.next_action.redirect_to_url.url, '_blank')
+                                window.location.href = response.paymentIntent.next_action.redirect_to_url.url
                                 break
                               }
 
@@ -1713,7 +1830,7 @@ export default {
                   fontSize: '16px',
                 }
               },
-              accountHolderType: 'company'
+              accountHolderType: 'individual'
             })
 
             this.$nextTick(() => {
@@ -1786,6 +1903,8 @@ export default {
                                     }).then(async ({ data }) => {
                                         if (data.status === 'succeeded') {
                                             ev.complete('success');
+
+                                          that.redirectComplete();
                                         } else if (data.status === "requires_source_action" || data.status === "requires_action") {
                                             await this.cards.stripe.handleCardAction(data.payment_intent.client_secret).then(async result => {
                                                 if (result.error) {
@@ -1797,6 +1916,8 @@ export default {
                                                 } else {
                                                     await axios.put(updatePaymentIntentUrl).then(() => {
                                                         ev.complete('success');
+
+                                                      that.redirectComplete();
                                                     }).catch((response) => {
                                                         ev.complete('fail');
 
@@ -2043,10 +2164,11 @@ export default {
         },
         getStripeAmount() {
             // remove thousands separator if any
-            const filteredAmount = String(this.checkout.charge_amount).replace(',', '')
+            //const filteredAmount = String(this.checkout.charge_amount).replace(',', '')
 
             // We need to round it, because sometimes JS behave weird, like 0.55*100=55.00000000000001
-            return Math.round(this.zero_decimal ? filteredAmount : filteredAmount * 100)
+            //return Math.round(this.zero_decimal ? filteredAmount : filteredAmount * 100)
+            return Math.round(this.zero_decimal ? this.totalAmount : this.totalAmount * 100)
         },
         alreadyPaid() {
             this.suppressBeforeUnload = true
@@ -2078,6 +2200,20 @@ export default {
             this.isTimedOut = true
             this.timeoutText = message
           }          
+        },
+
+        getMethodsArray (newMethods) {
+          let res = []
+
+          newMethods.forEach(m => {
+            if (this.methods.includes(m)) {
+              res.push(m)
+            }
+          })
+
+          return res.length > 0
+            ? res
+            : [ ...this.methods ]
         }
     }
 }
@@ -2211,6 +2347,20 @@ $emailContainerPadding: 12px;
     .currency {
         margin-top: 6px;
         margin-left: 4px;
+    }
+
+    .sliding-numbers {
+      height: 42px;
+      font-size: 28px;
+
+      .sliding-digit {
+        width: 17px;
+        height: 28px;
+
+        .digit {
+          height: 28px;
+        }
+      }
     }
 }
 
@@ -2414,32 +2564,63 @@ $emailContainerPadding: 12px;
                             display: flex;
 
                             .sign {
-                                @media screen and (max-width: $breakpoint) {
-                                    font-size: 12px;
-                                    margin-top: 11px;
-                                }
+                              @media screen and (max-width: $breakpoint) {
+                                font-size: 12px;
+                                margin-top: 11px;
+                              }
 
-                                @media screen and (min-width: $breakpoint) {
-                                    font-size: 20px;
-                                    margin-top: 20px;
-                                }
+                              @media screen and (min-width: $breakpoint) {
+                                font-size: 20px;
+                                margin-top: 20px;
+                              }
 
-                                margin-right: 4px;
+                              margin-right: 4px;
+                            }
+
+                            .sliding-numbers {
+                              @media screen and (max-width: $breakpoint) {
+                                height: 48px;
+                                font-size: 32px;
+
+                                .sliding-digit {
+                                  width: 19px;
+                                  height: 32px;
+
+                                  .digit {
+                                    height: 32px;
+                                  }
+                                }
+                              }
+
+                              @media screen and (min-width: $breakpoint) {
+                                height: 67px;
+                                font-size: 45px;
+                                margin: 6px 0;
+
+                                .sliding-digit {
+                                  width: 25px;
+                                  height: 45px;
+
+                                  .digit {
+                                    height: 45px;
+                                  }
+                                }
+                              }
                             }
 
                             .input-amount {
-                                @media screen and (max-width: $breakpoint) {
-                                    max-width: 150px;
-                                    min-width: 32px;
-                                    font-size: 32px;
-                                }
+                              @media screen and (max-width: $breakpoint) {
+                                max-width: 150px;
+                                min-width: 32px;
+                                font-size: 32px;
+                              }
 
-                                @media screen and (min-width: $breakpoint) {
-                                    max-width: 220px;
-                                    min-width: 45px;
-                                    font-size: 45px;
-                                    margin: 6px 0;
-                                }
+                              @media screen and (min-width: $breakpoint) {
+                                max-width: 220px;
+                                min-width: 45px;
+                                font-size: 45px;
+                                margin: 6px 0;
+                              }
                             }
                         }
 
@@ -2468,6 +2649,13 @@ $emailContainerPadding: 12px;
                         margin-top: 18px;
                         text-align: center;
                     }
+                }
+
+                .rates {
+                  padding: 8px 12px;
+                  border-width: 1px;
+                  border-style: solid;
+                  border-radius: 6px;
                 }
             }
 
@@ -2502,6 +2690,11 @@ $emailContainerPadding: 12px;
                     opacity: 1;
                 }
             }
+
+            .description-length {
+              height: 12px;
+              font-size: 11px;
+            }
         }
 
         .v-divider {
@@ -2528,6 +2721,16 @@ $emailContainerPadding: 12px;
         }
     }
 
+    .mobile-rates {
+      margin: 12px;
+
+      padding: 8px 12px;
+      border-width: 1px;
+      border-style: solid;
+      border-radius: 6px;
+
+    }
+
     .main-body {
         flex-grow: 1;
         display: flex;
@@ -2543,31 +2746,31 @@ $emailContainerPadding: 12px;
         }
 
         .apple-pay {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+          height: $applePayheight;
+
+          .inner {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            position: relative;
-            height: $applePayheight;
 
-            .inner {
-                position: absolute;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
+            #payment-request-button {
+              @media screen and (max-width: $breakpoint) {
+                width: 100%;
+              }
 
-                #payment-request-button {
-                    @media screen and (max-width: $breakpoint) {
-                        width: 100%;
-                    }
-
-                    @media screen and (min-width: $breakpoint) {
-                        width: 300px;
-                    }
-                }
+              @media screen and (min-width: $breakpoint) {
+                width: 300px;
+              }
             }
+          }
         }
 
         .email-methods {

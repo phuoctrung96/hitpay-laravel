@@ -3,6 +3,7 @@
     <MenuItem
       :item="item"
       :forceSelect="childSelected"
+      :expanded="expanded"
       @click="$emit('expand')"/>
     <div class="list-sub-items">
       <template v-if="expanded">
@@ -30,6 +31,11 @@ export default {
   props: {
     expanded: Boolean, // expanded status
     item: Object
+  },
+  mounted(){
+    if(this.item.children.some(child => window.location.href.includes(child.path))){
+      this.expanded = true;
+    }
   },
   computed: {
     childSelected () {

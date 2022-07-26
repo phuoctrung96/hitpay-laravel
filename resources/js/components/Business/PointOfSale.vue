@@ -41,8 +41,12 @@
                     <div class="card-body p-4">
                         <div class="row">
                             <div class="col-12 col-lg-6 order-lg-2">
-                                <label class="small"><span class="text-uppercase">Remark</span> (Optional)</label>
-                                <input id="remark" v-model="quick_sale_remark" class="form-control mb-3" aria-label="Remar" aria-describedby="remarkLabel" autocomplete="off" :disabled="is_processing">
+                                <label class="small">
+                                    <span class="text-uppercase">Remark</span>
+                                    <span v-if="!business_settings.point_of_sales_remark">(Optional)</span>
+                                    <span v-if="business_settings.point_of_sales_remark">(*)</span>
+                                </label>
+                                <input id="remark" v-model="quick_sale_remark" class="form-control mb-3" aria-label="Remark" aria-describedby="remarkLabel" autocomplete="off" :disabled="is_processing">
                             </div>
                             <div class="col-12 col-lg-6 order-lg-1">
                                 <label class="small text-uppercase">Amount</label>
@@ -207,6 +211,7 @@
                                         </div>
                                         <div class="information flex-grow-1">
                                             <h5 class="title-product">{{ product.name }}</h5>
+                                            <span class="small text-danger" v-if="product.is_manageable && !product.has_variations && (!product.quantity || !(product.quantity > 0)) || (product.is_manageable && product.variations.reduce((sum, variant) => sum + variant.quantity, 0) === 0)">out of stock</span>
                                         </div>
                                         <div class="meta-bottom">
                                             <p class="price">{{ product.showPrice }}</p>
@@ -343,14 +348,17 @@
                                 </ul>
                                 <p class="small mb-0">{{ currency_display }}{{ Number(product.unit_price).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') }}
                                 </p>
-                                <p>
-                                    <div class="cart-number clearfix">
+                                <div class="d-flex justify-content-between">
+                                    <div class="cart-number">
                                         <span class="btn-decrease" @click="decreaseQuantity(index)">-</span>
                                         <input type="text" class="number" min="1" v-model="product.quantity"
                                                oninput="this.value = Math.abs(this.value)" @input="enterQuantity(index)">
                                         <span class="btn-increase" @click="increaseQuantity(index)">+</span>
                                     </div>
-                                </p>
+                                    <div class="clearfix" v-if="product.stock_available > 0">
+                                        <span class="text-muted">stock: </span>{{ product.stock_available }}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -409,6 +417,7 @@
                             <template v-if="order_details.tax_setting_amount">
                                 {{ Number(order_details.tax_setting_amount).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') }}%
                                 <a href="#" @click="addTaxModal">Edit</a>
+                                <a href="#" class="small text-danger" @click="removeTax">Remove</a>
                             </template>
                             <button v-else class="btn btn-secondary btn-sm" @click="addTaxModal">
                                 <i class="fas fa-plus mr-2"></i> Tax Setting
@@ -561,7 +570,13 @@
                             <div class="mb-3">
                                 <div id="paynow_online-qr-code"></div>
                             </div>
-                            <p class="mb-0">Awaiting payment. Please do not close this window until you receive payment confirmation.</p>
+                            <div v-if="cards.error">
+                                <p><i class="fas fa-exclamation-circle fa-3x text-danger"></i></p>
+                                <p class="mb-0">{{ cards.error }}</p>
+                            </div>
+                            <div v-else>
+                                <p class="mb-0">Awaiting payment. Please do not close this window until you receive payment confirmation.</p>
+                            </div>
                         </template>
                         <template v-else-if="charges.chosen_method === 'grabpay'">
                             <h3 class="mb-3">GrabPay</h3>
@@ -587,11 +602,17 @@
                                 </button>
                             </template>
                         </template>
-                        <template v-else-if="charges.chosen_method === 'alipay' || charges.chosen_method === 'grabpay'">
+                        <template v-else-if="charges.chosen_method === 'alipay'">
                             <h3 class="mb-3">Alipay</h3>
                             <p>{{ currency_display }}{{Number(amount).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') }}</p>
-                            <p><i class="fas fa-spinner fa-spin fa-3x text-primary"></i></p>
-                            <p class="mb-0">Awaiting payment. Please do not close this window until you receive payment confirmation.</p>
+                            <div v-if="cards.error">
+                                <p><i class="fas fa-exclamation-circle fa-3x text-danger"></i></p>
+                                <p class="mb-0">{{ cards.error }}</p>
+                            </div>
+                            <div v-else>
+                                <p><i class="fas fa-spinner fa-spin fa-3x text-primary"></i></p>
+                                <p class="mb-0">Awaiting payment. Please do not close this window until you receive payment confirmation.</p>
+                            </div>
                         </template>
                         <template v-else-if="charges.chosen_method === 'cash'">
                             <h3 class="mb-3">Cash</h3>
@@ -1080,6 +1101,9 @@ import CardReader from './CardReader'
                 is_show_discount: false,
                 pageOfProducts: [],
                 featured_products: [],
+                business_settings: {
+
+                },
             };
         },
 
@@ -1234,6 +1258,8 @@ import CardReader from './CardReader'
                 this.clearTerminalCart();
                 this.disconnectTerminal();
             }
+
+            this.getBusinessSettings();
         },
 
         methods: {
@@ -1441,6 +1467,12 @@ import CardReader from './CardReader'
                     this.is_processing = false;
                     return;
                 }
+
+                // if (this.business_settings.point_of_sales_remark && this.quick_sale_remark === "") {
+                //     this.general_error = "Remark is mandatory.";
+                //     this.is_processing = false;
+                //     return;
+                // }
 
                 if (this.current_tab === 'quick-sale-tab') {
                     axios.post(this.base_url + 'charge', {
@@ -1824,6 +1856,13 @@ import CardReader from './CardReader'
                 })
             },
 
+            async removeTax() {
+                this.tax_setting.id = '';
+                this.order_details.tax_amount = 0;
+                this.order_details.tax_setting_name = '';
+                this.order_details.tax_setting_amount = 0;
+                this.setTaxAmount();
+            },
             addTaxModal() {
                 this.tax_setting.name = this.order_details.tax_setting_name ? this.order_details.tax_setting_name : 'Tax Setting';
                 this.tax_setting.amount = this.order_details.tax_setting_amount;
@@ -2043,6 +2082,14 @@ import CardReader from './CardReader'
             increaseQuantity(index) {
                 this.to_be_updated = this.order_details.products[index];
 
+                if (!this.isStockProductAvailable()) {
+                    alert('Insufficient stock level');
+
+                    this.to_be_updated.quantity = this.to_be_updated.stock_available;
+
+                    return;
+                }
+
                 this.to_be_updated.quantity++;
 
                 this.updateProduct(this.to_be_updated.id);
@@ -2055,9 +2102,24 @@ import CardReader from './CardReader'
                     return;
                 }
 
-                this.to_be_updated.quantity;
+                if (!this.isStockProductAvailable()) {
+                    alert('Insufficient stock level');
+
+                    this.to_be_updated.quantity = this.to_be_updated.stock_available;
+
+                    return;
+                }
 
                 this.updateProduct(this.to_be_updated.id);
+            },
+
+            isStockProductAvailable() {
+                if (this.to_be_updated.stock_available > 0 &&
+                  this.to_be_updated.stock_available <= this.to_be_updated.quantity) {
+                    return false;
+                }
+
+                return true;
             },
 
             onChangePage(pageOfItems) {
@@ -2112,12 +2174,28 @@ import CardReader from './CardReader'
                     total_amount: 0,
                     tax_setting: {}
                 }
+            },
+
+            getBusinessSettings() {
+                let that = this;
+
+                axios.get(this.getDomain('business/' + Business.id + '/setting', 'dashboard')).then(({data}) => {
+                    data.map(function(item) {
+                        that.business_settings = {
+                            [item.key]: item.value,
+                        };
+                    });
+                });
             }
         },
     }
 </script>
 
 <style lang="scss">
+#paynow_online-qr-code img {
+    display: revert !important;
+}
+
 #paynow_online-qr-code img,
 #grabpay-qr-code img,
 

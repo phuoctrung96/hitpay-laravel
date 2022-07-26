@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Actions\Business\OnlineStore\Coupons\CouponCalculator;
+use App\Actions\Business\OnlineStore\Discounts\DiscountCalculator;
+use App\Actions\Business\OnlineStore\Discounts\StoreOrderDiscount;
 use App\Actions\Business\Stripe\Charge\Source;
 use App\Business;
 use App\Business\Charge;
@@ -10,33 +13,35 @@ use App\Business\OrderedProduct;
 use App\Business\ProductVariation;
 use App\Business\Shipping;
 use App\Business\ShippingCountry;
-use App\Services\ShopCheckout;
 use App\Enumerations\AllCountryCode;
 use App\Enumerations\Business\Channel;
 use App\Enumerations\Business\ChargeStatus;
 use App\Enumerations\Business\OrderStatus;
 use App\Http\Resources\Business\Charge as ChargeResource;
 use App\Http\Resources\Business\PaymentIntent as PaymentIntentResource;
+use App\Services\ShopCheckout;
 use Exception;
 use HitPay\Stripe\Charge as StripeCharge;
-use HitPay\Stripe\Core;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 
 class CheckoutController extends Controller
 {
+    /**
+     * @throws \ReflectionException
+     * @throws Exception
+     */
     public function showPreCheckoutPage(Request $request, Business $business)
     {
         $cart = $request->session()->get('cart-' . $business->getKey(), [
@@ -72,7 +77,7 @@ class CheckoutController extends Controller
                 continue;
             }
 
-            $totalCartAmount = $totalCartAmount + bcmul($value['quantity'], $variation->price);
+            $totalCartAmount = $totalCartAmount + (int) bcmul($value['quantity'], $variation->price);
             $totalCartQuantity = $totalCartQuantity + $value['quantity'];
 
             $variationsArray[$key] = [
@@ -82,9 +87,7 @@ class CheckoutController extends Controller
             ];
         }
 
-        $discounts = $business->discounts->sortByDesc('minimum_cart_amount');
-
-        $discount = $this->getDiscount($discounts, $totalCartAmount);
+        $discount = DiscountCalculator::withBusiness($business)->setCart($cart)->process();
 
         $business->slots = json_decode($business->slots);
 
@@ -103,19 +106,13 @@ class CheckoutController extends Controller
         ]);
     }
 
+    /**
+     * @throws \ReflectionException
+     * @throws \Throwable
+     * @throws ValidationException
+     */
     public function doCheckout(Request $request, Business $business, ShopCheckout $shopCheckout)
     {
-        $cart = $request->session()->pull('cart-' . $business->getKey(), [
-            'checksum' => '',
-            'products' => [
-                //
-            ],
-        ]);
-
-        if (empty($cart['products'])) {
-            App::abort(404);
-        }
-
         if ($business->enabled_shipping && !$business->can_pick_up && $business->shippings_count < 1) {
             App::abort(404);
         }
@@ -124,11 +121,13 @@ class CheckoutController extends Controller
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255',
-            'phone_number' => 'required|string',
+            'phone_number' => 'required|string|numeric',
             'remark' => 'nullable|string|max:65536',
             'discount.name' => 'nullable|string',
             'discount.amount' => 'nullable|numeric',
-            'coupon_amount' => 'nullable|numeric',
+            'discount.data' => 'nullable|array',
+            'coupon.amount' => 'nullable|numeric',
+            'coupon.id' => 'nullable',
         ];
 
         if ($business->enabled_shipping){
@@ -246,6 +245,17 @@ class CheckoutController extends Controller
             }
         }
 
+        $cart = $request->session()->pull('cart-' . $business->getKey(), [
+            'checksum' => '',
+            'products' => [
+                //
+            ],
+        ]);
+
+        if (empty($cart['products'])) {
+            App::abort(404);
+        }
+
         $order = new Order;
 
         $order->customer_email = $data['email'];
@@ -265,7 +275,26 @@ class CheckoutController extends Controller
         $order->status = OrderStatus::DRAFT;
         $order->automatic_discount_name = $data['discount']['name'];
         $order->automatic_discount_amount = $data['discount']['amount'];
-        $order->coupon_amount = $data['coupon_amount'];
+        $order->coupon_amount = $data['coupon']['amount'];
+
+        $isProductVariationPriceChanged = false;
+        $responseCoupon = null;
+
+        if ($data['coupon']['id'] && $coupon = Business\Coupon::find($data['coupon']['id'])) {
+            $order->coupon_id = $coupon->getKey();
+
+            if ($coupon->coupons_left && $coupon->coupons_left > 0) {
+                $coupon->decrement('coupons_left');
+            }
+
+            $responseCoupon = CouponCalculator::withBusiness($business)->setCoupon($coupon)->setCart($cart)->process();
+
+            if ($responseCoupon['status'] === 'success') {
+                if ($responseCoupon['is_product_price_changed']) {
+                    $isProductVariationPriceChanged = true;
+                }
+            }
+        }
 
         $productsCollection = Collection::make($cart['products']);
 
@@ -292,7 +321,19 @@ class CheckoutController extends Controller
             $orderedProduct->variation_value_3 = $variation->variation_value_3;
             $orderedProduct->quantity = $value['quantity'];
             $orderedProduct->remark = $value['remark'] ?? null;
+
+            $orderedProduct->base_unit_price = $variation->price;
             $orderedProduct->unit_price = $variation->price;
+
+            if ($isProductVariationPriceChanged && $responseCoupon != null && isset($responseCoupon['coupon_information'])) {
+                foreach ($responseCoupon['coupon_information'] as $couponProductPriceChangedItem) {
+                    if ($variation->getKey() === $couponProductPriceChangedItem['product_variation_id']) {
+                        $orderedProduct->unit_price = $couponProductPriceChangedItem['product_price_changed'];
+                        break;
+                    }
+                }
+            }
+
             $orderedProduct->discount_amount = 0;
             $orderedProduct->price = bcmul($orderedProduct->quantity, $orderedProduct->unit_price)
                 - $orderedProduct->discount_amount;
@@ -315,6 +356,7 @@ class CheckoutController extends Controller
 
             $productsArray[] = $orderedProduct;
         }
+
         if ($business->enabled_shipping) {
             if ($data['date_slot']) {
                 $order->slot_date = $data['date_slot']['date'] ? Date::parse($data['date_slot']['date']) : null;
@@ -342,7 +384,7 @@ class CheckoutController extends Controller
         }
 
         return DB::transaction(function () use (
-            $business, $order, $productsArray, $request, $shopCheckout
+            $business, $order, $productsArray, $request, $shopCheckout, $data
         ) {
             $business->orders()->save($order);
 
@@ -365,6 +407,12 @@ class CheckoutController extends Controller
 
             $order->products()->saveMany($productsArray);
             $order->checkout();
+
+            if (isset($data['discount']['data'])) {
+                StoreOrderDiscount::withBusiness($business)
+                    ->setDiscountData($data['discount']['data'])
+                    ->setOrder($order)->process();
+            }
 
             $charge = new Charge;
 
@@ -513,8 +561,36 @@ class CheckoutController extends Controller
         // display if alipay success or failed.
     }
 
-    public function getJsonCoupon(Request $request, Business $business){
+    /**
+     * @param Request $request
+     * @param Business $business
+     * @return \Illuminate\Http\JsonResponse
+     * @throws Exception
+     */
+    public function getJsonCoupon(Request $request, Business $business): \Illuminate\Http\JsonResponse
+    {
         $coupon = $business->coupons()->where('code', $request->coupon_code)->first();
-        return Response::json($coupon ? $coupon->toArray() : null);
+
+        // validate coupon valid?
+        if (!$coupon instanceof Business\Coupon) {
+            return Response::json([
+                'status' => 'failed',
+                'message' => 'Coupon not found!',
+            ]);
+        }
+
+        // get cart
+        $cart = $request->session()->get('cart-' . $business->getKey(), [
+            'checksum' => '',
+            'products' => [
+                //
+            ],
+        ]);
+
+        // is coupon valid for cart details?
+        $responseCouponCalculator = CouponCalculator::withBusiness($business)
+            ->setCoupon($coupon)->setCart($cart)->process();
+
+        return Response::json($responseCouponCalculator);
     }
 }

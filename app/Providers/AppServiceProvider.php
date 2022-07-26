@@ -2,14 +2,18 @@
 
 namespace App\Providers;
 
+use App\Business\GatewayProvider;
 use App\Services\XeroAccounts;
 use App\Services\XeroCheckout;
 use HitPay\Agent\Agent;
-use App\Business\GatewayProvider;
+use HitPay\Notifications\Channels\MailChannel as HitPayMailChannel;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Resources\Json\Resource;
+use Illuminate\Notifications\Channels\MailChannel as IlluminateMailChannel;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Validator as ValidatorFacade;
 use Illuminate\Support\ServiceProvider;
@@ -17,7 +21,10 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Validator;
 use InvalidArgumentException;
 use Laravel\Passport\Passport;
+use libphonenumber\NumberParseException;
+use libphonenumber\PhoneNumberUtil;
 use QuickBooksOnline\API\DataService\DataService;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -62,7 +69,7 @@ class AppServiceProvider extends ServiceProvider
             'payment_provider' => \App\Business\PaymentProvider::class,
         ]);
 
-        Resource::withoutWrapping();
+        JsonResource::withoutWrapping();
 
         $this->app->instance('hitpay.agent', new Agent($request));
 
@@ -155,25 +162,29 @@ class AppServiceProvider extends ServiceProvider
             return false;
         };
 
-        ValidatorFacade::extend('mobile_phone_number', function (
-            string $attribute, $value, array $parameters, Validator $validator
-        ) use ($function) : bool {
-
-            return $function($value, $parameters, [
-                'MY' => '/^(\+601([2-4]|[6-9])\d{7})|(\+6011\d{8})$/',
-                'SG' => '/^(\+65[89]\d{7})$/',
-            ]);
-        });
-
         ValidatorFacade::extend('phone_number', function (
             string $attribute, $value, array $parameters, Validator $validator
-        ) use ($function) : bool {
+        ) : bool {
+            if (is_string($value) && strlen($value) > 4) {
+                // Number should start with +, because it is in intl format
+                if ($value[0] === '+') {
+                    // try to parse it
+                    $phoneUtil = PhoneNumberUtil::getInstance();
 
-            return $function($value, $parameters, [
-                'MY' => '/^(\+601([2-4]|[6-9])\d{7})|(\+6011\d{8})|(\+60([3-9])\d{7,9})$/',
-                'SG' => '/^(\+65[3689]\d{7})$/',
-            ]);
-        });
+                    try {
+                        $parsed = $phoneUtil->parse($value, null);
+
+                        if ($parsed) {
+                            return $phoneUtil->isValidNumber($parsed);
+                        }
+                    } catch (NumberParseException $e) {
+                        // do nothing
+                    }
+                }
+            }
+
+            return false;
+        }, 'Invalid phone number');
 
         ValidatorFacade::extend('decimal', function (
             string $attribute, $value, array $parameters, Validator $validator
@@ -220,5 +231,10 @@ class AppServiceProvider extends ServiceProvider
 
             return true;
         });
+
+        $this->app->singleton(IlluminateMailChannel::class, HitPayMailChannel::class);
+        Blade::withoutComponentTags();
+
+        Paginator::useBootstrap();
     }
 }

@@ -2,7 +2,7 @@
     <div>
         <button v-if="exportEnabled()" class="btn btn-primary" data-toggle="modal" data-target="#exportModal">Export Products</button>
         <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="exportModalLabel">Export</h5>

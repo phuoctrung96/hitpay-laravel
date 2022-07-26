@@ -135,6 +135,7 @@ class PaymentCardController extends Controller
 
             case PaymentProvider::STRIPE_MALAYSIA:
             case PaymentProvider::STRIPE_SINGAPORE:
+            case PaymentProvider::STRIPE_US:
                 if (empty($currencies)) {
                     $currencies = [
                         strtoupper($business->currency),

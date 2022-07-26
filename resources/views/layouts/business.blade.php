@@ -39,11 +39,16 @@
     'navbar_main_border_bottom' => false
 ])
 
+@push('head-stack')
+    <script>
+        window.Business = @json($business->toBladeModel());
+        window.User = @json(Auth::user()->load('businessUsers')->toBladeModel());
+    </script>
+@endpush
+
 @section('app-content')
     <main-layout
         title="{{ $title }}"
-        :business="{{ json_encode($business) }}"
-        :user="{{json_encode(Auth::user()->load('businessUsers'))}}"
         alert_text="{{ $alertText }}"
         alert_link="{{ $alertLink }}"
         alert_link_text="{{ $alertLinkText }}"
@@ -65,4 +70,18 @@
             jwt: '{{$jwt}}'
         });
     </script>
+
+    <!-- Start of Refiner client code snippet -->
+    <script type="text/javascript">
+        let project = '{{env('REFINER_SURVEY_KEY')}}';
+        window._refinerQueue = window._refinerQueue || []; function _refiner(){_refinerQueue.push(arguments);} _refiner('setProject', project); (function(){var a=document.createElement("script");a.type="text/javascript";a.async=!0;a.src="https://js.refiner.io/v001/client.js";var b=document.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b)})();
+
+        _refiner('identifyUser', {
+            id: '{{$business->getKey()}}',
+            email: '{{$business->email}}',
+            name: '{{$business->name}}',
+        });
+
+    </script>
+    <!-- End of Refiner client code snippet -->
 @endpush

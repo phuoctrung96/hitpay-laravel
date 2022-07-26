@@ -24,6 +24,10 @@
 @section('app-content')
     <div class="container container-lg mb-3 mt-5">
         <h2>About Us</h2>
-        <p>{{$business->introduction}}</p>
+        <p>{!!$business->introduction!!}</p>
     </div>
 @endsection
+
+@push('body-stack')
+
+@endpush

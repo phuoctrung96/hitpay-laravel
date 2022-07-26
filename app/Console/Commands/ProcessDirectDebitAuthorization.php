@@ -39,7 +39,7 @@ class ProcessDirectDebitAuthorization extends Command
      *
      * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
      */
-    public function handle()
+    public function handle() : int
     {
         $storageFilePath = 'direct-debit-authorization';
         $localFilePath = storage_path('temp/direct-debit-authorization');
@@ -89,6 +89,8 @@ class ProcessDirectDebitAuthorization extends Command
 
             Storage::move($storageZipFilename, $storageFilePath.'/processed/'.$thisStorageFilename);
         }
+
+        return 0;
     }
 
     public function process(string $content)

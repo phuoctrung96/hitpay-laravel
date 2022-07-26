@@ -41,9 +41,9 @@ class ProcessOnboarding extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
-      $providers_info = [ 
+      $providers_info = [
         [
           'slug' => PaymentProviderEnum::GRABPAY,
           'path' => 'onboarding/grabpay'
@@ -59,7 +59,7 @@ class ProcessOnboarding extends Command
         $files = array_filter(Storage::disk('s3')->files($provider_info['path']), function ($value) {
           return str_ends_with($value, '.csv');
         });
-        
+
         foreach ($files as $file) {
           $csvData = Storage::disk('s3')->get($file);
 
@@ -91,11 +91,11 @@ class ProcessOnboarding extends Command
                 }
 
                 break;
-    
+
               case PaymentProviderEnum::HOOLAH:
-    
+
                 break;
-            }    
+            }
           }
 
           if (count($not_found) > 0) {
@@ -117,5 +117,7 @@ class ProcessOnboarding extends Command
           Storage::disk('s3')->move($file, $newFile);
         }
       }
+
+      return 0;
     }
 }

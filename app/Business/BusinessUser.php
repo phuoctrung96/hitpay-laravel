@@ -18,6 +18,8 @@ class BusinessUser extends Model
 {
     protected $guarded = [];
 
+    protected $_role = [];
+
     protected $table = 'business_user';
 
     protected $appends = [
@@ -55,22 +57,34 @@ class BusinessUser extends Model
 
     public function isOwner(): bool
     {
-        return $this->role->isOwner();
+        if (!array_key_exists('owner', $this->_role)) {
+            $this->_role['owner'] = $this->role->isOwner();
+        }
+        return $this->_role['owner'];
     }
 
     public function isAdmin(): bool
     {
-        return $this->role->isAdmin();
+        if (!array_key_exists('admin', $this->_role)) {
+            $this->_role['admin'] = $this->role->isAdmin();
+        }
+        return $this->_role['admin'];
     }
 
     public function isManager(): bool
     {
-        return $this->role->isManager();
+        if (!array_key_exists('manager', $this->_role)) {
+            $this->_role['manager'] = $this->role->isManager();
+        }
+        return $this->_role['manager'];
     }
 
     public function isCashier(): bool
     {
-        return $this->role->isCashier();
+        if (!array_key_exists('cashier', $this->_role)) {
+            $this->_role['cashier'] = $this->role->isCashier();
+        }
+        return $this->_role['cashier'];
     }
 
     public function getPermissionsAttribute(): array

@@ -24,6 +24,12 @@ class OnboardingController extends Controller
 {
     const supportedProviders = [
       PaymentProviderEnum::GRABPAY,
+      PaymentProviderEnum::SHOPEE_PAY,
+      PaymentProviderEnum::ZIP
+    ];
+
+    const uploadSupportedProviders = [
+      PaymentProviderEnum::GRABPAY,
       PaymentProviderEnum::SHOPEE_PAY
     ];
 
@@ -95,6 +101,7 @@ class OnboardingController extends Controller
       }
 
       $data = PaymentProvider::where($where)
+        ->has('business')
         ->with('business:id,name,country,currency')
         ->paginate($perPage, ['*'], 'page')
         ->toArray();
@@ -118,10 +125,17 @@ class OnboardingController extends Controller
     }
 
     public function downloadCsv (Request $request, $slug) {
-      $requestData = Validator::make(['slug' => $slug], [
+      $requestData = Validator::make([
+        'slug' => $slug,
+        'all' => $request->get('all')
+      ], [
         'slug' => [
           'required',
-          Rule::in(self::supportedProviders)]
+          Rule::in(self::supportedProviders)],
+        'all' => [
+          'required',
+          Rule::in(['true', 'false'])
+        ]
       ])->validate();
 
       $csv = Writer::createFromString('');
@@ -168,13 +182,32 @@ class OnboardingController extends Controller
           ]);
 
           break;
+
+          case PaymentProviderEnum::ZIP:
+            $csv->insertOne([
+              's_no',
+              'merchant_id',
+              'merchant_name',
+              'store_name',              
+              'company_uen',
+              'address',
+              'mcc',
+              'submitted_date',
+              'status'
+            ]);
+  
+            break;  
       }
 
       $dbData = PaymentProvider::with('business')
                 ->whereHas('business')
-                ->where('payment_provider', $slug)
-                ->where('onboarding_status', '!=', OnboardingStatus::SUCCESS)
-                ->get()->toArray();
+                ->where('payment_provider', $slug);
+
+      if ($requestData['all'] !== 'true') {
+        $dbData = $dbData->where('onboarding_status', '!=', OnboardingStatus::SUCCESS);
+      }
+                
+      $dbData = $dbData->get()->toArray();
 
       $data = [];
       $i = 1;
@@ -222,6 +255,21 @@ class OnboardingController extends Controller
             ];
 
             break;
+
+          case PaymentProviderEnum::ZIP:
+            $data[] = [
+              's_no' => $i++,
+              'merchant_id' => $rec['business']['id'],
+              'merchant_name' => $rec['business']['name'],
+              'store_name' => $rec['data']['store_name'],
+              'company_uen' => $rec['data']['company_uen'],
+              'address' => $rec['data']['city'] . ', ' . $rec['data']['postal_code'] . ', ' . $rec['data']['address'],
+              'mcc' => $rec['data']['mcc'],
+              'submitted_date' => date('d-m-Y H:i:s'),
+              'status' => $rec['onboarding_status']
+            ];
+
+            break;  
         }
       }
 
@@ -236,7 +284,7 @@ class OnboardingController extends Controller
       $requestData = Validator::make(['slug' => $slug], [
         'slug' => [
           'required',
-          Rule::in(self::supportedProviders)]
+          Rule::in(self::uploadSupportedProviders)]
       ])->validate();
 
       $reader = Reader::createFromString($request->file('csv')->get());

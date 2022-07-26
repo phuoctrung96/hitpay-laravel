@@ -43,7 +43,7 @@ class SendDailyEmailToAdmin extends Command
      * @throws \League\Csv\Exception
      * @throws \ReflectionException
      */
-    public function handle()
+    public function handle() : int
     {
         $startTime = Date::now();
 
@@ -512,5 +512,7 @@ class SendDailyEmailToAdmin extends Command
             Log::info(__CLASS__.' end exporting '.$request.' for '.$this->option('period'));
         } catch (Throwable $throwable) {
         }
+
+        return 0;
     }
 }

@@ -48,7 +48,6 @@
 export default {
   name: 'PayNowSettings',
   props: {
-    business: Object,
     provider: Object,
     // Success message to show
     success_message: {
@@ -58,6 +57,7 @@ export default {
   },
   data () {
     return {
+      business: window.Business,
       errors: {
         //
       },

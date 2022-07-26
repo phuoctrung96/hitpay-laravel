@@ -38,7 +38,7 @@ class VerificationDocumentRequired extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $businesses = Business::query()
             ->with('verifications')
@@ -88,5 +88,7 @@ class VerificationDocumentRequired extends Command
                 $this->info('error message: ' . $exception->getMessage());
             }
         }
+
+        return 0;
     }
 }

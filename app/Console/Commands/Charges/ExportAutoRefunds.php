@@ -33,7 +33,7 @@ class ExportAutoRefunds extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
         [ $startDate, $endDate ] = $this->getDateTimeRange($this->options());
 
@@ -97,5 +97,7 @@ class ExportAutoRefunds extends Command
         $email = $this->option('email') ?? 'aditya@hit-pay.com';
 
         $this->storeAndGroupByDate($startDate, $endDate, $email, 'auto-refunds', $csv->getContent());
+
+        return 0;
     }
 }

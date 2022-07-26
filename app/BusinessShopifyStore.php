@@ -21,7 +21,7 @@ class BusinessShopifyStore extends Model
 
     use SoftDeletes, UsesUuid;
 
-    const MAX_STORES = 5;
+    const MAX_STORES = 20;
 
     const PAGINATE_NUMBER = 5;
 

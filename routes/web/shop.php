@@ -38,5 +38,7 @@ Route::namespace('Shop')->group(function () {
         Route::post('order/confirm/{order_id}', 'OrderController@confirm')->name('.order.confirm');
         Route::get('order/{id}', 'OrderController@get')->name('.order');
         Route::post('order/{id}', 'OrderController@pay')->name('.order.pay');
+
+        Route::get('gateway-provider-store', 'ShopGatewayProviderController')->name('gateway_providers');
     });
 });

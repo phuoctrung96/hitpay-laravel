@@ -210,7 +210,11 @@ export default {
                 docType: this.docType,
                 status: this.statusForm
             }
-            
+
+            if (this.statusForm === 'all') {
+                submissionData.status = _.values(this.statuses).filter((value, index) => 'all' !== value).join(',');
+            }
+
             if (submissionData.starts_at > submissionData.ends_at) {
                 this.is_requesting = false;
                 this.error = 'Oops, date from should not be greater than date to.';

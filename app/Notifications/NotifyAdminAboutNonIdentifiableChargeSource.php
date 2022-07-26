@@ -100,7 +100,8 @@ class NotifyAdminAboutNonIdentifiableChargeSource extends Notification implement
 
                 if (in_array($this->charge->payment_provider, [
                     \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA,
-                    \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE
+                    \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE,
+                    \App\Enumerations\PaymentProvider::STRIPE_US,
                 ])){
                     $paymentSource = $this->issuerName;
 

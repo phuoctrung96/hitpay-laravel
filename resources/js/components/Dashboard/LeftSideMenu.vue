@@ -1,15 +1,9 @@
 <template>
     <nav class="left-side-menu navbar-expand-md">
         <div
-            class="p-2 py-3 p-md-0 pt-md-5 top-line d-flex justify-content-between justify-content-md-center align-items-center flex-md-row flex-row-reverse">
-      <span class="d-inline d-md-none flex-grow-1 text-center text-white">
-        <svg
-                class=""
-                height="30"
-                viewBox="0 0 576 144">
-                <use xlink:href='/images/hitpay.svg#hitpay'></use>
-            </svg>
-
+            class="p-2 p-md-0 pt-md-5 top-line d-flex justify-content-between justify-content-md-center align-items-center">
+      <span class="d-inline d-md-none">
+        {{ business.name }}
       </span>
 
             <svg
@@ -88,14 +82,18 @@ export default {
                 {
                     title: 'Online Shop',
                     icon: 'online_shop.svg',
+                    business_id: this.business.id,
+                    shop_url: this.getShopDomain() + this.business.identifier,
                     visible: this.isVisibleMenuItem('canOperateOnlineShop'),
                     children: [
+                        {title: 'Dashboard', path: '/business/:business_id/dashboard', visible: this.isVisibleMenuItem('canOperateOnlineShopDashboard')},
+                        {title: 'Dashboard', path: '/business/:business_id/insight', visible: this.isVisibleMenuItem('canOperateOnlineShopInsight')},
                         {title: 'Products', path: '/business/:business_id/product', visible: this.isVisibleMenuItem('canOperateOnlineShopProducts')},
                         {title: 'Product Categories', path: '/business/:business_id/product-categories', visible: this.isVisibleMenuItem('canOperateOnlineShopProductCategories')},
-                        {title: 'Orders', path: '/business/:business_id/order', visible: this.isVisibleMenuItem('canOperateOnlineShopOrders')},
+                        {title: 'Orders', path: '/business/:business_id/order', visible: this.isVisibleMenuItem('canOperateOnlineShopOrders'), business_id: this.business.id},
                         {title: 'Discount', path: '/business/:business_id/discount', visible: this.isVisibleMenuItem('canOperateOnlineShopDiscount')},
                         {title: 'Coupons', path: '/business/:business_id/coupon', visible: this.isVisibleMenuItem('canOperateOnlineShopCoupons')},
-                        {title: 'Shipping', path: '/business/:business_id/setting/shipping', visible: this.isVisibleMenuItem('canOperateOnlineShopShipping')},
+                        {title: 'Shipping & Pickup', path: '/business/:business_id/setting/shipping', visible: this.isVisibleMenuItem('canOperateOnlineShopShipping')},
                         {title: 'Store Settings', path: '/business/:business_id/setting/shop', visible: this.isVisibleMenuItem('canOperateOnlineShopStoreSettings')},
                         {title: 'Inventory Sync', path: '/business/:business_id/integration/hotglue/home', visible: this.isVisibleMenuItem('canOperateOnlineShopHotglueIntegration')}
                     ]
@@ -148,6 +146,7 @@ export default {
                     icon: 'settings.svg',
                     children: [
                         {title: 'Payment Methods', path: '/business/:business_id/payment-provider', visible: this.isVisibleMenuItem('canOperateSettingsPaymentMethods')},
+                        {title: 'Email Templates', path: '/business/:business_id/email-templates', visible: this.isVisibleMenuItem('canManageWallets')},
                         {title: 'Bank Accounts', path: '/business/:business_id/settings/bank-accounts', visible: this.isVisibleMenuItem('canManageWallets')},
                         {title: 'Account Verification', path: '/business/:business_id/verification', visible: this.isVisibleMenuItem('canOperateSettingsAccountVerification')},
                         {title: 'Xero Integration', path: '/business/:business_id/integration/xero/home', visible: this.isVisibleMenuItem('canOperateSettingsXeroIntegration')},
@@ -184,6 +183,9 @@ export default {
                 : id
 
             let item = document.getElementById(id);
+            if(!item)
+                return;
+
             if(this.menuExpanded != -1) {
                 item.classList.add('hidden-try-me');
             }else{
@@ -224,19 +226,19 @@ export default {
                 : 2
         },
         isVisibleMenuItem(permission) {
-            if (permission == 'canOperatePaymentGatewayCashback') {
+            if (permission === 'canOperateSettingsAccountVerification') {
+                if (this.business.skip_verification) {
+                    return false;
+                }
+            } else if (permission === 'canOperatePaymentGatewayCashback') {
                 if (this.business.country !== 'sg') {
                     return false;
-                } else {
-                    return this.user.businessUsersList.filter((businessUser) => {
-                        return businessUser.business_id == this.business.id && businessUser.permissions[permission];
-                    }).length;
                 }
-            } else {
-                return this.user.businessUsersList.filter((businessUser) => {
-                    return businessUser.business_id == this.business.id && businessUser.permissions[permission];
-                }).length;
             }
+
+            return this.user.businessUsersList.filter((businessUser) => {
+                return businessUser.business_id === this.business.id && businessUser.permissions[permission];
+            }).length;
         },
         filterMenu(menu) {
             return menu.filter(item => {
@@ -291,7 +293,6 @@ $backColor: #011B5F;
 
     .navbar-toggler {
         color: white;
-        background-color: #021b60;
     }
 
     #navbarNavDropdown {

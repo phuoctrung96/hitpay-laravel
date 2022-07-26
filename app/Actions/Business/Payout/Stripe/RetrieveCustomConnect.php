@@ -22,7 +22,11 @@ class RetrieveCustomConnect extends Action
                 retrieve stripe payout from transfer");
         }
 
-        if (!in_array($this->business->payment_provider, [PaymentProviderEnum::STRIPE_MALAYSIA, PaymentProviderEnum::STRIPE_SINGAPORE])) {
+        if (!in_array($this->business->payment_provider, [
+            PaymentProviderEnum::STRIPE_MALAYSIA,
+            PaymentProviderEnum::STRIPE_SINGAPORE,
+            PaymentProviderEnum::STRIPE_US
+        ])) {
             throw new \Exception("Invalid payment provider {$this->business->payment_provider} when
                 retrieve stripe payout from transfer");
         }

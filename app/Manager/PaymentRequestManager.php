@@ -50,6 +50,12 @@ class PaymentRequestManager extends AbstractManager implements ManagerInterface,
             $data['send_sms']   = false;
         }
 
+        if (isset($data['add_admin_fee']) && ($data['add_admin_fee'] === 'true' || $data['add_admin_fee'] === true)) {
+          $data['add_admin_fee'] = true;
+        } else {
+          $data['add_admin_fee'] = false;
+        }
+
         if (!isset($data['send_email']) || empty($data['send_email'])) {
             $data['send_email'] = false;
         } else {

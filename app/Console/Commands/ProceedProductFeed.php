@@ -40,16 +40,18 @@ class ProceedProductFeed extends Command
      * @return mixed
      */
 
-    public function handle()
+    public function handle() : int
     {
         $businessId = $this->option('business_id');
         $path = $this->option('file_path')[0];
 
         $business = Business::where('id', $businessId)->first();
         if (!isset($business->id)) {
-            return false;
+            return 1;
         }
 
         Excel::import(new ProductFeedImport($business), $path);
+
+        return 0;
     }
 }

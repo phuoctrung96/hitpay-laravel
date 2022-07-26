@@ -18,7 +18,7 @@
                 </div>
                 <div class="col-12 col-sm-8 col-lg-6 mb-3">
                     <label for="phone_number" class="small text-muted text-uppercase">Phone Number</label>
-                    <input id="phone_number" class="form-control" title="" v-model="customer.phone_number" :class="{
+                    <input id="phone_number" type="tel" class="form-control" title="" v-model="customer.phone_number" :class="{
                         'is-invalid' : errors.phone_number
                     }" placeholder="Customer Phone Number" :disabled="is_processing">
                     <span class="invalid-feedback" role="alert">{{ errors.phone_number }}</span>

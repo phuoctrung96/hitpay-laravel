@@ -81,7 +81,8 @@ class PaymentRequestRequest extends FormRequest
             'allow_repeated_payments'   => ['nullable', Rule::in(['true','false'])],
             'expiry_date'               => 'nullable|date_format:Y-m-d H:i:s|after:now',
             'channel'                   => ['nullable', Rule::in(PluginProvider::CHANNELS)],
-            'business_id'               => 'nullable'
+            'business_id'               => 'nullable',
+            'add_admin_fee'             => ['nullable', Rule::in(['true','false'])],
         ];
     }
 }

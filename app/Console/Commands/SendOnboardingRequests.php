@@ -51,9 +51,9 @@ class SendOnboardingRequests extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
-        $providers_info = [ 
+        $providers_info = [
           [
             'slug' => PaymentProviderEnum::GRABPAY,
             'email' => 'services.grabpay.onboarding_email'
@@ -116,8 +116,10 @@ class SendOnboardingRequests extends Command
             foreach ($providers as $provider) {
               $provider->onboarding_status = OnboardingStatus::PENDING_VERIFICATION;
               $provider->save();
-            }                        
-          });  
-        }     
+            }
+          });
+        }
+
+        return 0;
     }
 }

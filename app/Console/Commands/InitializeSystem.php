@@ -36,12 +36,12 @@ class InitializeSystem extends Command
      *
      * @throws \Exception
      */
-    public function handle()
+    public function handle() : int
     {
         if (Configuration::count()) {
             throw new RuntimeException('The system has been initialized.');
         } elseif (!$this->confirmToProceed()) {
-            return;
+            return 1;
         }
 
         if ($this->getLaravel()->environment('local')) {
@@ -178,6 +178,8 @@ class InitializeSystem extends Command
         DB::commit();
 
         $this->line('System setup completed.');
+
+        return 0;
     }
 
     /**

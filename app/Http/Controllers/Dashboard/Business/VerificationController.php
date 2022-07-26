@@ -28,7 +28,7 @@ class VerificationController extends Controller
         $this->middleware('auth');
     }
 
-    public function showHomepage(Business $business)
+    public function showHomepage(Request $request, Business $business)
     {
         Facades\Gate::inspect('view', $business)->authorize();
 
@@ -52,7 +52,7 @@ class VerificationController extends Controller
             ]);
         }
 
-        if (!$verification->isVerified() && $verification->status == VerificationStatus::VERIFIED) {
+        if (!$verification->isVerified() && $verification->status == VerificationStatus::VERIFIED && !$business->verified_wit_my_info_sg) {
             // user have finish go to my info but not yet confirm
             return Facades\Response::redirectToRoute('dashboard.business.verification.confirm.page', [
                 $business->getKey(),
@@ -73,13 +73,16 @@ class VerificationController extends Controller
 
         $verificationStatusName = $verification->getStatusName();
 
+        $firstSubmit = $request->get('first_submit', 0);
+
         return Facades\Response::view('dashboard.business.verification.completed',
             compact(
                 'business',
                 'verification',
                 'verification_data',
                 'type',
-                'verificationStatusName'
+                'verificationStatusName',
+                'firstSubmit'
             )
         );
     }
@@ -255,6 +258,9 @@ class VerificationController extends Controller
             'status' => VerificationStatus::VERIFIED
         ]);
 
+        $business->payment_enabled = true;
+        $business->save();
+
         return Facades\Response::redirectToRoute('dashboard.business.verification.confirm.page', [
             $business->getKey(),
             $verification->getKey(),
@@ -339,7 +345,10 @@ class VerificationController extends Controller
             }
         }
 
-        return route('dashboard.business.verification.home', $business->getKey());
+        return route('dashboard.business.verification.home', [
+            'business_id' => $business->getKey(),
+            'first_submit' => 1
+        ]);
     }
 
     public function delete(Request $request, Business $business, Business\Verification $verification)

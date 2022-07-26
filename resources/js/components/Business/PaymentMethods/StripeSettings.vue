@@ -56,12 +56,12 @@ import axios from 'axios'
 export default {
   name: 'StripeSettings',
   props: {
-    business: Object,
     provider: Object,
     user: Object
   },
   data () {
     return {
+      business: window.Business,
       //csrf token
       csrf: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
       is_processing: false,

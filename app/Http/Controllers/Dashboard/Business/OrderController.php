@@ -42,97 +42,19 @@ class OrderController extends Controller
     {
         Gate::inspect('view', $business)->authorize();
 
-        $orders = $business->orders()->whereIn('status', [OrderStatus::CANCELED, OrderStatus::COMPLETED, OrderStatus::REQUIRES_BUSINESS_ACTION])->with('products', 'charges');
-
         $statuses = array(
             'All' => 'all',
-            'Completed' => 'completed',
-            'Pending' => 'requires_business_action',
-            'Canceled' => 'canceled');
+            'Completed' => OrderStatus::COMPLETED,
+            'Pending' => OrderStatus::REQUIRES_BUSINESS_ACTION,
+            'Canceled' => OrderStatus::CANCELED
+        );
 
-        $orders = $orders->orderByDesc('id')->get();
-
-        return Response::view('dashboard.business.order.index', compact('business', 'orders', 'statuses'));
-    }
-
-    public function search(Request $request, Business $business){
-        Gate::inspect('view', $business)->authorize();
-        $keywords = $request->get('keywords');
-
-        $orders = $business->orders()->whereIn('status', [OrderStatus::CANCELED, OrderStatus::COMPLETED, OrderStatus::REQUIRES_BUSINESS_ACTION])->with('products', 'charges');
-
-        if (strlen($keywords) != 0) {
-            if (is_numeric($keywords)) {
-                $orders->where('amount', 'LIKE', '%' . $keywords . '%');
-            } elseif(strtotime($keywords)) {
-                $orders->where('created_at', 'LIKE', '%' . $keywords . '%');
-            } elseif(Str::isUuid($keywords)) {
-                $orders->where('id', $keywords);
-            } else {
-                $keywords = explode(' ', $request->get('keywords'));
-                $keywords = array_map(function ($value) {
-                    return trim($value);
-                }, $keywords);
-                $keywords = array_filter($keywords);
-                $keywords = array_unique($keywords);
-                $orders->where(function (Builder $query) use ($keywords) {
-                    $i = 0;
-                    foreach ($keywords as $keyword) {
-                        $query->orWhere($query->qualifyColumn('remark'), 'LIKE', '%' . $keyword . '%');
-                        $query->orWhere($query->qualifyColumn('customer_name'), 'LIKE', '%' . $keyword . '%');
-                        if ($i++ === 2) {
-                            break;
-                        }
-                    }
-                });
-            }
+        $currentStatus = 'all';
+        if($request->pending) {
+            $currentStatus = 'pending';
         }
 
-        $orders = $orders->orderByDesc('id')->get();
-        return Response::json([
-            'orders' => $orders,
-        ]);
-    }
-
-    public function getOrdersWithFilters(Request $request, Business $business)
-    {
-        Gate::inspect('view', $business)->authorize();
-
-        $orders = $business->orders()->whereIn('status', [OrderStatus::CANCELED, OrderStatus::COMPLETED, OrderStatus::REQUIRES_BUSINESS_ACTION])->with('products','charges');
-
-        $status = $request->get('status');
-        $statusLabel = 'All';
-
-        if ($status === 'requires_business_action') {
-            $orders->where('status', OrderStatus::REQUIRES_BUSINESS_ACTION);
-            $statusLabel = 'Pending';
-        } elseif ($status === 'completed') {
-            $orders->where('status', OrderStatus::COMPLETED);
-            $statusLabel = 'Completed';
-        } elseif ($status === 'canceled') {
-            $orders->where('status', OrderStatus::CANCELED)->orWhere('status', OrderStatus::EXPIRED);
-            $statusLabel = 'Canceled';
-        }
-
-        if ($request->get('dateFrom') != '' && $request->get('dateTo') != '') {
-            $dateFrom = Date::parse($request->get('dateFrom'));
-            $dateTo = Date::parse($request->get('dateTo'));
-
-            if ($dateFrom->gt($dateTo)) {
-                [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
-            }
-
-            $orders->whereDate('created_at', '>=', $dateFrom->startOfDay()->toDateTimeString());
-            $orders->whereDate('created_at', '<=', $dateTo->endOfDay()->toDateTimeString());
-        }
-
-        $orders = $orders->orderByDesc('id')->get();
-
-        return Response::json([
-            'orders' => $orders,
-            'status' => $statusLabel
-        ]);
-
+        return Response::view('dashboard.business.order.index', compact('business', 'statuses', 'currentStatus'));
     }
 
     /**
@@ -164,19 +86,21 @@ class OrderController extends Controller
 
         $orders = $business->orders()->with('products');
 
-        $status = $request->get('status');
+        $statuses = $request->get('status');
 
-        if ($status === 'requires_business_action') {
-            $orders->where('status', OrderStatus::REQUIRES_BUSINESS_ACTION);
-        } elseif ($status === 'requires_customer_action') {
-            $orders->where('status', OrderStatus::REQUIRES_CUSTOMER_ACTION);
-        } elseif ($status === 'requires_payment_method') {
-            $orders->where('status', OrderStatus::REQUIRES_PAYMENT_METHOD);
-        } elseif ($status === 'completed') {
-            $orders->where('status', OrderStatus::COMPLETED);
-        } elseif ($status === 'canceled') {
-            $orders->where('status', OrderStatus::CANCELED)->orWhere('status', OrderStatus::EXPIRED);
+        if ($statuses) {
+            $statuses = is_array($statuses) ? $statuses : explode(',', $statuses);
         }
+
+        if (!is_array($statuses) || count($statuses) <= 0) {
+            $statuses = [
+                OrderStatus::COMPLETED,
+                OrderStatus::REQUIRES_BUSINESS_ACTION,
+                OrderStatus::CANCELED,
+            ];
+        }
+
+        $orders->whereIn('status', $statuses);
 
         $fromDate = Date::parse($data['starts_at']);
         $toDate = Date::parse($data['ends_at']);

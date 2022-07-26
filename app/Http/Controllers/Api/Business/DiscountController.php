@@ -30,24 +30,26 @@ class DiscountController extends Controller
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function index(Request $request, BusinessModel $business)
+    public function index(Request $request, BusinessModel $business): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         Gate::inspect('view', $business)->authorize();
 
-        $discounts = $business->discounts()->paginate();
+        $discounts = $business->discounts();
 
         if ($request->has('keywords')) {
             $keywords = $request->get('keywords');
 
             if (strlen($keywords) > 0) {
-                $discounts = $business->discounts()
-                    ->where('name', 'like', '%' . $keywords . '%')
-                    ->orWhere('description', 'like', '%' . $keywords . '%')
-                    ->paginate();
+                $discounts->where('name', 'like', '%' . $keywords . '%')
+                    ->orWhere('description', 'like', '%' . $keywords . '%');
             }
         }
 
-        return Discount::collection($discounts);
+        $perPage = $request->get('perPage', 10);
+
+        $discounts->orderBy('updated_at', 'desc');
+
+        return Discount::collection($discounts->paginate($perPage));
     }
 
     /**
@@ -61,7 +63,7 @@ class DiscountController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Throwable
      */
-    public function store(Request $request, BusinessModel $business)
+    public function store(Request $request, BusinessModel $business): Discount
     {
         Gate::inspect('update', $business)->authorize();
 
@@ -79,7 +81,7 @@ class DiscountController extends Controller
      * @return \App\Http\Resources\Business\Discount
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function show(BusinessModel $business, DiscountModel $discount)
+    public function show(BusinessModel $business, DiscountModel $discount): Discount
     {
         Gate::inspect('view', $business)->authorize();
 
@@ -98,7 +100,7 @@ class DiscountController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Throwable
      */
-    public function update(Request $request, BusinessModel $business, DiscountModel $discount)
+    public function update(Request $request, BusinessModel $business, DiscountModel $discount): Discount
     {
         Gate::inspect('update', $business)->authorize();
 
@@ -117,7 +119,7 @@ class DiscountController extends Controller
      * @throws \Illuminate\Auth\Access\AuthorizationException
      * @throws \Throwable
      */
-    public function destroy(BusinessModel $business, DiscountModel $discount)
+    public function destroy(BusinessModel $business, DiscountModel $discount): \Illuminate\Http\JsonResponse
     {
         Gate::inspect('update', $business)->authorize();
 

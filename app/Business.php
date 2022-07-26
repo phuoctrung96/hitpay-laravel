@@ -6,6 +6,7 @@ use App\Business\ApiKey;
 use App\Business\BusinessCategory;
 use App\Business\BusinessReferral;
 use App\Business\BusinessShopSettings;
+use App\Business\BusinessSettings;
 use App\Business\BusinessUser;
 use App\Business\Cashback;
 use App\Business\CashbackCampaign;
@@ -17,6 +18,7 @@ use App\Business\ComplianceNotes;
 use App\Business\Coupon;
 use App\Business\Customer;
 use App\Business\Discount;
+use App\Business\EmailTemplate;
 use App\Business\GatewayProvider;
 use App\Business\HotglueIntegration;
 use App\Business\Image;
@@ -57,6 +59,7 @@ use App\Models\Business\BankAccount;
 use App\Models\Business\HasPaymentProviders;
 use App\Models\Business\PartnerMerchantMapping;
 use App\Models\Business\QuickbookIntegration;
+use App\Models\Business\SpecialPrivilege;
 use App\Models\BusinessPartner;
 use App\Notifications\NotifyAdminAboutNewBusiness;
 use App\Notifications\XeroAccountDisconnectedNotification;
@@ -87,6 +90,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Throwable;
+use App\Manager\BusinessManager;
 
 /**
  * Class Business
@@ -98,6 +102,9 @@ use Throwable;
  * @property ?BusinessPartner partner
  * @property ?BusinessReferral businessReferral
  * @property ?BusinessReferral referredBy
+ * @property ?array xero_channels
+ * @property string currency
+ * @property string xero_tenant_id
  */
 class Business extends Model implements OwnableContract
 {
@@ -154,6 +161,7 @@ class Business extends Model implements OwnableContract
         'enabled_shipping',
         'is_redirect_order_completion',
         'url_redirect_order_completion',
+        'enabled_shipping',
         'url_facebook',
         'url_instagram',
         'url_twitter',
@@ -279,7 +287,7 @@ class Business extends Model implements OwnableContract
                 $model->setAttribute('slug', generate_unique_slug($model->getAttribute('name')));
             }
 
-            $model->setAttribute('currency', Core::$countries[$model->getAttribute('country')]['currency']);
+            $model->setAttribute('currency', Core::getCountries()[$model->getAttribute('country')]['currency']);
         });
 
         static::updating(function (self $model): void {
@@ -581,6 +589,16 @@ class Business extends Model implements OwnableContract
     public function shopSettings(): HasOne
     {
         return $this->hasOne(BusinessShopSettings::class, 'business_id', 'id');
+    }
+
+    /**
+     * Get the business settings.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne|\App\Business\BusinessShopSettings|\App\Business\BusinessShopSettings
+     */
+    public function settings(): HasOne
+    {
+        return $this->hasOne(BusinessSettings::class, 'business_id', 'id');
     }
 
     /**
@@ -985,11 +1003,70 @@ class Business extends Model implements OwnableContract
             $customisation->refresh();
             return $customisation;
         } else {
-            $cust = $customisation->first();
-            $cust->payment_order = json_decode($cust->payment_order);
-            $cust->method_rules = json_decode($cust->method_rules);
-            return $cust;
+          $cust = $customisation->first();
+          $cust->payment_order = json_decode($cust->payment_order);
+          $cust->method_rules = json_decode($cust->method_rules);
+          $cust->admin_fee_settings = json_decode($cust->admin_fee_settings);
+
+          // Check admin_fee_settings version and convert to version 2 if needed
+          if (isset($cust->admin_fee_settings) && (!isset($cust->admin_fee_settings->version) || $cust->admin_fee_settings->version < 2)) {
+            $businessManager = new BusinessManager();
+
+            $methodsKeys = isset($cust->admin_fee_settings->allMethods) && $cust->admin_fee_settings->allMethods
+              ? array_keys($businessManager->getByBusinessAvailablePaymentMethods($this, null, true))
+              : $cust->admin_fee_settings->specificMethods;
+
+            $methods = new \stdClass();;
+
+            foreach ($methodsKeys as $key) {
+              $methods->$key = isset($cust->admin_fee_settings->customFee) ? $cust->admin_fee_settings->customFee : 0.5;
+            }
+
+              if (isset($cust->admin_fee_settings->enabled)) {
+                  $enabled = $cust->admin_fee_settings->enabled;
+              } elseif (isset($cust->admin_fee_settings->allMethods)) {
+                  $enabled = $cust->admin_fee_settings->allMethods
+                      || (
+                          isset($cust->admin_fee_settings->specificMethods)
+                          && count($cust->admin_fee_settings->specificMethods) > 0
+                      );
+              } else {
+                  $enabled = false;
+              }
+
+            $cust->admin_fee_settings = (object) [
+              'version' => 2,
+              'enabled' => $enabled,
+              'allMethods' => isset($cust->admin_fee_settings->allMethods) && $cust->admin_fee_settings->allMethods,
+              'channels' => $cust->admin_fee_settings->channels,
+              'methods' => $methods
+            ];
+
+          }
+
+          return $cust;
         }
+    }
+
+    // Right now only used from Rates helper
+    // So just create empty admin fees settings
+    public function customizationAdminFees()
+    {
+      $customisation = $this->checkoutCustomisation();
+
+      if (!$customisation->admin_fee_settings) {
+        $adminFees = new \stdClass();
+        $adminFees->enabled = false;
+        $adminFees->version = 2;
+        $adminFees->allMethods = false;
+        $adminFees->channels = [];
+        $adminFees->methods = new \stdClass();
+
+        $adminFees->customText = 'Admin Fees';
+        return $adminFees;
+      } else {
+        return $customisation->admin_fee_settings;
+      }
     }
 
     public function updateCustomisation($data)
@@ -1012,8 +1089,14 @@ class Business extends Model implements OwnableContract
                 $customisation->method_rules = $data['method_rules'];
             }
 
+            if (array_key_exists('admin_fee_settings', $data)) {
+              $customisation->admin_fee_settings = $data['admin_fee_settings'];
+            }
+
             $customisation->save();
         }
+
+        return $customisation;
     }
 
     public function getStoreCustomisationStyles()
@@ -1054,7 +1137,8 @@ class Business extends Model implements OwnableContract
             'id' => $this->id,
             'name' => $this->name,
             'country' => $this->country,
-            'currency' => $this->currency
+            'currency' => $this->currency,
+            'business_type' => $this->business_type
         ];
     }
 
@@ -1174,6 +1258,23 @@ class Business extends Model implements OwnableContract
     }
 
     /**
+     * Get the refunds of the business.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     */
+    public function refunds(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Business\Refund::class,
+            Charge::class,
+            'business_id',
+            'business_charge_id',
+            'id',
+            'id'
+        );
+    }
+
+    /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany|\App\Business\SubscribedEvent|\App\Business\SubscribedEvent[]
      */
     public function subscribedEvents(): HasMany
@@ -1226,8 +1327,10 @@ class Business extends Model implements OwnableContract
         $provider = $this->gatewayProviders()->where('name', $provider)->first();
         $paymentMethods = [];
 
-        foreach ($provider->array_methods as $method) {
-            $paymentMethods[] = $method;
+        if ($provider instanceof GatewayProvider) {
+          foreach ($provider->array_methods as $method) {
+              $paymentMethods[] = $method;
+          }
         }
 
         return $paymentMethods;
@@ -1593,5 +1696,50 @@ class Business extends Model implements OwnableContract
     public function isPartner() : bool
     {
         return $this->business_type === Enumerations\Business\Type::PARTNER;
+    }
+
+    /**
+     * Get the special privileges granted to the businesses.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function specialPrivileges() : HasMany
+    {
+        return $this->hasMany(SpecialPrivilege::class, 'business_id', 'id');
+    }
+
+    public function toBladeModel() : array
+    {
+        $attributes = $this->only([
+            'id',
+            'payment_enabled',
+            'identifier',
+            'name',
+            'email',
+            'currency',
+            'currency_name',
+            'display_name',
+            'country',
+            'business_type',
+            'payment_providers',
+            'verified_wit_my_info_sg'
+        ]);
+
+        /* @var \HitPay\Data\Countries\Country $businessCountryClass */
+        $businessCountryClass = '\HitPay\Data\Countries\\' . strtoupper($this->country);
+
+        $attributes['skip_verification'] = $businessCountryClass::skip_verification;
+
+        return $attributes;
+    }
+
+    /**
+     * Get the special privileges granted to the businesses.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function emailTemplate() : HasOne
+    {
+        return $this->hasOne(EmailTemplate::class, 'business_id', 'id');
     }
 }

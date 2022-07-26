@@ -6,6 +6,7 @@ use App\Enumerations\CountryCode;
 use App\Enumerations\CurrencyCode;
 use App\Enumerations\PaymentProvider;
 use App\Exceptions\HitPayLogicException;
+use HitPay\Data\Countries;
 use Illuminate\Support\Facades\Config;
 use Stripe\Stripe;
 
@@ -28,29 +29,47 @@ abstract class Core
     /**
      * The available countries.
      */
-    public static $countries = [
+    public static function getCountries(): array
+    {
+        $countries = [];
 
-        CountryCode::MALAYSIA => [
-            'code' => CountryCode::MALAYSIA,
-            'payment_provider' => PaymentProvider::STRIPE_MALAYSIA,
-            'currency' => CurrencyCode::MYR,
-            'payment_methods' => [
-                'card',
-            ],
-        ],
+        foreach (Countries::all() as $country_code) {
+            if (CountryCode::MALAYSIA === $country_code) {
+                $countries[$country_code] = [
+                    'code' => CountryCode::MALAYSIA,
+                    'payment_provider' => PaymentProvider::STRIPE_MALAYSIA,
+                    'currency' => CurrencyCode::MYR,
+                    'payment_methods' => [
+                        'card',
+                    ],
+                ];
+            } elseif (CountryCode::SINGAPORE === $country_code) {
+                $countries[$country_code] = [
+                    'code' => CountryCode::SINGAPORE,
+                    'payment_provider' => PaymentProvider::STRIPE_SINGAPORE,
+                    'currency' => CurrencyCode::SGD,
+                    'payment_methods' => [
+                        'card',
+                        'alipay',
+                        'wechat',
+                    ],
+                ];
+            } else {
+                $country = Countries::get($country_code);
 
-        CountryCode::SINGAPORE => [
-            'code' => CountryCode::SINGAPORE,
-            'payment_provider' => PaymentProvider::STRIPE_SINGAPORE,
-            'currency' => CurrencyCode::SGD,
-            'payment_methods' => [
-                'card',
-                'alipay',
-                'wechat',
-            ],
-        ],
+                $countries[$country_code] = [
+                    'code' => $country_code,
+                    'payment_provider' => PaymentProvider::STRIPE_US,
+                    'currency' => $country::default_currency(),
+                    'payment_methods' => [
+                        'card',
+                    ],
+                ];
+            }
+        }
 
-    ];
+        return $countries;
+    }
 
     /**
      * Core constructor.
@@ -67,6 +86,8 @@ abstract class Core
             $this->configurations = Config::get('services.stripe.sg');
         } elseif ($paymentProvider === PaymentProvider::STRIPE_MALAYSIA) {
             $this->configurations = Config::get('services.stripe.my');
+        } elseif ($paymentProvider === PaymentProvider::STRIPE_US) {
+            $this->configurations = Config::get('services.stripe.us');
         } else {
             throw new HitPayLogicException("The payment provider '$paymentProvider' is not available.");
         }
@@ -136,6 +157,6 @@ abstract class Core
      */
     public static function getStripePlatformByCountry(string $country) : string
     {
-        return static::$countries[$country]['payment_provider'];
+        return static::getCountries()[$country]['payment_provider'];
     }
 }

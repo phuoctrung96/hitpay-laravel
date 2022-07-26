@@ -6,6 +6,7 @@ use App\Actions\Business\Action;
 use App\Actions\Business\Settings\BankAccount\Store as BankAccountStore;
 use App\Business;
 use App\Business\PaymentProvider;
+use App\Enumerations\CountryCode;
 use App\Enumerations\PaymentProvider as PaymentProviderEnum;
 use App\Jobs\SetCustomPricingFromPartner;
 use App\Models\Business\BankAccount;
@@ -25,16 +26,44 @@ class Store extends Action
     {
         $banksData = $this->business->banksAvailable();
 
-        $data = Facades\Validator::validate($this->data, [
+        $shouldUseBanksList = in_array($this->business->country, [CountryCode::SINGAPORE, CountryCode::MALAYSIA]);
+
+        $rules = [
             'company_uen' => 'required|string',
             'company_name' => 'required|string',
-            'bank_account_name' => 'required|string',
-            'bank_id' => [ 'required', Rule::in($banksData->pluck('id')) ],
-            'bank_account_no' => 'required|digits_between:4,32',
-        ]);
+            'bank_account_name' => 'required|string|max:160',
+        ];
 
-        /** @var \HitPay\Data\Countries\Objects\Bank $bank */
-        $bank = $banksData->where('id', $data['bank_id'])->first();
+        if ($shouldUseBanksList) {
+            $rules['bank_id'] = [ 'required', Rule::in($banksData->pluck('id')) ];
+        } else {
+            /**
+             * Countries that use Routing Number
+             */
+            if (in_array($this->business->country, BankAccountStore::ROUTING_NUMBER_COUNTRIES)) {
+                $rules['bank_routing_number'] = 'required|string|max:15';
+            }
+
+            /**
+             * Countries that use SWIFT code
+             */
+            if (in_array($this->business->country, BankAccountStore::SWIFT_CODE_COUNTRIES)) {
+                $rules['bank_swift_code'] = 'required|string|min:8|max:11';
+            }
+        }
+
+        if (in_array($this->business->country, BankAccountStore::IBAN_COUNTRIES)) {
+            $rules['bank_account_no'] = 'required|regex:/(^[A-Z]{2}\w{4,32}$)/u';
+        } else {
+            $rules['bank_account_no'] = 'required|digits_between:4,32';
+        }
+
+        $data = Facades\Validator::validate($this->data, $rules);
+
+        if ($shouldUseBanksList) {
+            /** @var \HitPay\Data\Countries\Objects\Bank $bank */
+            $bank = $banksData->where('id', $data['bank_id'])->first();
+        }
 
         $paymentProviders = $this->business->paymentProvidersAvailable();
 
@@ -80,11 +109,13 @@ class Store extends Action
         }
 
         $data = [
-            'bank_id' => $bank->id,
+            'bank_id' => $bank->id ?? null,
             'branch_code' => $this->data['bank_branch_code'] ?? null,
             'currency' => $this->business->currency,
             'number' => $data['bank_account_no'],
             'number_confirmation' => $data['bank_account_no'],
+            'bank_routing_number' => $data['bank_routing_number'] ?? null,
+            'bank_swift_code' => $data['bank_swift_code'] ?? null,
             'holder_name' => $data['bank_account_name'] ?? null,
             'holder_type' => $this->business->getStripeAccountBusinessType(),
             'use_in_hitpay' => true,

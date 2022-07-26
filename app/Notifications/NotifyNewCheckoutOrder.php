@@ -47,19 +47,28 @@ class NotifyNewCheckoutOrder extends Notification implements ShouldQueue
             $orderedProducts[$key]['price'] = getFormattedAmount($this->order->currency, $value['price']);
         }
 
+        $shippingAmount = 0;
+
         if (!$this->order->customer_pickup) {
+            $shippingAmount = $this->order->shipping_amount;
+
             $shipping = [
                 'shipping' => [
                     'method' => $this->order->shipping_method,
-                    'amount' => getFormattedAmount($this->order->currency, $this->order->shipping_amount),
+                    'amount' => getFormattedAmount($this->order->currency, $shippingAmount),
                 ],
             ];
         }
 
         $tax_setting = TaxSetting::find($this->order->tax_setting_id);
-        $tax_amount = 0;
-        if($tax_setting)
-            $tax_amount = $this->order->amount * $tax_setting->rate / 100;
+        $tax_exception_amount = $this->order->automatic_discount_amount + $this->order->additional_discount_amount + $this->order->coupon_amount;
+        if($tax_setting) {
+            $tax_amount = ($this->order->line_item_price - $tax_exception_amount) * (float) $tax_setting->rate / 100;
+        } else {
+            $tax_amount = 0;
+        }
+
+        $sub_total = ($this->order->line_item_price + $shippingAmount) - $tax_exception_amount;
 
         return (new MailMessage)->view('hitpay-email.new-order', [
                 'title' => $title,
@@ -77,9 +86,9 @@ class NotifyNewCheckoutOrder extends Notification implements ShouldQueue
                     'amount' => getFormattedAmount($this->order->currency, $this->order->automatic_discount_amount + $this->order->additional_discount_amount),
                 ],
                 'coupon_amount' => getFormattedAmount($this->order->currency, $this->order->coupon_amount),
-                'sub_total_amount' => getFormattedAmount($this->order->currency, $this->order->amount),
+                'sub_total_amount' => getFormattedAmount($this->order->currency, $sub_total),
                 'tax_amount' => getFormattedAmount($this->order->currency, $tax_amount),
-                'order_amount' => getFormattedAmount($this->order->currency, $this->order->amount + $tax_amount),
+                'order_amount' => getFormattedAmount($this->order->currency, $sub_total + $tax_amount),
                 'order_date' => $this->order->created_at->toDateTimeString(),
                 'order_remark' => $this->order->remark,
                 'ordered_products' => $orderedProducts,

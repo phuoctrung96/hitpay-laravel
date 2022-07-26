@@ -36,6 +36,11 @@ class PaymentRequestAuthentication
                 App::abort(404, 'Invalid business api key.');
             }
 
+            // TODO - Keep In View
+            //  ------------------
+            //  This may be a security risk, we just called the first business for this owner in the payment request
+            //  controller, so if the user has multiple businesses, the second business onward will not hit.
+            //
             Auth::onceUsingId($apiKey->business->owner->id);
 
             return $next($request);

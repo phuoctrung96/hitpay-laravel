@@ -43,10 +43,10 @@ class HotglueController extends Controller
         $logEcommerceTemplate = $this->generateLogTemplate(HotglueJob::ECOMMERCE, $data['source']);
         Log::info($logEcommerceTemplate . ' successfully connected. Start Hitpay process for business_id: ' . $business->id);
 
-        $ecommerceFlow = HotglueIntegration::whereBusinessId($business->id)
-            ->whereSource($data['source'])
-            ->whereFlow($data['flow'])
-            ->whereType(HotglueJob::ECOMMERCE)
+        $ecommerceFlow = HotglueIntegration::where('business_id', $business->id)
+            ->where('source', $data['source'])
+            ->where('flow', $data['flow'])
+            ->where('type', HotglueJob::ECOMMERCE)
             ->where('connected', false)
             ->first();
 
@@ -59,7 +59,8 @@ class HotglueController extends Controller
                 'business_id' => $business->id,
                 'source' => $data['source'],
                 'flow' => $data['flow'], 
-                'type' => HotglueJob::ECOMMERCE
+                'type' => HotglueJob::ECOMMERCE,
+                'sync_all_hitpay_orders' => true
             ]);
             Log::info($logEcommerceTemplate . ' successfully added');
         }
@@ -110,10 +111,10 @@ class HotglueController extends Controller
             Log::critical($logProductTemplate . ' failed to connect with error code: ' . $e->getCode() . ' for business_id: ' . $business->id);
         }
 
-        $productFlow = HotglueIntegration::whereBusinessId($business->id)
-            ->whereSource($data['source'])
-            ->whereFlow(config('services.hotglue.product_flow_id'))
-            ->whereType(HotglueJob::PRODUCTS)
+        $productFlow = HotglueIntegration::where('business_id', $business->id)
+            ->where('source', $data['source'])
+            ->where('flow', config('services.hotglue.product_flow_id'))
+            ->where('type', HotglueJob::PRODUCTS)
             ->where('connected', true)
             ->first();
 
@@ -133,7 +134,7 @@ class HotglueController extends Controller
         }
         Log::info($logProductTemplate . '. End Hitpay process for business_id: ' . $business->id);
 
-        return $business->hotglueIntegration()->with('jobInProgress')->get();
+        return $business->hotglueIntegration()->with('jobInProgressJobCreated', 'jobInProgressJobQueued', 'jobDone', 'hotglueLocation')->where('type', HotglueJob::ECOMMERCE)->get();
     }
 
     public function sourceDisconnected(Business $business, Request $request)
@@ -153,6 +154,11 @@ class HotglueController extends Controller
                         ],
                     ]);
                     Log::info($logTemplate . ' successfully disconnected');
+
+                    HotglueJob::where('hotglue_integration_id', $hotglueIntegration->id)
+                        ->whereIn('status', [HotglueJob::CREATED, HotglueJob::QUEUED])
+                        ->update(['status' => HotglueJob::CANCELLED]);
+                    Log::info($logTemplate . ' successfully cancelled pending jobs');
                 } catch (\Exception $e) {
                     Log::critical($logTemplate . ' failed to disconnect with error code: ' . $e->getCode() . ' for business_id: ' . $business->id);
                 }
@@ -166,8 +172,8 @@ class HotglueController extends Controller
         }
 
         Log::info($logTemplate . ' end disconnection for business_id: ' . $business->id);
-        if ($business->hotglueIntegration()->whereType(HotglueJob::ECOMMERCE)->whereConnected(true)->first()) {
-            return $business->hotglueIntegration()->with('jobInProgress')->get();
+        if ($business->hotglueIntegration()->where('type', HotglueJob::ECOMMERCE)->where('connected', true)->first()) {
+            return $business->hotglueIntegration()->with('jobInProgressJobCreated', 'jobInProgressJobQueued', 'jobDone', 'hotglueLocation')->whereType('type', HotglueJob::ECOMMERCE)->get();
         }
 
         return [];
@@ -183,9 +189,9 @@ class HotglueController extends Controller
         $logProductTemplate = $this->generateLogTemplate(HotglueJob::PRODUCTS, $data['target']);
         Log::info($logProductTemplate . ' successfully connected. Start Hitpay process for business_id: ' . $business->id);
 
-        $hotglue = HotglueIntegration::whereBusinessId($business->id)
-            ->whereSource($data['target'])
-            ->whereType(HotglueJob::PRODUCTS)
+        $hotglue = HotglueIntegration::where('business_id', $business->id)
+            ->where('source', $data['target'])
+            ->where('type', HotglueJob::PRODUCTS)
             ->where('connected', false)
             ->first();
 
@@ -198,7 +204,7 @@ class HotglueController extends Controller
         $this->apiRequestProduct($products, $business->id, $hotglue->id, $data['target'], $data['flow'], 'initial');
 
         Log::info($logProductTemplate . '. End Hitpay process for business_id: ' . $business->id);
-        return $business->hotglueIntegration()->with('jobInProgress')->get();
+        return $business->hotglueIntegration()->with('jobInProgressJobCreated', 'jobInProgressJobQueued', 'jobDone', 'hotglueLocation')->where('type', HotglueJob::ECOMMERCE)->get();
     }
 
     public function productPeriodicSync(Business $business, Request $request)
@@ -264,13 +270,34 @@ class HotglueController extends Controller
 
         Log::info($logTemplate . ' sync now end process for business_id: ' . $business->id);
 
-        return $business->hotglueIntegration()->with('jobInProgress')->get();
+        return $business->hotglueIntegration()->with('jobInProgressJobCreated', 'jobInProgressJobQueued', 'jobDone', 'hotglueLocation')->where('type', HotglueJob::ECOMMERCE)->get();
+    }
+
+    public function inventoryLocation(Business $business, Request $request)
+    {
+        Gate::inspect('manage', $business)->authorize();
+
+        Log::info('Hotglue integration inventory location start process for business_id: ' . $business->id);
+        if ($hotglueIntegration = HotglueIntegration::find($request->id)) {
+            $hotglueIntegration->selected_location_id = $request->location_id;
+            $hotglueIntegration->update();
+            Log::info('Hotglue integration inventory location set location id ' . $request->location_id . ' as default for business_id: ' . $business->id);
+        }
+        Log::info('Hotglue integration inventory location end process for business_id: ' . $business->id);
+
+        return $business->hotglueIntegration()->with('jobInProgressJobCreated', 'jobInProgressJobQueued', 'jobDone', 'hotglueLocation')->where('type', HotglueJob::ECOMMERCE)->get();
     }
 
     private function apiRequestEcommerce($business_id, $integration_id, $source, $flow, $prefix = null)
     {
+        if ($prefix === 'initial') {
+            $jobType = HotglueJob::INITIAL_SYNC;
+        } elseif ($prefix === 'sync-now') {
+            $jobType = HotglueJob::NOW_SYNC;
+        }
+
         $prefix = $prefix ? $prefix . '-' : null;
-        $jobName = $prefix . $source . '-' . $flow; 
+        $jobName = $prefix . $source . '-' . $flow;
 
         $url = config('services.hotglue.api_host') . '/' . config('services.hotglue.env_id') . '/' . $flow . '/' . $business_id . '/jobs';
         $response = $this->client->post($url, [
@@ -292,7 +319,8 @@ class HotglueController extends Controller
                 'job_id' => $response['job_id'],
                 'job_name' => $response['job_name'],
                 'status' => $response['status'],
-                'aws_path' => $response['s3_root']
+                'aws_path' => $response['s3_root'],
+                'job_type' => $jobType
             ]);
         }
 
@@ -306,7 +334,7 @@ class HotglueController extends Controller
 
         $prepareProducts = [];
         foreach($products as $product) {
-            $hotglueProducts = HotglueProductTracker::whereStockKeepingUnit($product->stock_keeping_unit)
+            $hotglueProducts = HotglueProductTracker::where('stock_keeping_unit', $product->stock_keeping_unit)
                 ->whereNotNull('stock_keeping_unit')
                 ->get();
 
@@ -401,7 +429,7 @@ class HotglueController extends Controller
                     'aws_path' => $response['s3_root']
                 ]);
                 foreach($products as $product) {
-                    $hotglueProducts = HotglueProductTracker::whereStockKeepingUnit($product->stock_keeping_unit)
+                    $hotglueProducts = HotglueProductTracker::where('stock_keeping_unit', $product->stock_keeping_unit)
                         ->whereNotNull('stock_keeping_unit')
                         ->get();
 

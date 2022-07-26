@@ -36,6 +36,14 @@ class RegisterPartnerController extends Controller
      */
     public function register(RegisterPartnerRequest $request)
     {
+        // prevent bots
+        $this->validate($request, [
+            'recaptcha_token' => [
+                'required',
+                'captcha'
+            ],
+        ]);
+
         try {
             DB::beginTransaction();
             /** @var User $user */

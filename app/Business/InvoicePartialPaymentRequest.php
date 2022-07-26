@@ -32,8 +32,11 @@ class InvoicePartialPaymentRequest extends Model
         'due_date' => 'datetime',
     ];
 
-    public function getDueDateAttribute($value) {
-        return \Carbon\Carbon::parse($value)->format('Y-m-d');
+    public function getDueDateAttribute($value)
+    {
+        if ($value) {
+            return \Carbon\Carbon::parse($value)->format('Y-m-d');
+        }
     }
 
     /**

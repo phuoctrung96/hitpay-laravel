@@ -82,7 +82,7 @@ class ChargeManager extends AbstractManager implements ManagerInterface, ChargeM
         }
 
         if (isset($data['customer_phone']) && !isset($charge->customer_phone)) {
-            $charge->customer_phone_number   = $data['customer_phone'];
+            $charge->customer_phone_number   = substr($data['customer_phone'], 0, 32);
         }
 
         if (isset($data['customer_name']) && !isset($charge->customer_name)) {
@@ -171,15 +171,9 @@ class ChargeManager extends AbstractManager implements ManagerInterface, ChargeM
 
     public function updateAmount(Charge $charge, $amount) : void
     {
-        $paymentRequest = PaymentRequest::find($charge->plugin_provider_reference);
-
-        // This method is only called from ChargeController->createPaymentIntent()
-        // Allow amount updates only default requests
-        if ($paymentRequest && $paymentRequest->is_default === 1) {
-          $charge->update([
-            'amount' => getRealAmountForCurrency($charge->currency, $amount)
-          ]);
-        }
+        $charge->update([
+          'amount' => getRealAmountForCurrency($charge->currency, $amount)
+        ]);
     }
 
     public function updateRemark(Charge $charge, $remark) : void

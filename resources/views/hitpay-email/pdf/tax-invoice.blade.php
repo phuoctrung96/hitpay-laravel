@@ -59,7 +59,6 @@
         }
 
         .invoice-box table tr.total td:nth-child(2) {
-            border-top: 2px solid #eee;
             font-weight: bold;
         }
 
@@ -101,7 +100,7 @@
                 <table>
                     <tr>
                         <td class="title">
-                            <img src="{{asset('images/pdf-logo-sm.png')}}" style="width: 100%; max-width: 300px" />
+                            <img src="{{ asset('images/pdf-logo-sm.png') }}" style="width: 100%; max-width: 300px" />
                         </td>
 
                         <td>
@@ -125,11 +124,11 @@
                         </td>
 
                         <td>
-                            Invoice Number: INV-{{$monthDate->format('Ym')}}-{{substr($business->getKey(), -7)}}<br />
-                            Invoice Date: {{$monthDate->format('M d, Y')}}<br />
-                            Service Month: {{$monthDate->format('M Y')}}<br />
+                            Invoice Number: INV-{{ $date->format('Ym') }}-{{ substr($business->getKey(), -7) }}<br />
+                            Invoice Date: {{ $date->format('M d, Y') }}<br />
+                            Service Month: {{ $date->format('M Y') }}<br />
                             HitPay Tax Number: 201605883W<br />
-                            @if($business->tax_registration_number)Customer Tax Number {{$business->tax_registration_number}}<br />@endif
+                            @if($business->tax_registration_number)Customer Tax Number {{ $business->tax_registration_number }}<br />@endif
                         </td>
                     </tr>
                 </table>
@@ -161,20 +160,37 @@
         </tr>
 
         <tr class="details">
-            <td>Transaction Volume</td>
+            <td>Total Sales</td>
 
-            <td>${{number_format($total_volume,2)}}</td>
+            <td>{{ $total_sales }}</td>
         </tr>
-        <tr class="details">
-            <td>HitPay Fees</td>
 
-            <td>${{number_format($fee,2)}}</td>
+        <tr class="details">
+            <td>
+                Less Total Refunds
+                @foreach ($refunds_breakdown as $breakdown)
+                    <br><small style="color: #999">- {{ $breakdown }}</small>
+                @endforeach
+            </td>
+
+            <td>
+                @if ($is_approximately) <small style="font-style: italic">Approximately</small> @endif
+                {{ $total_refunds }}
+            </td>
+        </tr>
+
+        <tr class="details">
+            <td>Net Sales</td>
+
+            <td>
+                @if ($is_approximately) <small style="font-style: italic">Approximately</small> @endif
+                {{ $net_sales }}
+            </td>
         </tr>
 
         <tr class="total">
-            <td></td>
-
-            <td>Total Fees: ${{number_format(($fee), 2)}}</td>
+            <td>Total Fees</td>
+            <td>{{ $total_fees }}</td>
         </tr>
     </table>
 </div>

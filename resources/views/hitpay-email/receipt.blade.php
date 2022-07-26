@@ -191,7 +191,13 @@
         <td style="{{ $style['outer_td'] }}" valign="top">&nbsp;</td>
         <td class="container" style="{{ $style['outer_td'] }} {{ $style['outer_td_ext'] }}" width="580" valign="top">
             <div class="content" style="{{ $style['content'] }}">
-                <span class="preheader" style="{{ $style['preheader'] }}">Receipt from {{ $business_name }}.</span>
+                <span class="preheader" style="{{ $style['preheader'] }}">
+                    @if($isHaveTemplateEmail && $title)
+                        {{ $title }}
+                    @else
+                        Receipt from {{ $business_name }}.
+                    @endif
+                </span>
                 <div class="header" style="{{ $style['header'] }}">
                     <table border="0" cellpadding="0" cellspacing="0" style="{{ $style['inner_table'] }}" width="100%">
                         <tr>
@@ -200,7 +206,13 @@
                                 @if (isset($business_logo))
                                     <img src="{{ $business_logo }}" height="48" alt="Logo" align="center" style="{{ $style['img'] }}">
                                 @endif
-                                <h1>{{ $business_name }}</h1>
+                                <h1>
+                                    @if($isHaveTemplateEmail && $title)
+                                        {{ $title }}
+                                    @else
+                                        {{ $business_name }}
+                                    @endif
+                                </h1>
                             </td>
                         </tr>
                     </table>
@@ -211,7 +223,13 @@
                             <table border="0" cellpadding="0" cellspacing="0" style="{{ $style['special_1'] }}" width="100%">
                                 <tr>
                                     <td style="{{ $style['outer_td'] }}" valign="top">
-                                        <h1 style="color: #222222; font-family: sans-serif; font-weight: 300; line-height: 1.4; margin: 0; Margin-bottom: 30px; font-size: 25px; text-transform: capitalize; text-align: center">View transaction details below</h1>
+                                        <h1 style="color: #222222; font-family: sans-serif; font-weight: 300; line-height: 1.4; margin: 0; Margin-bottom: 30px; font-size: 25px; text-transform: capitalize; text-align: center">
+                                            @if($isHaveTemplateEmail && $subtitle)
+                                                {{ $subtitle }}
+                                            @else
+                                                View transaction details below
+                                            @endif
+                                        </h1>
                                         <table border="0" cellpadding="0" cellspacing="0" style="{{ $style['special_1'] }}"
                                                width="100%">
                                             <tr>
@@ -261,11 +279,17 @@
                                                             </tr>
                                                         @endif
                                                     </table>
-                                                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Notice something wrong?
-                                                        <a href="mailto:{{ $business_email }}" target="_blank" style="color: #3498db; text-decoration: underline;">Contact our support team</a>
-                                                        and we'll be happy to help.
-                                                    </p>
-                                                    <p style="{{ $style['help'] }}">ID: {{ $charge_id }}</p>
+                                                    @if($isHaveTemplateEmail && $footer)
+                                                        {!! $footer !!}
+                                                    @else
+                                                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">
+                                                            Notice something wrong?
+                                                            <a href="mailto:{{ $business_email }}" target="_blank" style="color: #3498db; text-decoration: underline;">Contact our support team</a>
+                                                            and we'll be happy to help.
+                                                        </p>
+                                                        <p style="{{ $style['help'] }}">ID: {{ $charge_id }}</p>
+                                                    @endif
+
                                                     @isset($application)
                                                         <p style="{{ $style['help'] }}">Application Name: {{ $application['name'] }} AID: {{ $application['identifier'] }}</p>
                                                     @endisset

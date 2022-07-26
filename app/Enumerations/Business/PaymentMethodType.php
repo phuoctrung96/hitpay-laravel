@@ -35,9 +35,13 @@ class PaymentMethodType
             self::CARD_PRESENT,
             self::PAYNOW,
             self::GRABPAY,
+            self::GRABPAY_DIRECT,
+            self::GRABPAY_PAYLATER,
             self::SHOPEE,
             self::HOOLAH,
-            self::ZIP
+            self::ZIP,
+            self::GIRO,
+            self::FPX
         ];
     }
 

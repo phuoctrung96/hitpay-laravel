@@ -39,11 +39,11 @@ class SendInvoiceRemind extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         if(Cache::has(md5($this->signature))) {
             // Skipped task as it's already running
-            return;
+            return 0;
         }
 
         Cache::put(md5($this->signature), true, 120);
@@ -63,8 +63,21 @@ class SendInvoiceRemind extends Command
 
                 if ($products) {
                     foreach ($products as $product) {
+                        $business = $invoice->business;
+
+                        if (!$business) {
+                            continue;
+                        }
+
                         $product_variation = $invoice->business->productVariations()->with('product')->find($product->variation_id);
-                        array_push($added_products, ['product' => new ProductResource($product_variation->product), 'variation' => $product_variation->toArray(), 'quantity' => $product->quantity]);
+
+                        if ($product_variation) {
+                            array_push($added_products, [
+                                'product' => new ProductResource($product_variation->product),
+                                'variation' => $product_variation->toArray(),
+                                'quantity' => $product->quantity
+                            ]);
+                        }
                     }
                 }
 
@@ -75,5 +88,7 @@ class SendInvoiceRemind extends Command
                 $invoice->notify(new SendInvoiceLink('invoice-'.$this->invoice->reference, $pdf->output(), 'pdf'));
             }
         }
+
+        return 0;
     }
 }

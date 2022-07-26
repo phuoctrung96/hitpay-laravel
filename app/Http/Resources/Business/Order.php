@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Business;
 
+use App\Business\OrderedProduct;
 use App\Enumerations\Business\Channel;
 use App\Enumerations\Business\OrderStatus;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\URL;
 
 /**
  * @mixin \App\Business\Order
+ * @property OrderedProduct[] products
  */
 class Order extends JsonResource
 {
@@ -42,6 +44,7 @@ class Order extends JsonResource
                 'country' => $this->customer_country,
             ],
         ];
+        $data['customer_pickup'] = (bool)$this->customer_pickup;
 
         $currency = $this->currency;
 

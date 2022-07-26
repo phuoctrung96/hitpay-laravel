@@ -279,7 +279,7 @@ class LoginController extends Controller
     /**
      * Redirect the user to the GitHub authentication page.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|HttpResponse|\Illuminate\Routing\Redirector
      */
     public function redirectToProvider($provider)
     {
@@ -289,7 +289,9 @@ class LoginController extends Controller
 
             return redirect($authorizeURL);
         } else {
-            return Socialite::driver($provider)->redirect();
+            Log::critical("There is unregistered provider {$provider} access this route.");
+
+            abort(404);
         }
     }
 

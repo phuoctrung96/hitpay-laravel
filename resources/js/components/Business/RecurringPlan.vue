@@ -3,7 +3,7 @@
         <div class="card-body bg-light border-top p-4">
             <div v-if="!recurring_plan.customer_id" class="form-group">
                 <label for="search_customer" class="small text-muted text-uppercase">Search Customer</label>
-                <input id="search_customer" class="form-control" title="" v-model="search_customer" :class="{
+                <input id="search_customer" class="form-control" title="" v-model="search_customer" :disabled="is_processing" :class="{
                     'is-invalid' : errors.customer_id
                 }" placeholder="Enter customer email to search" @keyup="searchCustomer">
                 <span class="invalid-feedback" role="alert">{{ errors.customer_id }}</span>
@@ -68,7 +68,7 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text" id="basic-addon3">{{ display_currency }}</span>
                     </div>
-                    <input v-model="recurring_plan.price" :class="{ 'is-invalid' : errors.price }" class="form-control" placeholder="10.00" step="0.01" title="Selling Price">
+                    <input v-model="recurring_plan.price" :class="{ 'is-invalid' : errors.price }" class="form-control" :disabled="is_processing" placeholder="10.00" step="0.01" title="Selling Price">
                 </div>
                 <span v-if="errors.price" class="d-block small text-danger w-100 mt-1" role="alert">
                     {{ errors.price }}
@@ -76,7 +76,7 @@
             </div>
             <div class="form-group">
                 <label for="starts_at" class="small text-muted text-uppercase">Select Start Date</label>
-                <datepicker id="starts_at" v-model="recurring_plan.starts_at_picker" :bootstrap-styling="true" placeholder="Click here to select date" :format="'yyyy-MM-dd'" :class="{
+                <datepicker id="starts_at" v-model="recurring_plan.starts_at_picker" :bootstrap-styling="true" :disabled-dates="disableDates" placeholder="Click here to select date" :format="'yyyy-MM-dd'" :class="{
                     'border border-danger rounded' : errors.starts_at
                 }"></datepicker>
                 <span v-if="errors.starts_at" class="text-danger small" role="alert">{{ errors.starts_at }}</span>
@@ -84,7 +84,7 @@
             <div class="form-group">
                 <label class="small text-muted text-uppercase">Times To Be Charged (Optional)</label>
                 <div class="input-group">
-                    <input v-model="recurring_plan.times_to_be_charged" :class="{ 'is-invalid' : errors.times_to_be_charged }" class="form-control" title="Selling Price">
+                    <input v-model="recurring_plan.times_to_be_charged" :class="{ 'is-invalid' : errors.times_to_be_charged }" :disabled="is_processing" class="form-control" title="Selling Price">
                 </div>
                 <span v-if="errors.times_to_be_charged" class="d-block small text-danger w-100 mt-1" role="alert">
                     {{ errors.times_to_be_charged }}
@@ -92,8 +92,7 @@
             </div>
             <div class="form-group">
                 <label for="send_email" class="text-muted">Send Email</label>
-                <input type="checkbox" id="send_email" title="" v-model="recurring_plan.send_email"
-                       :disabled="is_processing">
+                <input type="checkbox" id="send_email" title="" v-model="recurring_plan.send_email" :disabled="is_processing">
             </div>
             <button class="btn btn-primary" @click.prevent="saveMethod" :disabled="is_processing">
                 <i class="fas fa-plus mr-3"></i> Save Recurring Plan
@@ -257,5 +256,14 @@ export default {
             this.recurring_plan.customer_id = null;
         },
     },
+    computed:{
+        disableDates() {
+            var date = new Date();
+            date.setDate(date.getDate() - 1);
+            return {
+                to: date
+            }
+        },
+    }
 }
 </script>

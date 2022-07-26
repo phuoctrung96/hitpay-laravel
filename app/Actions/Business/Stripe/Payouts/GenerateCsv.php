@@ -130,7 +130,7 @@ class GenerateCsv extends BaseAction
             $csv->insertOne([
                 '#' => $counter++,
                 'Datetime' => Facades\Date::createFromTimestamp($item->created)->toDateTimeString(),
-                'Description' => $description,
+                'Description' => $description ?? null,
                 'Charge ID' => $chargeId ?? null,
                 'Payout ID' => $payoutId ?? null,
                 'Debit' => $item->amount < 0 ? $item->amount : '-',

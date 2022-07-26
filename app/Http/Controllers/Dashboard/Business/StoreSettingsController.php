@@ -74,10 +74,6 @@ class StoreSettingsController extends Controller
         $business = BusinessRepository::update($request, $business);
 
         $shopSettingsData = $this->validate($request, [
-            'can_pick_up' => [
-                'required',
-                'bool',
-            ],
             'slots' => [
                 'nullable',
             ],
@@ -93,7 +89,6 @@ class StoreSettingsController extends Controller
                 'string',
                 'max:1000',
             ],
-            'enabled_shipping' => 'required|boolean',
             'is_redirect_order_completion'=> 'required|boolean',
             'url_redirect_order_completion' => [
                 'nullable',
@@ -130,12 +125,10 @@ class StoreSettingsController extends Controller
         DB::transaction(function () use ($business, $shopSettingsData) {
             if ($business->shopSettings) {
                 $business->shopSettings->shop_state = $shopSettingsData['shop_state'];
-                $business->shopSettings->can_pick_up = $shopSettingsData['can_pick_up'];
                 $business->shopSettings->slots = $shopSettingsData['slots'];
                 $business->shopSettings->seller_notes = $shopSettingsData['seller_notes'];
                 $business->shopSettings->enable_datetime = $shopSettingsData['enable_datetime'];
                 $business->shopSettings->thank_message = $shopSettingsData['thank_message'];
-                $business->shopSettings->enabled_shipping = $shopSettingsData['enabled_shipping'];
                 $business->shopSettings->is_redirect_order_completion = $shopSettingsData['is_redirect_order_completion'];
                 $business->shopSettings->url_redirect_order_completion = $shopSettingsData['url_redirect_order_completion'];
                 $business->shopSettings->url_facebook = $shopSettingsData['url_facebook'];

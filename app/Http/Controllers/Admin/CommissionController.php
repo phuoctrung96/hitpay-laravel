@@ -104,7 +104,7 @@ class CommissionController extends Controller
             $commission->payment_provider_account_id = $data['bank_swift_code'].'@'.$data['bank_account_no'];
             $commission->save();
 
-            ProcessOutgoingFast::dispatch($commission);
+            ProcessOutgoingFast::dispatch($commission)->onQueue('main-server');
 
             Session::flash('success_message', 'The transfer of commission is updated and being processed now.');
         }
@@ -119,7 +119,7 @@ class CommissionController extends Controller
      */
     public function trigger(Commission $commission)
     {
-        ProcessOutgoingFast::dispatch($commission);
+        ProcessOutgoingFast::dispatch($commission)->onQueue('main-server');
 
         Session::flash('success_message', 'The transfer of commission is being processed now.');
 

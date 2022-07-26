@@ -29,6 +29,9 @@ class RecurringBilling extends JsonResource
      * @OA\Property(property="updated_at"                           , type="string", format="date-time")
      * @OA\Property(property="created_at"                           , type="string", format="date-time")
      * @OA\Property(property="expires_at"                           , type="string", format="date-time")
+     * @OA\Property(property="webhook"                              , type="string", nullable="true")
+     * @OA\Property(property="save_card"                            , type="boolean", nullable="true")
+     * @OA\Property(property="reference"                            , type="string", nullable="true")
      *
      * @return array
      */
@@ -41,6 +44,7 @@ class RecurringBilling extends JsonResource
             "customer_email" => $this->customer_email,
             "name" => $this->name,
             "description" => $this->description,
+            "reference" => $this->reference,
             "cycle" => $this->cycle,
             "currency" => $this->currency,
             "price" => getReadableAmountByCurrency($this->currency, $this->price),
@@ -48,6 +52,7 @@ class RecurringBilling extends JsonResource
             "times_charged" => $this->times_charged,
             "status" => $this->status,
             "send_email" => $this->send_email,
+            "save_card" => $this->save_card,
             "redirect_url" => $this->redirect_url,
             "payment_methods" => $this->payment_methods,
             "created_at" => (string) Carbon::parse($this->created_at)->format("Y-m-d\TH:i:s"),
@@ -56,8 +61,14 @@ class RecurringBilling extends JsonResource
             "url" => route('recurring-plan.show', [
                 'business_id' => $this->business_id,
                 'recurring_plan_id' => $this->id,
-            ])
+            ]),
+            'webhook' => $this->webhook,
         ];
+
+        if ($this->payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE && $this->save_card && $this->data){
+            $data['payment_method']['card']['brand'] = $this->data['stripe']['payment_method']['card']['brand'];
+            $data['payment_method']['card']['last4'] =$this->data['stripe']['payment_method']['card']['last4'];
+        }
 
         return $data;
     }

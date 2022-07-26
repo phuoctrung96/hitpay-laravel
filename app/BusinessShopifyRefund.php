@@ -11,7 +11,7 @@ class BusinessShopifyRefund extends Model
 {
     use SoftDeletes, UsesUuid, Ownable;
 
-    protected $fillable = ['business_id', 'id', 'gid', 'payment_id', 'request_data', 'response_data'];
+    protected $fillable = ['business_id', 'id', 'gid', 'payment_id', 'request_data', 'response_data', 'refund_id'];
 
     protected $casts = [
         'request_data' => 'array',

@@ -16,6 +16,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades;
 use Illuminate\Support\Str;
 use Stripe;
+use Session;
 
 abstract class CustomAccount extends Core
 {
@@ -205,7 +206,7 @@ abstract class CustomAccount extends Core
      *
      * @return array
      */
-    protected function generateDesiredCapabilities() : array
+    protected function generateDesiredCapabilities(bool $payoutOnly = false) : array
     {
         if ($this->business->country == CountryCode::SINGAPORE) {
             $capabilities = [
@@ -229,6 +230,17 @@ abstract class CustomAccount extends Core
 
             if ($this->business->business_type === 'company') {
                 $capabilities[] = 'fpx_payments';
+            }
+        } else {
+            if ($payoutOnly) {
+                $capabilities = [
+                    'transfers'
+                ];
+            } else {
+                $capabilities = [
+                    'card_payments',
+                    'transfers'
+                ];
             }
         }
 
@@ -364,7 +376,7 @@ abstract class CustomAccount extends Core
 
         $state = Str::random();
 
-        Facades\Cache::set($this->generateSyncStateCacheKey($state), true, Facades\Date::now()->addMinutes(30));
+        Session::put($this->generateSyncStateKey($state), true);
 
         $returnUrl = Facades\URL::route(
             'dashboard.business.settings.payment-providers.platform.custom-account.callback',
@@ -394,7 +406,7 @@ abstract class CustomAccount extends Core
      *
      * @return string
      */
-    protected function generateSyncStateCacheKey(string $state) : string
+    protected function generateSyncStateKey(string $state) : string
     {
         return "business_{$this->businessId}:custom_account_sync_{$state}";
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Dashboard\Business;
 
+use App\Actions\Business\Settings\UserManagement\Settings\Retrieve;
 use App\Actions\Business\Stripe\Charge\PaymentIntent\AttachPaymentMethod;
 use App\Actions\Business\Stripe\Charge\PaymentIntent\Capture;
 use App\Actions\Business\Stripe\Charge\PaymentIntent\Confirm;
@@ -14,6 +15,7 @@ use App\Business\Customer;
 use App\Business\Order;
 use App\Business\OrderedProduct;
 use App\Business\Product;
+use App\Enumerations\Business\BusinessSettings;
 use App\Enumerations\Business\Channel;
 use App\Enumerations\Business\ChargeStatus;
 use App\Enumerations\Business\OrderStatus;
@@ -34,22 +36,26 @@ use Exception;
 use HitPay\PayNow\Generator;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Stripe\Exception\CardException;
+use HitPay\Business\PaymentProviderUtil;
 
 class PointOfSaleController extends Controller
 {
+    use PaymentProviderUtil;
+
     /**
      * PointOfSaleController constructor.
      */
@@ -75,6 +81,8 @@ class PointOfSaleController extends Controller
 
         $provider = $business->paymentProviders()->where('payment_provider', $business->payment_provider)->first();
 
+        // TODO by Bankorh : I don't think we need this in this page.
+        //
         $business->load('stripeTerminalLocations');
 
         $tax_settings = $business->tax_settings->toArray();
@@ -118,36 +126,18 @@ class PointOfSaleController extends Controller
     }
 
     /**
-     * @param Business $business
+     * Generate connection token for Stripe terminal.
+     *
+     * @param  \App\Business  $business
+     * @param  \App\Manager\BusinessManagerInterface  $businessManager
      *
      * @return \Illuminate\Http\JsonResponse
-     * @throws \App\Exceptions\HitPayLogicException
-     * @throws \Stripe\Exception\ApiErrorException
      */
-    public function getConnectionToken(Business $business)
+    public function getConnectionToken(Business $business, BusinessManagerInterface $businessManager) : JsonResponse
     {
-        $provider = $business->paymentProviders()->where('payment_provider', $business->payment_provider)->first();
+        $secret = $businessManager->createStripeConnectionToken($business);
 
-        if (!$provider) {
-            // should fail la.
-        }
-
-        $locations = $business->stripeTerminalLocations;
-
-        $location = $locations->first();
-        // Set your secret key. Remember to switch to your live secret key in production!
-        // See your keys here: https://dashboard.stripe.com/account/apikeys
-        \Stripe\Stripe::setApiKey(Config::get('services.stripe.sg.secret'));
-
-        // In a new endpoint on your server, create a ConnectionToken and return the
-        // `secret` to your app. The SDK needs the `secret` to connect to a reader.
-        $token = \Stripe\Terminal\ConnectionToken::create([
-            'location' => $location->stripe_terminal_location_id,
-        ]);
-
-        return Response::json([
-            'secret' => $token->secret,
-        ]);
+        return Response::json(compact('secret'));
     }
 
     /**
@@ -170,6 +160,16 @@ class PointOfSaleController extends Controller
             $business->currency,
         ];
 
+        $businessSettings = Retrieve::withBusiness($business)->process();
+
+        $isPointOfSalesRemarkMandatory = false;
+
+        foreach ($businessSettings as $businessSetting) {
+            if ($businessSetting['key'] === BusinessSettings::POINT_OF_SALES_REMARK) {
+                $isPointOfSalesRemarkMandatory = $businessSetting['value'];
+            }
+        }
+
         $data = $this->validate($request, [
             'customer_id' => [
                 'nullable',
@@ -186,7 +186,7 @@ class PointOfSaleController extends Controller
                 'between:0.01,' . PointOfSale::MAX_AMOUNT
             ],
             'remark' => [
-                'nullable',
+                $isPointOfSalesRemarkMandatory ? 'required' : 'nullable',
                 'string',
                 'max:255',
             ],
@@ -302,10 +302,28 @@ class PointOfSaleController extends Controller
             ],
         ]);
 
-        $providers = $business->paymentProviders()->whereNotNull('payment_provider_account_id')->get();
-        $provider = $providers->where('payment_provider', $business->payment_provider)->first();
+        /* @var \App\Business\PaymentProvider $provider */
+        $provider = self::getProviderForMethod($business, $data['method']);
 
-        // TODO - Throw minimum amount error based on the selected currency and payment provider
+        // minimum amount handling
+        $allowedCurrencies = $provider->getPaymentMethodCurrencies($data['method']);
+        $usedCurrencyRules = $allowedCurrencies[$charge->currency] ?? null;
+
+        if ($usedCurrencyRules) {
+            // Throw minimum amount error based on the selected currency and payment provider
+            if ($charge->amount < $usedCurrencyRules['minimum_amount']) {
+                return Response::json([
+                    'error_message' => 'Transaction Failed. Minimum amount allowed to be charged is ' . getFormattedAmount($charge->currency, $usedCurrencyRules['minimum_amount']),
+                ], 400);
+            }
+        } else {
+            // Currency not allowed for this payment provider
+            Facades\Log::critical("The business (ID : {$business->getKey()}) is trying to create a charge with unsupported currency ({$charge->currency}) using {$provider->payment_provider}. Please check.");
+
+            return Response::json([
+                'error_message' => 'Business is not configured properly, our support team has been notified.',
+            ], 400);
+        }
 
         switch ($data['method']) {
             case 'card':
@@ -319,7 +337,7 @@ class PointOfSaleController extends Controller
                     ], 400);
                 }
 
-                return new PaymentIntentResource($paymentIntent);
+                break;
 
             case 'alipay':
             case 'wechat':
@@ -327,7 +345,7 @@ class PointOfSaleController extends Controller
                     'method' => $data['method'],
                 ])->process();
 
-                return new PaymentIntentResource($paymentIntent);
+                break;
 
             case 'paynow_online':
                 if ($charge->currency !== CurrencyCode::SGD) {
@@ -357,10 +375,33 @@ class PointOfSaleController extends Controller
                     ]);
                 });
 
-                return new PaymentIntentResource($paymentIntent);
+                break;
+
+            default:
+              throw new Exception('Invalid payment method requested.');
         }
 
-        throw new Exception('Invalid payment method requested.');
+        $chargeUpdateData = [
+          'payment_provider_charge_method' => $data['method']
+        ];
+
+        [ $fixed, $percent ] = $provider->getRateFor(
+          $charge->currency,
+          Channel::POINT_OF_SALE,
+          $data['method'],
+          null,
+          null,
+          $charge->amount
+        );
+
+        $chargeUpdateData['admin_fee'] = false;
+        $chargeUpdateData['fixed_fee'] = $fixed;
+        $chargeUpdateData['discount_fee_rate'] = $percent;
+        $chargeUpdateData['discount_fee'] = round($charge->amount * $percent);
+
+        $charge->update($chargeUpdateData);
+
+        return new PaymentIntentResource($paymentIntent);
     }
 
     /**
@@ -583,6 +624,7 @@ class PointOfSaleController extends Controller
         $data['products'] = [];
 
         foreach ($order->products->sortBy('created_at') as $product) {
+            $originalProduct = $order->business->productBases()->findOrFail($product->business_product_id);
             $data['products'][] = [
                 'id' => $product->getKey(),
                 'name' => $product->name,
@@ -594,6 +636,7 @@ class PointOfSaleController extends Controller
                 'variation_key_3' => $product->variation_key_3,
                 'variation_value_3' => $product->variation_value_3,
                 'quantity' => $product->quantity,
+                'stock_available' => $originalProduct->quantity ?? null,
                 'unit_price' => getReadableAmountByCurrency($currency, $product->unit_price),
                 'total_price' => getReadableAmountByCurrency($currency, $product->price),
                 'actual_unit_price' => $product->unit_price,
@@ -774,7 +817,7 @@ class PointOfSaleController extends Controller
         Gate::inspect('operate', $business)->authorize();
 
         $data = $this->validate($request, [
-            'tax_setting_id' => 'required|string',
+            'tax_setting_id' => 'nullable|string',
         ]);
 
         $order->tax_setting_id = $data['tax_setting_id'];
@@ -803,7 +846,7 @@ class PointOfSaleController extends Controller
         Gate::inspect('operate', $business)->authorize();
 
         $request->merge([
-            'skip_quantity_check' => true,
+            'skip_quantity_check' => false,
         ]);
 
         $order = OrderRepository::addProduct($request, $business, $order, false);

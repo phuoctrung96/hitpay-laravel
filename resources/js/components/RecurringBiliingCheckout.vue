@@ -14,7 +14,7 @@
                             <img class="mr-3" height="48" :src="business_image"/>
                             <span>{{ business.name }}</span>
                         </div>
-                        <div class="recurring-subscribe mb-1">
+                        <div v-if="recurring_plan.name" class="recurring-subscribe mb-1">
                             <span>
                                 Subscribe to {{ recurring_plan.name }}
                             </span>
@@ -26,7 +26,7 @@
                         </div>
                         <div class="d-flex recurring-price mb-4">
                             <span class="price">{{ recurring_plan.price }}</span>
-                            <div class="d-flex flex-column cycle ml-3">
+                            <div v-if="recurring_plan.cycle != 'save_card'" class="d-flex flex-column cycle ml-3">
                                 <span>per </span>
                                 <span>{{ recurring_plan.cycle.replace('ly', '') }}</span>
                             </div>
@@ -38,11 +38,11 @@
                         <div class="d-flex justify-content-between p-3 mb-3 subscription-box">
                             <div class="d-flex flex-column">
                                 <span class="type">Subscription</span>
-                                <span class="cycle">Billed {{ recurring_plan.cycle }}</span>
+                                <span v-if="recurring_plan.cycle != 'save_card'" class="cycle">Billed {{ recurring_plan.cycle }}</span>
                             </div>
                             <span class="price">{{ recurring_plan.price }}</span>
                         </div>
-                        <div class="recurring-expires mb-2">
+                        <div v-if="recurring_plan.cycle != 'save_card'" class="recurring-expires mb-2">
                             <span>Expires on: </span>{{ expires_at }}
                         </div>
                         <div v-if="recurring_plan.status === 'active'" class="recurring-status">

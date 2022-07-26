@@ -54,7 +54,6 @@ class OrderStatusController extends Controller
                 if ($res->errcode === 0 && $res->debug_msg === 'success') {
                   Shopee::confirmOrder(
                     $business,
-                    $provider,
                     $paymentIntent,
                     $res->transaction
                   );

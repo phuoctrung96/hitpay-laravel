@@ -69,7 +69,7 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="role_id">Role <span class="text-danger">*</span></label>
-                            <select class="form-control" v-model="selectedRecord.role_id" id="role_id">
+                            <select class="form-control" v-model="selectedRecord.role.id" id="role_id">
                                 <option v-for="(role) in roles" :value="role.id">{{role.title}}</option>
                             </select>
                         </div>
@@ -93,17 +93,20 @@ export default {
     name: 'BusinessUsers',
     components: { InviteUser},
     props: {
-        business: Object,
         roles: Array,
-        current_business_user: Object
+        current_business_user_id: String
     },
     data() {
         return {
+            business: window.Business,
             users: [],
             selectedRecord: null,
+            current_business_user: null
         }
     },
     mounted() {
+        this.business = Business;
+
         this.reloadBusinessUsers()
     },
     methods: {
@@ -135,6 +138,7 @@ export default {
             }).then(({data: {businessUsers}}) => {
                 console.log(businessUsers)
                 this.users = businessUsers;
+                this.current_business_user = this.users.find(businessUser => businessUser.user_id === this.current_business_user_id);
             }).catch(({response: { data: { errors } } }) => {
                 console.error(errors)
             });
@@ -151,7 +155,7 @@ export default {
 
         save() {
             let form = new FormData();
-            form.append('role_id', this.selectedRecord.role_id);
+            form.append('role_id', this.selectedRecord.role.id);
 
             axios.post(this.getDomain('business/' + this.business.id + '/user-management/' + this.selectedRecord.id + '/update', 'dashboard'), form, {
                 headers: {

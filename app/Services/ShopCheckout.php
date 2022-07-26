@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-
+use App;
 use App\Business;
 use App\Business\Order;
 use App\Charge;
@@ -32,8 +32,14 @@ class ShopCheckout
         try {
             $apiKey = $this->business->apiKeys()->where('is_enabled', 1)->firstOrFail()->api_key;
 
+            $apiUrl = 'https://' . config('app.subdomains.api') . '/v1/';
+            
+            if (App::environment('local')) {
+                $apiUrl = 'http://' . config('app.subdomains.api') . '/v1/';
+            }
+
             $client = new Client([
-                'base_uri' => 'https://' . config('app.subdomains.api') . '/v1/',
+                'base_uri' => $apiUrl,
                 'headers' => [
                     'X-BUSINESS-API-KEY' => $apiKey,
                     'X-Requested-With' => 'XMLHttpRequest',
@@ -46,7 +52,7 @@ class ShopCheckout
 
             $response = $client->post('payment-requests', [
                 'form_params' => [
-                    'amount' => $order->amount / 100,
+                    'amount' => getReadableAmountByCurrency($order->currency, $order->amount),
                     'currency' => $order->currency,
                     'name' => $order->customer_name,
                     'email' => $order->customer_email,

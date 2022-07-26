@@ -25,9 +25,11 @@ class DispatchJob extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $class = '\\App\\Jobs\\' . $this->argument('job');
         dispatch(new $class());
+
+        return 0;
     }
 }

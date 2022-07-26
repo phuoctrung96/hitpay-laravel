@@ -160,6 +160,10 @@ class RouteServiceProvider extends ServiceProvider
             return $business($identifier, $router, 'discounts');
         });
 
+        RouteFacade::bind('b_coupon', function ($identifier, Route $router) use ($business) {
+            return $business($identifier, $router, 'coupons');
+        });
+
         RouteFacade::bind('b_order', function ($identifier, Route $router) use ($business) {
             return $business($identifier, $router, 'orders');
         });
@@ -204,6 +208,10 @@ class RouteServiceProvider extends ServiceProvider
 
         RouteFacade::bind('b_shipping', function ($identifier, Route $router) use ($business) {
             return $business($identifier, $router, 'shippings');
+        });
+
+        RouteFacade::bind('b_setting', function ($identifier, Route $router) use ($business) {
+            return $business($identifier, $router, 'settings');
         });
 
         RouteFacade::bind('b_shipping_discount', function ($identifier, Route $router) use ($business) {

@@ -65,7 +65,10 @@ class ManualVerificationController extends Controller
                 ->withRequestFile($request)
                 ->process();
 
-            return route('dashboard.business.verification.home', $business->getKey());
+            return route('dashboard.business.verification.home', [
+                'business_id' => $business->getKey(),
+                'first_submit' => 1
+            ]);
         } catch (BadRequest $exception) {
             if ($request->wantsJson()) {
                 return Facades\Response::json([

@@ -9,9 +9,11 @@ use HitPay\Data\Objects\Fee;
 use HitPay\Data\Objects\PaymentMethods\Card;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use App\Helpers\Currency;
 
 /**
  * @method static $this forBusinessPaymentIntent( Business\PaymentIntent $businessPaymentIntent )
+ * @method static $this forBusinessCharge( Business\Charge $businessCharge, Business\PaymentProvider $paymentProvider, string $method )
  */
 class FeeCalculator
 {
@@ -88,7 +90,11 @@ class FeeCalculator
         $this->paymentProviderMethod = $businessPaymentIntent->payment_provider_method;
         $this->channel = $businessCharge->channel;
         $this->currency = $businessPaymentIntent->currency;
-        $this->amount = $businessPaymentIntent->amount;
+
+        // Support for zero-decimal currencies
+        $this->amount = Currency::isZeroDecimal($businessPaymentIntent->currency)
+          ? $businessPaymentIntent->amount * 100
+          : $businessPaymentIntent->amount;
 
         if ($this->paymentProviderConfiguration->official_code === 'stripe') {
             $card = $businessPaymentIntent->card();
@@ -100,6 +106,67 @@ class FeeCalculator
         }
 
         return $this;
+    }
+
+    protected function withBusinessCharge(Business\Charge $businessCharge, $provider, $method) : self
+    {
+      $this->initializedWith = get_class($businessCharge);
+
+      $this->business = $businessCharge->business;
+
+      //$businessCharge = $businessPaymentIntent->charge;
+
+      // TODO - KIV By Bankorh
+      //   --------------------->>>
+      //   Check the logic here, the logic here is, if the platform has payment provider enabled for this intent,
+      //   we use the rate from that payment provider, else we use the one from business. However, from my
+      //   understanding, the platform and the business must have the same payment provider enabled to do charge.
+      //
+      /*
+      if ($businessCharge->platform_business_id) {
+          $this->platform = Business::find($businessCharge->platform_business_id);
+
+          if ($this->platform instanceof Business && $this->platform->country === $this->business->country) {
+              $selectedPaymentProvider = $this->platform->paymentProviders()
+                  ->where('payment_provider', $businessPaymentIntent->payment_provider)
+                  ->first();
+          }
+      }
+
+      if (isset($selectedPaymentProvider) && $selectedPaymentProvider instanceof Business\PaymentProvider) {
+          $this->selectedPaymentProvider = $selectedPaymentProvider;
+          $this->selectedPaymentProviderOf = 'platform';
+      } else {
+          $this->selectedPaymentProvider = $this->business->paymentProviders()
+              ->where('payment_provider', $businessPaymentIntent->payment_provider)
+              ->first();
+      }
+      */
+      $this->selectedPaymentProvider = $provider;
+
+      $this->paymentProviderConfiguration = Countries::get($this->business->country)->paymentProviders()
+          ->where('code', $this->selectedPaymentProvider->payment_provider)
+          ->first();
+
+      $this->paymentProviderMethod = $method;
+      $this->channel = $businessCharge->channel;
+      $this->currency = $businessCharge->currency;
+
+      // Support for zero-decimal currencies
+      $this->amount = Currency::isZeroDecimal($businessCharge->currency)
+        ? $businessCharge->amount * 100
+        : $businessCharge->amount;
+
+      if ($this->paymentProviderConfiguration->official_code === 'stripe') {
+          $card = $businessCharge->card();
+
+          if ($card instanceof Card) {
+              $this->cardBrand = $card->brand;
+              $this->cardCountry = $card->country;
+          }
+      }
+
+      return $this;
     }
 
     /**
@@ -114,8 +181,6 @@ class FeeCalculator
             $homeCurrencyFixedFeeAmount,
             $discountFeeRate,
         ] = $this->selectedPaymentProvider->getRateFor(
-            $this->business->country,
-            $this->business->currency,
             $this->currency,
             $this->channel,
             $this->paymentProviderMethod,

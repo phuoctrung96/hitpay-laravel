@@ -27,7 +27,7 @@ class AddPaymentProviderForSubscribedRecurringPlans extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         RecurringBilling::where('payment_provider_customer_id', 'like', 'cus_%')->update([
             'payment_provider' => PaymentProvider::STRIPE_SINGAPORE,

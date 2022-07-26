@@ -10,6 +10,7 @@ use App\Enumerations\Business\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Business\Order;
 use App\Logics\Business\OrderRepository;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
@@ -30,6 +32,7 @@ class OrderController extends Controller
     public static $relationships = [
         'customer',
         'products',
+        'charges'
     ];
 
     /**
@@ -116,17 +119,47 @@ class OrderController extends Controller
         $keywords = $request->get('keywords');
 
         if (strlen($keywords) != 0) {
-            $orders->where('id', $keywords);
-            $orders->orWhere('customer_email', 'like', '%'. $keywords . '%');
-            $orders->orWhere('remark', 'like', '%'. $keywords .'%');
-            $orders->orWhereHas('charges', function ($query) use ($keywords) {
-                return $query->where('id', '=', $keywords);
-            });
+            if (is_numeric($keywords)) {
+                $orders->where('amount', 'LIKE', '%' . $keywords . '%');
+            } elseif(strtotime($keywords)) {
+                $orders->where('created_at', 'LIKE', '%' . $keywords . '%');
+            } elseif(Str::isUuid($keywords)) {
+                $orders->where('id', $keywords);
+            } else {
+                $keywords = explode(' ', $request->get('keywords'));
+                $keywords = array_map(function ($value) {
+                    return trim($value);
+                }, $keywords);
+                $keywords = array_filter($keywords);
+                $keywords = array_unique($keywords);
+                $orders->where(function (Builder $query) use ($keywords) {
+                    $i = 0;
+                    foreach ($keywords as $keyword) {
+                        $query->orWhere($query->qualifyColumn('remark'), 'LIKE', '%' . $keyword . '%');
+                        $query->orWhere($query->qualifyColumn('customer_name'), 'LIKE', '%' . $keyword . '%');
+                        if ($i++ === 2) {
+                            break;
+                        }
+                    }
+                });
+            }
+        }
+
+        if ($request->get('dateFrom') != '') {
+            $dateFrom = Date::parse($request->get('dateFrom'));
+            $orders->whereDate('created_at', '>=', $dateFrom->startOfDay()->toDateTimeString());
+        }
+
+        if ($request->get('dateTo') != '') {
+            $dateTo = Date::parse($request->get('dateTo'));
+            $orders->whereDate('created_at', '<=', $dateTo->endOfDay()->toDateTimeString());
         }
 
         $orders->orderByDesc('id');
 
-        return Order::collection($orders->paginate());
+        $perPage = $request->get('perPage', 100);
+
+        return Order::collection($orders->paginate($perPage));
     }
 
     /**

@@ -11,6 +11,7 @@ use App\Enumerations\PaymentProvider;
 use App\Exceptions\HitPayLogicException;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Business\PaymentIntent;
+use HitPay\Data\FeeCalculator;
 use HitPay\PayNow\Generator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -102,6 +103,16 @@ class ChargeController extends Controller
 
         $paymentIntent = DB::transaction(function () use ($business, $paymentProvider, $charge, $paynow) {
             $business->charges()->save($charge);
+
+            $fees = FeeCalculator::forBusinessCharge($charge, $paymentProvider, $charge->payment_provider_charge_method)
+                ->calculate();
+
+            $charge->exchange_rate = $fees->exchange_rate;
+            $charge->discount_fee_rate = $fees->discount_fee_rate;
+            $charge->fixed_fee = $fees->home_currency_fixed_fee_amount;
+            $charge->discount_fee = $fees->home_currency_discount_fee_amount;
+
+            $charge->save();
 
             return $charge->paymentIntents()->create([
                 'business_id' => $charge->business_id,

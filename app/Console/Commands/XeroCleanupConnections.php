@@ -38,13 +38,15 @@ class XeroCleanupConnections extends Command
      *
      * @return mixed
      */
-    public function handle(DisconnectService $disconnectService)
+    public function handle(DisconnectService $disconnectService) : int
     {
         foreach ($this->getConnectedBusinesses() as $connectedBusiness) {
             if($disconnectService->isXeroConnectionDead($connectedBusiness)) {
                 $disconnectService->disconnectBusinessFromXero($connectedBusiness);
             }
         }
+
+        return 0;
     }
 
     private function getConnectedBusinesses(): Collection

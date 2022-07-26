@@ -11,6 +11,7 @@ use App\Business;
 use App\Enumerations;
 use App\Logics\ConfigurationRepository;
 use Illuminate\Support\Facades;
+use Illuminate\Support\Facades\Artisan;
 use Stripe;
 use Throwable;
 
@@ -132,6 +133,7 @@ class SyncWithSucceededPaymentIntent extends Action
                     $targetModel->save();
                     $targetModel->updateProductsQuantities();
                     $targetModel->notifyAboutNewOrder();
+                    Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $targetModel->id);
                 }
             }, 3);
         } catch (Throwable $exception) {

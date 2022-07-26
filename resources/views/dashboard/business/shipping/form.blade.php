@@ -26,7 +26,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         window.Data = @json($data);
         @isset($shipping)
             window.Shipping = @json($shipping)

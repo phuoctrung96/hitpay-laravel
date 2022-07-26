@@ -12,6 +12,7 @@ use App\Enumerations\Business\PaymentMethodType;
 use App\Logics\ConfigurationRepository;
 use HitPay\Business\Charge\IdentifiedCardChargeIssuer;
 use Illuminate\Support\Facades;
+use Illuminate\Support\Facades\Artisan;
 use Stripe;
 use Throwable;
 
@@ -134,6 +135,7 @@ class Confirm extends Action
                     $targetModel->save();
                     $targetModel->updateProductsQuantities();
                     $targetModel->notifyAboutNewOrder();
+                    Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $targetModel->id);
                 }
             }, 3);
 
@@ -145,7 +147,7 @@ class Confirm extends Action
                     $identifiedCardChargeIssuer->process();
                 }
             } catch(\Exception $exception) {
-                Facades\Log::critical("identified card charge issue have issue: " . $exception->getMessage());
+                Facades\Log::info("identified card charge issue have issue: " . $exception->getMessage());
             }
 
         } catch (Throwable $exception) {

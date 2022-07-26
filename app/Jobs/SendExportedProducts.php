@@ -27,7 +27,7 @@ class SendExportedProducts implements ShouldQueue
      * @return void
      */
     public function __construct(Business $business, $products, $user)
-    {   
+    {
         $this->business = $business;
         $this->products = $products;
         $this->user = $user;
@@ -59,20 +59,41 @@ class SendExportedProducts implements ShouldQueue
         $data = [];
 
         foreach ($this->products as $product) {
-            $rowData = collect([
+            $product = $product->getProductObject();
+
+            $productData = collect([
                 '#' =>  $i++,
-                'SKU' => $product->stock_keeping_unit,
-                'Name' => $product->name,
-                'Description' => $product->description,
-                'Price' => $product->readable_price,
-                'Quantity' => $product->variations_sum_quantity,
-                'Image' => $product->image_display,
-                'Publish' => $product->published ? 'True' : 'False',
-                'Manage Inventory' => $product->manageable ? 'True' : 'False',
-                'Created At' => $product->created_at
+                'SKU' => $product['stock_keeping_unit'],
+                'Name' => $product['name'],
+                'Description' => $product['description'],
+                'Price' => $product['readable_price'],
+                'Quantity' => $product['quantity'] ?? '',
+                'Image' => $product['image_display'],
+                'Publish' => $product['is_published'],
+                'Manage Inventory' => $product['is_manageable'],
+                'Created At' => $product['created_at']
             ])->toArray();
 
-            $data[] = $rowData;
+            $data[] = $productData;
+
+            if ($product['has_variations']){
+                foreach ($product['variations'] as $variation){
+                    $variationData = collect([
+                        '#' =>  '',
+                        'SKU' => '',
+                        'Name' => '',
+                        'Description' => $variation['description'],
+                        'Price' => $variation['price'],
+                        'Quantity' => $variation['quantity'] ?? '',
+                        'Image' => '',
+                        'Publish' => '',
+                        'Manage Inventory' => '',
+                        'Created At' => ''
+                    ])->toArray();
+
+                    $data[] = $variationData;
+                }
+            }
         }
 
         $csv->insertAll($data);

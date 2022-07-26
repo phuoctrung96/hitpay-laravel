@@ -20,7 +20,7 @@ class RefundSessionRejectJob implements ShouldQueue
     protected string $shopifyDomain;
     protected string $shopifyApiVersion;
     protected string $shopifyGid;
-    protected string $shopifyReason;
+    protected array $shopifyReason;
     protected string $businessId;
     protected string $paymentId;
     protected string $refundId;

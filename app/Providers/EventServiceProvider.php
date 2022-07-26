@@ -8,7 +8,7 @@ use App\Events\Business\RecurrentChargeSucceeded;
 use App\Events\Business\SentInvoice;
 use App\Events\Business\SuccessCharge;
 use App\Listeners\ChargePostProcessor;
-use App\Listeners\CheckCompliance;
+//use App\Listeners\CheckCompliance;
 use App\Listeners\SendReceipt;
 use App\Listeners\SendRecurrentReceipt;
 use App\Listeners\SendWelcomeEmail;
@@ -33,7 +33,7 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $listen = [
         Registered::class => [
-            // SendEmailVerificationNotification::class,
+            SendEmailVerificationNotification::class,
         ],
         SocialiteWasCalled::class => [
             ShopifyExtendSocialite::class,

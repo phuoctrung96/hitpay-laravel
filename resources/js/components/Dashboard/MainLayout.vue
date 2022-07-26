@@ -26,7 +26,7 @@
             </div>
         </div>
 
-      <div class="help-line justify-content-between align-items-center py-3 px-4 main-top-bar d-md-flex d-none">
+      <div class="help-line d-flex justify-content-between align-items-center py-3 px-4 main-top-bar">
         <span
           v-if="title"
           class="page-title mb-0">
@@ -38,9 +38,9 @@
           name="test"></slot>
 
         <div class="d-flex align-items-center">
-            <a  :href="nolt_link" class="mr-3 menu-items-desktop"><img class="mr-2" src="/images/feedback_header.svg">Feedback</a>
+            <a data-nolt="button" :href="nolt_link" class="mr-3 menu-items-desktop">Feedback</a>
             <div class="announcekit menu-items-desktop">
-            <a href="#" class="ak-trigger"><img class="mr-2" src="/images/wats_new.svg">What's New <AnnounceKit
+            <a href="#" class="ak-trigger">What's New <AnnounceKit
                 :user="{id: business.id, email: business.email, name: business.name}"
                 catchClick=".ak-trigger"
                 widget="https://announcekit.co/widgets/v2/5LtzW" />
@@ -121,8 +121,6 @@ export default {
   },
   props: {
     title: String,
-    business: Object,
-    user: Object,
     alert_text: String,
     alert_link: String,
     alert_link_text: String,
@@ -132,6 +130,8 @@ export default {
   },
   data () {
     return {
+      business: window.Business,
+      user: window.User,
       csrf: document.head.querySelector('meta[name="csrf-token"]').content
     }
   },
@@ -141,46 +141,31 @@ export default {
     }
   },
   mounted() {
-
     this.postHogCaptureData('', this.business.id, this.business.email, '');
-      $('#alertModal').modal('show');
-    
-        var url = 'https://wati-integration-service.clare.ai/ShopifyWidget/shopifyWidget.js?54911';
-    var s = document.createElement('script');
-    s.type = 'text/javascript';
-    s.async = true;
-    s.src = url;
-    var options = {
-  "enabled":true,
-  "chatButtonSetting":{
-      "backgroundColor":"#4DC247",
-      "ctaText":"",
-      "borderRadius":"25",
-      "marginLeft":"0",
-      "marginBottom":"50",
-      "marginRight":"50",
-      "position":"right"
-  },
-  "brandSetting":{
-      "brandName":"HitPay ",
-      "brandSubTitle":"Typically replies within minutes",
-      "brandImg":"https://i.postimg.cc/tgJ40VfC/IMG-7258.jpg",
-      "welcomeText":"Hi there!\n\nHow can I help you?",
-      "messageText":"",
-      "backgroundColor":"#0A5F54",
-      "ctaText":"Start Chat",
-      "borderRadius":"25",
-      "autoShow":false,
-      "phoneNumber":"6589518262"
-  }
-};
-    s.onload = function() {
-        CreateWhatsappChatWidget(options);
-    };
-    var x = document.getElementsByTagName('script')[0];
-    x.parentNode.insertBefore(s, x);
-    
-    
+    $('#alertModal').modal('show');
+
+    var APP_ID = "dwbpydma";
+    var current_user_email = this.business.email;
+    var current_user_id = this.business.id;
+
+    window.intercomSettings = {
+        app_id: APP_ID,
+        email: current_user_email, // Email address
+        user_id: current_user_id // current_user_id
+      };
+
+    (function(){var w=window;var ic=w.Intercom;if(typeof ic==="function"){ic('reattach_activator');ic('update',w.intercomSettings);}else{var d=document;var i=function(){i.c(arguments);};i.q=[];i.c=function(args){i.q.push(args);};w.Intercom=i;var l=function(){var s=d.createElement('script');s.type='text/javascript';s.async=true;s.src='https://widget.intercom.io/widget/' + APP_ID;var x=d.getElementsByTagName('script')[0];x.parentNode.insertBefore(s, x);};if(document.readyState==='complete'){l();}else if(w.attachEvent){w.attachEvent('onload',l);}else{w.addEventListener('load',l,false);}}})();
+
+
+    // s.onload = function() {
+    //     CreateWhatsappChatWidget(options);
+    // };
+
+
+    // var x = document.getElementsByTagName('script')[0];
+    // x.parentNode.insertBefore(s, x);
+
+
   },
 
   methods: {
@@ -231,7 +216,7 @@ export default {
 
     @media screen and (max-width: 576px) {
       padding: 8px 8px 100px 8px;
-    }    
+    }
   }
 
   .gplay-container {

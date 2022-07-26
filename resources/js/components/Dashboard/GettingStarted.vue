@@ -15,7 +15,7 @@
               <div class="item-sub-title collapse" id="collapse1" :class="is_setup_payment_method == false ? 'show': ''">
                 <p>Hitpay supports wide ranage of payment methods. Setting up multiple payment methods increases your conversion</p>
                 <div class="getting-bottom getting-bottom d-flex justify-content-between justify-content-between align-items-center">
-                  <a :href="`/business/${business_id}/payment-provider`" class="btn btn-primary">Setup now</a>
+                  <a :href="`/business/${business.id}/payment-provider`" class="btn btn-primary">Setup now</a>
                   <a href="https://hitpayapp.com/pricing" class="view-more" target="_blank">View Pricing?</a>
                 </div>
               </div>
@@ -46,7 +46,7 @@
               <div class="item-sub-title collapse" id="collapse2">
                 <p>Submit your business information to start accepting payments. It takes less than 3 mins to finish this.</p>
                 <div class="getting-bottom getting-bottom d-flex justify-content-between justify-content-between align-items-center">
-                  <a :href="`/business/${business_id}/verification`" class="btn btn-primary">Verify now</a>
+                  <a :href="`/business/${business.id}/verification`" class="btn btn-primary">Verify now</a>
                   <a :href="verify_support_link" class="view-more" target="_blank">Why do I need to verify?</a>
                 </div>
               </div>
@@ -63,7 +63,7 @@
               <div class="item-sub-title">
                 <p>Submit your business information to start accpeting payments. It takes less than 3 mins to finish this.</p>
                 <div class="getting-bottom getting-bottom d-flex justify-content-between justify-content-between align-items-center">
-                  <a :href="`/business/${business_id}/verification`" class="btn btn-primary">Verify now</a>
+                  <a :href="`/business/${business.id}/verification`" class="btn btn-primary">Verify now</a>
                   <a href="https://hitpay.zendesk.com/hc/en-us/articles/900006274443-How-to-verify-my-account-using-MyInfo" class="view-more" target="_blank">Why do I need to verify?</a>
                 </div>
               </div>
@@ -152,7 +152,7 @@
       <VerificationWarning
           v-if="country_code == 'sg'"
           v-model="is_show_modal_verification"
-          :businessId="business_id"
+          :businessId="business.id"
           :business="business"
       />
   </div>
@@ -169,8 +169,6 @@ export default {
       VerificationWarning,
   },
   props: {
-    business: Object,
-    business_id: String,
     country_code: String,
     payment_count: Boolean,
     is_show_modal_verification: Boolean,
@@ -209,6 +207,7 @@ export default {
   },
   data () {
      return {
+       business: window.Business,
        is_processing: false,
        is_setup_payment_method: true,
        is_finish_account_verification: false,
@@ -219,12 +218,12 @@ export default {
        accept_payments_url: "",
        accept_payments: [
          {id: 1, name:"Plugins for E-Commerce Platforms (Shopify, WooCommerce etc)", url:"https://www.hitpayapp.com/e-commerce-plugins"},
-         {id: 2, name:"APIs for custom integration", url: this.business_id+"/apikey"},
-         {id: 3, name:"Build online store with HitPay", url: this.business_id+"/product"},
-         {id: 4, name:"Payment links", url: this.business_id+"/payment-links"},
-         {id: 5, name:"Online Invoicing", url: this.business_id+"/invoice"},
-         {id: 6, name:"Recurring Billing Invoicing", url: this.business_id+"/recurring-plan"},
-         {id: 7, name:"Point of Sale and credit card terminal", url:this.business_id+"/point-of-sale"}
+         {id: 2, name:"APIs for custom integration", url: window.Business.id+"/apikey"},
+         {id: 3, name:"Build online store with HitPay", url: window.Business.id+"/dashboard"},
+         {id: 4, name:"Payment links", url: window.Business.id+"/payment-links"},
+         {id: 5, name:"Online Invoicing", url: window.Business.id+"/invoice"},
+         {id: 6, name:"Recurring Billing Invoicing", url: window.Business.id+"/recurring-plan"},
+         {id: 7, name:"Point of Sale and credit card terminal", url:window.Business.id+"/point-of-sale"}
        ],
        plugins_platform: [
          {id: 1, name:"Shopify", img_url: "/plugins/ico-plugin-01.svg", url: "https://hitpay.zendesk.com/hc/en-us/articles/900000685746-Add-PayNow-to-your-Shopify-E-Commerce-Store"},

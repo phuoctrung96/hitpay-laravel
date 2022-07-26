@@ -47,9 +47,16 @@ class BankAccountController extends Controller
     {
         Facades\Gate::inspect('update', $business)->authorize();
 
+        $bank_fields = [
+            'swift'             => Store::SWIFT_CODE_COUNTRIES,
+            'iban'              => Store::IBAN_COUNTRIES,
+            'routing_number'    => Store::ROUTING_NUMBER_COUNTRIES
+        ];
+
         return Facades\Response::view('dashboard.business.settings.bank-accounts.create', [
             'business' => $business,
             'banks' => $business->banksAvailable()->toArray(),
+            'bank_fields' => $bank_fields
         ]);
     }
 
@@ -107,9 +114,15 @@ class BankAccountController extends Controller
 
         $banks = $business->banksAvailable()->toArray();
 
+        $bank_fields = [
+            'swift'             => Update::SWIFT_CODE_COUNTRIES,
+            'iban'              => Update::IBAN_COUNTRIES,
+            'routing_number'    => Update::ROUTING_NUMBER_COUNTRIES
+        ];
+
         return Facades\Response::view(
             'dashboard.business.settings.bank-accounts.edit',
-            compact('business', 'bankAccount', 'banks')
+            compact('business', 'bankAccount', 'banks', 'bank_fields')
         );
     }
 

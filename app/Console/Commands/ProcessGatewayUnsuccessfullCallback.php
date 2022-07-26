@@ -57,11 +57,11 @@ class ProcessGatewayUnsuccessfullCallback extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         if(Cache::has(md5($this->signature))) {
             // Skipped task as it's already running
-            return;
+            return 0;
         }
 
         Cache::put(md5($this->signature), true, 120);
@@ -118,6 +118,8 @@ class ProcessGatewayUnsuccessfullCallback extends Command
         $this->output->newLine();
 
         Cache::forget(md5($this->signature));
+
+        return 0;
     }
 
     protected function pluginCallback(Charge $charge)

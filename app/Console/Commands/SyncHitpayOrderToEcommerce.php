@@ -44,18 +44,17 @@ class SyncHitpayOrderToEcommerce extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $orderId = $this->option('order_id');
         if ($order = Order::find($orderId)) {
 
-            if (HotglueOrderTracker::whereBusinessOrderId($order->id)->first()) {
+            if (HotglueOrderTracker::where('business_order_id', $order->id)->first()) {
                 Log::info('Hotglue sync hitpay order to ecommerce for order_id: ' . $order->id . ' already done');
-                return;
+                return 0;
             }
-
-            $hotglueIntegration = HotglueIntegration::whereBusinessId($order->business_id)
-                ->whereFlow(config('services.hotglue.product_flow_id'))
+            $hotglueIntegration = HotglueIntegration::where('business_id', $order->business_id)
+                ->where('flow', config('services.hotglue.ecommerce_flow_id'))
                 ->where('connected', true)
                 ->where('sync_all_hitpay_orders', true)
                 ->first();
@@ -65,17 +64,17 @@ class SyncHitpayOrderToEcommerce extends Command
 
                 $orderedProducts = $order->products;
                 $originalProducts = ProductVariation::with('product')->whereIn('id', $orderedProducts->pluck('business_product_id'))->get();
-                
+
                 $orderedItems = [];
                 foreach ($orderedProducts as $orderedProduct) {
                     $product = $originalProducts->where('id', $orderedProduct->business_product_id)->first();
 
-                    if ($sku = $product->product->stock_keeping_unit) {
-                        $hotglueProducts = HotglueProductTracker::with('hotglueJob')->whereStockKeepingUnit($sku)->first();
+                    if ($itemId = $product->shopify_inventory_item_id) {
+                        $hotglueProducts = HotglueProductTracker::with('hotglueJob')->where('item_id', $itemId)->first();
 
                         if ($hotglueProducts) {
                             $orderedItems[] = [
-                                "sku" => $sku,
+                                'variant_id' => $itemId,
                                 "quantity" => (int) $orderedProduct->quantity
                             ];
                         }
@@ -114,7 +113,8 @@ class SyncHitpayOrderToEcommerce extends Command
                             'job_id' => $response['job_id'],
                             'job_name' => $response['job_name'],
                             'status' => $response['status'],
-                            'aws_path' => $response['s3_root']
+                            'aws_path' => $response['s3_root'],
+                            'job_type' => HotglueJob::ORDER_SYNC
                         ]);
 
                         HotglueOrderTracker::firstOrCreate([
@@ -136,5 +136,7 @@ class SyncHitpayOrderToEcommerce extends Command
         } else {
             Log::critical('Hotglue sync hitpay order to ecommerce for order_id: ' . $orderId . ' not found');
         }
+
+        return 0;
     }
 }

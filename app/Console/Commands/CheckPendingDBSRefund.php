@@ -27,7 +27,7 @@ class CheckPendingDBSRefund extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
         Refund::where([
             'payment_provider' => PaymentProvider::DBS_SINGAPORE,
@@ -37,5 +37,7 @@ class CheckPendingDBSRefund extends Command
         ])->each(function (Refund $refund) {
             RefundJob::dispatchNow($refund);
         });
+
+        return 0;
     }
 }

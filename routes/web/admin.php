@@ -52,6 +52,8 @@ Route::namespace('Admin')->group(function () {
             Route::put('rekey', 'BusinessPlatformController@rekey')->name('rekey');
         });
 
+        Route::post('business/{business_id}/set-payment-enabled', 'BusinessSetPaymentEnableController@update')->name('business.set_payment_enabled');
+
         Route::get('charge', 'ChargeController@index')->name('charge.index');
         Route::post('charge/export', 'ChargeController@export')->name('charge.export');
         Route::get('charge/uncaptured', 'ChargeController@showUncapturedPage')->name('charge.uncaptured');
@@ -66,6 +68,17 @@ Route::namespace('Admin')->group(function () {
         Route::get('email-attachments/{any}', 'EmailAttachmentController@download')->name('email-attachment.download')->where('any', '.*');
         Route::get('failed-refund', 'ChargeController@failedRefund')->name('failed-refund.index');
         Route::get('files/email-attachments/{any?}', 'EmailAttachmentController@index')->name('email-attachment.index');
+
+        Route::group([
+            'as' => 'reconciliations.bank-statements.',
+            'namespace' => 'Reconciliations',
+            'prefix' => 'reconciliations/bank-statements',
+        ], function () {
+            Route::get('download', 'BankStatementController@download')->name('download');
+            Route::post('{year}/{month}/{day}', 'BankStatementController@update')->name('update');
+            Route::get('{year?}/{month?}/{day?}', 'BankStatementController@index')->name('index');
+        });
+
         Route::post('refund/export', 'ChargeController@exportRefund')->name('refund.export');
         Route::post('referral-fees/export', 'BusinessReferralFeeExportController')->name('referral-fees.export');
 
@@ -108,5 +121,8 @@ Route::namespace('Admin')->group(function () {
         Route::prefix('business/{business_id}/bank-accounts')->name('business.bank_accounts.')->group(function () {
             Route::get('/', 'BusinessBankAccountController@index')->name('index');
         });
+
+        Route::get('import-dbs-reconcile', 'ImportDbsReconcileController@index')->name('importdbsreconcile.index');
+        Route::post('import-dbs-reconcile', 'ImportDbsReconcileController@store')->name('importdbsreconcile.store');
     });
 });

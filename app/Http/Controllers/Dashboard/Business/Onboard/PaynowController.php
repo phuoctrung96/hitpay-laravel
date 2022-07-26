@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard\Business\Onboard;
 
 use App\Actions\Business\Onboard\Paynow\Store;
+use App\Actions\Business\Settings\BankAccount\Update;
 use App\Actions\Exceptions\BadRequest;
 use App\Business;
 use App\Http\Controllers\Controller;
@@ -39,6 +40,12 @@ class PaynowController extends Controller
             ]);
         }
 
+        $bank_fields = [
+            'swift'             => Update::SWIFT_CODE_COUNTRIES,
+            'iban'              => Update::IBAN_COUNTRIES,
+            'routing_number'    => Update::ROUTING_NUMBER_COUNTRIES
+        ];
+
         $data = $this->validate($request, [
             'success_message' => 'string|max:64|nullable',
         ]);
@@ -47,7 +54,8 @@ class PaynowController extends Controller
             'business' => $business,
             'provider' => null,
             'banks_list' => $business->banksAvailable()->toArray(),
-            'success_message' => empty($data['success_message']) ? '' : $data['success_message'],
+            'success_message' => (empty($data['success_message']) ? '' : $data['success_message']),
+            'bank_fields' => $bank_fields
         ]);
     }
 

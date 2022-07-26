@@ -65,6 +65,12 @@ class InvoiceFeedImport implements ToCollection
             if ($key === 0) {
                 continue;
             }
+
+            if (count($row) === 1) {
+                $errors['error_format'][] = "Please use delimiter CSV file with comma (,)";
+                break;
+            }
+
             if (empty($row[0])) {
                 $errors['customer_email'][] = "Customer email is required";
                 continue;
@@ -89,6 +95,23 @@ class InvoiceFeedImport implements ToCollection
             if (!isset($existCustomer->id)) {
                 $errors[$row[0]][] = "The customer $row[0]: not exist";
             }
+
+            $invoiceDate = now()->startOfDay();
+
+            try {
+                $invoiceDate = (isset($row[5]) && trim($row[5]) !== "") ? Date::createFromFormat('Y-m-d', $row[5])->startOfDay() : now()->startOfDay();
+            } catch (\Exception $exception) {
+                $errors[$row[0]][] = "The invoice date `$row[5]` wrong format, please use format YYYY-mm-dd";
+            }
+
+            $dueDate = null;
+
+            try {
+                $dueDate = (isset($row[6]) && trim($row[6]) !== "") ? Date::createFromFormat('Y-m-d', $row[6])->startOfDay() : null;
+            } catch (\Exception $exception) {
+                $errors[$row[0]][] = "The due date `$row[6]` wrong format, please use format YYYY-mm-dd";
+            }
+
             if (isset($errors[$row[0]]) && count($errors[$row[0]])) {
                 continue;
             }
@@ -98,12 +121,11 @@ class InvoiceFeedImport implements ToCollection
             $invoices[$key]['currency'] = $row[2];
             $invoices[$key]['email'] = $existCustomer->email;
             $invoices[$key]['amount'] = getRealAmountForCurrency($row[2], $row[3]);
-            $invoices[$key]['reference'] = $row[4] ? Str::random() : $row[4];
-            $invoices[$key]['invoice_date'] = $row[5]
-                ? Date::createFromFormat('Y-m-d', $row[5])->startOfDay()
-                : now()->startOfDay();;
-            $invoices[$key]['due_date'] = $row[6] ? Date::createFromFormat('Y-m-d', $row[6])->endOfDay() : null;;
+            $invoices[$key]['reference'] = (isset($row[4]) && trim($row[4]) !== "") ? trim($row[4]) : Str::random();
+            $invoices[$key]['invoice_date'] = $invoiceDate;
+            $invoices[$key]['due_date'] = $dueDate;
         }
+
         return [$invoices, $errors];
     }
 
@@ -143,6 +165,7 @@ class InvoiceFeedImport implements ToCollection
             $invoice->currency = $invoiceAttributes['currency'];
             $invoice->invoice_number = 'INV-'.$invoiceAttributes['invoice_number'];
             $invoice->amount = $invoiceAttributes['amount'];
+            $invoice->balance_amount = $invoiceAttributes['amount'] ?? 0;
             $invoice->amount_no_tax = $invoiceAttributes['amount'];
             $invoice->reference = $invoiceAttributes['reference'];
             $invoice->invoice_date = $invoiceAttributes['invoice_date'];

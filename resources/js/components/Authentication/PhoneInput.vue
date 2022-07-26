@@ -1282,26 +1282,29 @@ export default {
 
     methods: {
         applyCountry(country) {
-            if (country == 'my') {
-                this.chosenCountryCode = '+60';
+          this.countryCodes.forEach((country_data) => {
+            if (country === country_data.code.toLowerCase()) {
+              this.chosenCountryCode = country_data.dial_code;
             }
-
-            if (country == 'sg') {
-                this.chosenCountryCode = '+65';
-            }
-
+          });
             // default is +65
         }
     },
 }
 function showDisplayValue(e) {
-    var options = e.target.options,
-        option = e.target.selectedOptions[0],
-        i;
+    let options = e.target.options;
+    let selectedOptions = e.target.selectedOptions;
+    let i;
+
+    if (!selectedOptions) {
+        return;
+    }
+
+    let option = selectedOptions[0];
 
     // reset options
     for (i = 0; i < options.length; ++i) {
-        options[i].innerText = options[i].getAttribute('data-select');
+      options[i].innerText = options[i].getAttribute('data-select');
     }
 
     // change the selected option's text to its `data-display` attribute value
@@ -1309,8 +1312,22 @@ function showDisplayValue(e) {
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
-    var option = document.getElementById('code-select').selectedOptions[0]
+    let codeSelect = document.getElementById('code-select');
+
+    if (!codeSelect) {
+        return;
+    }
+
+    let selectedOptions = codeSelect.selectedOptions;
+
+    if (!selectedOptions) {
+        return;
+    }
+
+    let option = document.getElementById('code-select').selectedOptions[0];
+
     option.innerText = option.getAttribute('data-display');
+
     document.getElementById('code-select').addEventListener('change', showDisplayValue, false)
 });
 

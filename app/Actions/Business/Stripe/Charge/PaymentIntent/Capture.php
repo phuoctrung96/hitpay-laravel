@@ -14,6 +14,7 @@ use Exception;
 use HitPay\Business\Charge\IdentifiedCardChargeIssuer;
 use HitPay\Data\FeeCalculator;
 use Illuminate\Support\Facades;
+use Illuminate\Support\Facades\Artisan;
 use Stripe;
 use Throwable;
 
@@ -160,6 +161,7 @@ class Capture extends Action
                     $targetModel->save();
                     $targetModel->updateProductsQuantities();
                     $targetModel->notifyAboutNewOrder();
+                    Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $targetModel->id);
                 }
             }, 3);
 
@@ -171,7 +173,7 @@ class Capture extends Action
                     $identifiedCardChargeIssuer->process();
                 }
             } catch(\Exception $exception) {
-                Facades\Log::critical("identified card charge issue have issue: " . $exception->getMessage());
+                Facades\Log::info("identified card charge issue have issue: " . $exception->getMessage());
             }
         } catch (Throwable $exception) {
             $exceptionClassName = get_class($exception);

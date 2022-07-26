@@ -51,6 +51,7 @@
                     @if(in_array($charge->payment_provider, [
                         \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA,
                         \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE,
+                        \App\Enumerations\PaymentProvider::STRIPE_US,
                     ]) && ($card = $charge->card()) instanceof \HitPay\Data\Objects\PaymentMethods\Card)
                         Card Issuer: <span class="text-muted">{{ $card->issuer ?: '-' }}</span>
                         <p class="text-dark small mb-0">Card Brand: <span class="text-muted">{{ $card->brand_name }}</span></p>

@@ -8,7 +8,11 @@ class RecurringCycle extends Enumeration
 {
     const WEEKLY = 'weekly';
 
+    const BIWEEKLY = 'biweekly';
+
     const MONTHLY = 'monthly';
+
+    const QUARTERLY = 'quarterly';
 
     const YEARLY = 'yearly';
 

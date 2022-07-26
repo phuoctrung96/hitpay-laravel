@@ -79,5 +79,6 @@ Route::namespace('Shop')->group(function () {
   Route::prefix('redirect')->name('redirect.')->group(function () {
     Route::get('zip', 'ZipController@handleRedirect')->name('zip');
     Route::get('fpx/{paymentIntentId}', 'FpxController@handleRedirect')->name('fpx');
+    Route::get('grabpay/{paymentIntentId}', 'FpxController@handleRedirect')->name('grabpay');
   });
 });

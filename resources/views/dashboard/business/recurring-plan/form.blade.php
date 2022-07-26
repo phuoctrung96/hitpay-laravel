@@ -36,7 +36,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         window.Data = @json($data);
         @isset($template)
             window.Template = @json($template)

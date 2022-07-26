@@ -29,7 +29,7 @@ class RemindPendingOrder extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $businessIds = Order::select('business_id')->groupBy('business_id')
             ->where('status', OrderStatus::REQUIRES_BUSINESS_ACTION)->pluck('business_id');
@@ -42,7 +42,14 @@ class RemindPendingOrder extends Command
 
             if ($collection->count() > 0) {
                 $business->notify(new RemindPendingOrderNotification($collection));
+                $business->businessUsers()->each(function($businessUser) use ($collection) {
+                    if ($businessUser->isAdmin()) {
+                        $businessUser->user->notify(new RemindPendingOrderNotification($collection));
+                    }
+                });
             }
         }
+
+        return 0;
     }
 }

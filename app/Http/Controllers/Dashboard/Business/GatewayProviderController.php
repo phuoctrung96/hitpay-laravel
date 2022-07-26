@@ -63,7 +63,7 @@ class GatewayProviderController extends Controller
         $data               = $this->formData($business, $businessManager);
         $gatewayProvider    = GatewayProviderManager::createNew();
 
-        $gatewayProvider->methods = json_encode(array('paynow_online', 'card', 'alipay', 'wechat'));
+        $gatewayProvider->methods = ['paynow_online', 'card', 'alipay', 'wechat'];
 
         return Response::view('dashboard.business.gateway-provider.form', compact('business', 'gatewayProvider', 'data'));
     }

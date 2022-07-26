@@ -51,7 +51,7 @@
                 <button class="btn btn-success btn-sm" @click="markAsCompleted">Mark as shipped/picked up</button>
             </div>
             <template v-if="orders.length > 0">
-                <a class="hoverable" v-for="(order,index) in pageOfOrders" :key="order.id" :href="orderLink(order.id)">
+                <a class="hoverable" v-for="(order,index) in orders" :key="order.id" :href="orderLink(order.id)">
                     <div class="card-body bg-light border-top text-dark p-4 position-relative">
                         <input v-if="statusForm === 'requires_business_action'" type="checkbox" class="status-checkbox"
                                v-model="order.checked">
@@ -61,17 +61,16 @@
                                  alt="order">
                             <div class="media-body align-self-center">
                             <span
-                                class="font-weight-bold text-dark float-right">${{
-                                    (order.amount / 100).toFixed(2)
-                                }}</span>
+                                class="font-weight-bold text-dark float-right">{{ order.currency.toUpperCase() }} {{ order.amount | currency }}</span>
                                 <p class="font-weight-bold mb-2">
-                                    {{ order.customer_name ? order.customer_name : 'No Name' }}</p>
+                                    {{ order.customer.name ? order.customer.name : 'No Name' }}</p>
                                 <p class="text-dark small mb-0">Products<br><span class="text-muted">
                                 <span v-for="(product,index) in order.products">
                                     {{ product.name }} x {{ product.quantity }}
                                     <span v-if="index != Object.keys(order.products).length - 1">, </span>
                                 </span>
                             </span></p>
+                                <p class="text-dark small mb-2">Order ID: {{ order.id }}</p>
                                 <template v-if="order.status == 'completed'">
                                     <template v-if="order.customer_pickup">
                                         <p class="text-dark small mb-2">Picked up
@@ -91,7 +90,7 @@
                                     <template v-else>
                                         <p class="text-dark small mb-2">Address<br><span
                                             class="text-muted">{{
-                                                order.customer_city + ', ' + order.customer_street
+                                                order.customer.address.city + ', ' + order.customer.address.street
                                             }}</span>
                                         </p>
                                         <span class="badge badge-warning">Pending - Shipping</span>
@@ -109,7 +108,7 @@
                                 <template v-else-if="order.status == 'expired'">
                                     <span class="badge badge-danger">Canceled</span>
                                 </template>
-                                <template v-if="order.charges.length > 0">
+                                <template v-if="order.charges && order.charges.length > 0">
                                     <p class="text-dark small mb-2">Charge ID: {{ order.charges.slice(-1)[0].id }}
                                         <a href="#" style="text-decoration: underline" @click.prevent="copyCharge($event, order.charges.slice(-1)[0].id)">Copy</a></p>
                                     <input type="hidden" :id="'charge'+order.charges.slice(-1)[0].id"
@@ -124,7 +123,12 @@
                 <p><i class="fa far fa-list-alt fa-4x"></i></p>
                 <p class="small mb-0">- No order found -</p>
             </div>
-            <jw-pagination :items="orders" :pageSize=5 @changePage="onChangePage"></jw-pagination>
+            <b-pagination
+              v-model="page"
+              :total-rows="total"
+              :per-page="pageSize"
+              @change="handlePageChange"
+            />
         </div>
 
         <div class="modal" tabindex="-1" role="dialog" id="confirmationModal">
@@ -162,63 +166,99 @@ export default {
             status: 'All',
             statusForm: 'all',
             statuses: [],
-            is_processing: false,
             is_loading: false,
-            pageOfOrders: [],
-            statusOrderCheck: [],
             checkedAll: false,
             filterDate: {
                 dateFrom: '',
                 dateTo: '',
             },
             keywords: '',
+            page: 1,
+            total: 0,
+            pageSize: 5
         };
     },
 
     mounted() {
         this.business = Business;
-
-        if (window.Orders !== undefined) {
-            this.orders = Orders;
-        }
-
         this.statuses = Statuses;
 
-        let ordersWithChecked = [];
+        let urlParams = new URLSearchParams(window.location.search);
 
-        _.each(this.orders, (order) => {
-            order.checked = false;
-            ordersWithChecked.push(order);
-        });
+        let statusQuery = urlParams.get('status');
 
-        this.orders = ordersWithChecked;
+        if (statusQuery) {
+            this.statusForm = statusQuery;
+        }
+
+        this.retrieveItems();
     },
     methods: {
-        onChangePage(pageOfItems) {
-            // update page of items
-            this.pageOfOrders = pageOfItems;
+        getRequestParams() {
+          let params = {
+            'with': 'products,charges'
+          };
+
+          if (this.keywords) params["keywords"] = this.keywords;
+          if (this.page) params["page"] = this.page;
+          if (this.pageSize) params["perPage"] = this.pageSize;
+          if (this.filterDate.dateFrom) params['dateFrom'] = getFormattedDate(this.filterDate.dateFrom);
+          if (this.filterDate.dateTo) params['dateTo'] = getFormattedDate(this.filterDate.dateTo);
+          if (this.statusForm === 'all') {
+            params['statuses'] = _.values(this.statuses).filter((value, index) => 'all' !== value).join(',')
+          } else {
+            params['statuses'] = this.statusForm;
+          }
+
+          return params;
+        },
+        async retrieveItems() {
+          this.is_loading = true;
+
+          await axios.get(this.getDomain(`v1/business/${this.business.id}/order`, 'api'), {
+            params: this.getRequestParams(),
+            withCredentials: true
+          })
+            .then((response) => {
+              this.orders = response.data.data;
+              this.total = response.data.meta.total;
+              this.is_loading = false;
+            })
+            .catch((e) => {
+              this.is_loading = false;
+              console.log(e);
+            });
+        },
+        handlePageChange(value) {
+          this.page = value;
+          this.retrieveItems();
         },
         orderLink(id) {
             return '/business/' + this.business.id + '/order/' + id;
         },
         checkAll() {
-            _.each(this.pageOfOrders, (order) => {
-                if (!this.checkedAll) {
-                    order.checked = true;
-                } else order.checked = false;
+            _.each(this.orders, (order) => {
+                order.checked = !this.checkedAll;
             });
         },
         async markAsCompleted() {
+            let selectedOrders = this.orders.filter((order, index) => true === order.checked);
+
             this.is_loading = true;
+
             $('#confirmationModal').modal();
+
             let submissionData = {
-                'orders': this.pageOfOrders,
+                'orders': selectedOrders,
                 'status': this.statusForm
             };
+
             await axios.post(this.getDomain('business/' + this.business.id + '/order/update', 'dashboard'), submissionData).then(({data}) => {
                 $('#confirmationModal').modal('hide');
-                this.orders = data.orders;
                 this.is_loading = false;
+                // refresh items
+                this.retrieveItems();
+
                 $('#confirmationModal').modal();
             });
         },
@@ -228,23 +268,13 @@ export default {
                 setTimeout(() => { this.filterDate.dateTo = ''}, 5);
                 return;
             }
-            let submissionData = {
-                'status': this.statusForm,
-                'dateFrom': getFormattedDate(this.filterDate.dateFrom),
-                'dateTo': getFormattedDate(this.filterDate.dateTo)
-            };
-            await axios.post(this.getDomain('business/' + this.business.id + '/order/get', 'dashboard'), submissionData).then(({data}) => {
-                this.orders = data.orders;
-                this.status = data.status;
-            });
+
+            this.page = 1;
+            this.retrieveItems();
         },
         doSearch() {
-            let submissionData = {
-                'keywords': this.keywords,
-            };
-            axios.post(this.getDomain('business/' + this.business.id + '/order/search', 'dashboard'), submissionData).then(({data}) => {
-                this.orders = data.orders;
-            });
+            this.page = 1;
+            this.retrieveItems();
         },
 
         copyCharge($event, chargeId) {
@@ -253,8 +283,13 @@ export default {
             charge.select();
 
             try {
-                let copied = document.execCommand('copy');
-                $event.path[0].innerHTML = "Copied";
+                navigator.clipboard.writeText(chargeId);
+
+                if($event.path)
+                    $event.path[0].innerHTML = "Copied";
+                else
+                    $event.composedPath()[0].innerHTML = "Copied";
+
                 setTimeout(() => {
                     $event.path[0].innerHTML = "Copy";
                 }, 5000);
@@ -263,19 +298,19 @@ export default {
             }
 
             /* unselect the range */
-            charge.setAttribute('type', 'hidden')
+            charge.setAttribute('type', 'hidden');
             window.getSelection().removeAllRanges()
 
         },
     },
-        computed: {
-            statusUpper() {
-                return this.status.charAt(0).toUpperCase() + this.status.slice(1);
-            }
+    computed: {
+        statusUpper() {
+            return this.status.charAt(0).toUpperCase() + this.status.slice(1);
         }
+    }
 }
 
-    function getFormattedDate(date)
+function getFormattedDate(date)
 {
     if (date != '') {
         let year = date.getFullYear();

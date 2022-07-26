@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
+use Throwable;
 
 class PullHotglueScheduledJobs extends Command
 {
@@ -40,11 +41,11 @@ class PullHotglueScheduledJobs extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         Log::info('Hotglue pull scheduled jobs start process');
         $client = new Client;
-        $hotglueIntegrations = HotglueIntegration::whereFlow(config('services.hotglue.ecommerce_flow_id'))->whereConnected(true)->get();
+        $hotglueIntegrations = HotglueIntegration::where('flow', config('services.hotglue.ecommerce_flow_id'))->whereConnected(true)->get();
         if ($hotglueIntegrations) {
             Log::info('Hotglue pull scheduled jobs ' . $hotglueIntegrations->count() . ' tenants to process');
             foreach ($hotglueIntegrations as $hotglueIntegration) {
@@ -57,21 +58,33 @@ class PullHotglueScheduledJobs extends Command
                 ]);
                 $scheduledJobs = json_decode((string) $response->getBody(), true);
                 foreach ($scheduledJobs as $scheduledJob) {
-                    $jobExists = HotglueJob::whereJobId($scheduledJob['job_id'])->first();
-                    if (!$jobExists) {
-                        Log::info('Hotglue pull scheduled job for job_id ' . $scheduledJob['job_id']);
-                        HotglueJob::create([
-                            'hotglue_integration_id' => $hotglueIntegration->id,
-                            'job_id' => $scheduledJob['job_id'],
-                            'job_name' => 'scheduled-job-' . $scheduledJob['flow_id'],
-                            'status' => HotglueJob::QUEUED,
-                            'aws_path' => $scheduledJob['s3_root']
-                        ]);
-                        Artisan::queue('proceed:hotglue-feed --job_id=' . $scheduledJob['job_id']);
+                    if ($scheduledJob['status'] === HotglueJob::COMPLETED) {
+                        $jobExists = HotglueJob::where('job_id', $scheduledJob['job_id'])->first();
+                        if (!$jobExists) {
+                            Log::info('Hotglue pull scheduled job for job_id ' . $scheduledJob['job_id']);
+                            $hotglueJob = HotglueJob::create([
+                                'hotglue_integration_id' => $hotglueIntegration->id,
+                                'job_id' => $scheduledJob['job_id'],
+                                'job_name' => 'scheduled-job-' . $scheduledJob['flow_id'],
+                                'status' => HotglueJob::QUEUED,
+                                'aws_path' => $scheduledJob['s3_root'],
+                                'job_type' => HotglueJob::SCHEDULED_SYNC
+                            ]);
+                            try {
+                                Artisan::call('proceed:hotglue-feed --job_id=' . $scheduledJob['job_id']);
+                            } catch (Throwable $exception) {
+                                $hotglueJob->status = HotglueJob::FAILED;
+                                $hotglueJob->update();
+
+                                Log::critical("Command run for `proceed:hotglue-feed` for Job ID ({$scheduledJob['job_id']}) has failed. Error : {$exception->getMessage()} at {$exception->getFile()}:{$exception->getLine()}\n{$exception->getTraceAsString()}");
+                            }
+                        }
                     }
                 }
             }
-        } 
+        }
         Log::info('Hotglue pull scheduled jobs end process');
+
+        return 0;
     }
 }

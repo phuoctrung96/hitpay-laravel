@@ -49,6 +49,14 @@
                             </p>
                             <p class="text-dark small mb-0">Attached Card: <span class="text-muted">{{ $brand }} (****{{ $card['last4'] ?? '' }}, {{ $country }})</span>
                             </p>
+                        @elseif ($recurringPlan->payment_provider === \App\Enumerations\PaymentProvider::STRIPE_US)
+                            @php($card = $recurringPlan->data['stripe']['payment_method']['card'] ?? [])
+                            @php($brand = isset($card['brand']) ? ucwords($card['brand']) : 'Unknown')
+                            @php($country = isset($card['country']) ? (Lang::has('misc.country.'.$card['country']) ? Lang::get('misc.country.'.$card['country']) : $card['country']) : 'Unknown Country')
+                            <p class="text-dark small mb-0">Payment Method: <span class="text-muted">Card Payment</span>
+                            </p>
+                            <p class="text-dark small mb-0">Attached Card: <span class="text-muted">{{ $brand }} (****{{ $card['last4'] ?? '' }}, {{ $country }})</span>
+                            </p>
                         @else
                             <p class="text-dark small mb-0">Payment Method: <span class="text-muted">Unknown</span></p>
                         @endif
@@ -62,16 +70,20 @@
                     @switch($recurringPlan->status)
                         @case('active')
                         <p><span class="badge badge-lg badge-success">Active</span></p>
+                        @if($recurringPlan->cycle != \App\Enumerations\Business\RecurringCycle::SAVE_CARD)
                         <p class="text-dark small mb-0">Next charge
                             at: {{ $recurringPlan->expires_at->format('d \o\f F, Y') }}</p>
+                        @endif
                         @break
                         @case('completed')
                         <p class="mb-0"><span class="badge badge-lg badge-success">Completed</span></p>
                         @break
                         @case('scheduled')
-                        <p><span class="badge badge-lg badge-warning">Pending</span></p>
-                        <p class="text-dark small mb-0">Automatically cancel
-                            at: {{ $recurringPlan->expires_at->format('d \o\f F, Y') }}</p>
+                        @if ($recurringPlan->expires_at->isPast())
+                            <p class="text-dark small mb-0"><span class="badge badge badge-danger">Canceled</span> at {{ $recurringPlan->expires_at->format('h:ia \o\n F d, Y (l)') }}</p>
+                        @else
+                            <p class="text-dark small mb-0">Automatic canceled at {{ $recurringPlan->expires_at->format('h:ia \o\n F d, Y (l)') }}</p>
+                        @endif
                         @break
                         @case('canceled')
                         <p><span class="badge badge-lg badge-danger">Canceled</span></p>
@@ -241,7 +253,6 @@
         'recurring_plan_id' => $recurringPlan->id,
     ]) }}" title="Store Link" disabled>
     <script>
-        window.Business = @json($business);
         window.RecurringPlan = @json($recurringPlan);
 
         function freeze(element) {

@@ -40,8 +40,7 @@
                         <div class="input-group-append">
                             <span class="input-group-text"><a href="javascript:void(0)" class="btn-copy">COPY</a></span>
                         </div>
-                        <business-edit-slug
-                            :business = "{{json_encode($business)}}"/>
+                        <business-edit-slug />
                     </div>
                     <p class="text-muted mb-0">Accept payment from any customer with any amount using just one click</p>
                 </div>
@@ -142,6 +141,5 @@
             });
         });
 
-        window.Business = @json($business);
     </script>
 @endpush

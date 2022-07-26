@@ -218,7 +218,11 @@
                                                 <td style="{{ $style['outer_td'] }}" valign="top">&nbsp;</td>
                                                 <td class="receipt-container" style="{{ $style['outer_td'] }} width: 80%;"
                                                     width="80%" valign="top">
-                                                    @if ($plan_payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE || $plan_payment_provider === \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA)
+                                                    @if (in_array($plan_payment_provider, [
+                                                        \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE,
+                                                        \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA,
+                                                        \App\Enumerations\PaymentProvider::STRIPE_US,
+                                                    ]))
                                                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Your attached card for the below recurring payment invoice from {{ $business_name }} has failed to charge. Please update your card at the link below or contact {{ $business_name }} for further details.</p>
                                                     @else
                                                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Your direct debit authorization for the below recurring payment invoice from {{ $business_name }} has failed to charge. Please contact {{ $business_name }} for further details.</p>
@@ -280,7 +284,11 @@
                                                     </table>
                                                     <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">
                                                         <a href="{{ $plan_url }}">
-                                                            @if ($plan_payment_provider === \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE || $plan_payment_provider === \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA)
+                                                            @if (in_array($plan_payment_provider, [
+                                                                \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE,
+                                                                \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA,
+                                                                \App\Enumerations\PaymentProvider::STRIPE_US,
+                                                            ]))
                                                                 Update Card
                                                             @else
                                                                 View Plan

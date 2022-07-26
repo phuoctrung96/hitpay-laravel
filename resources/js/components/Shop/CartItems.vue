@@ -256,7 +256,7 @@
                         <div class="row align-items-center">
                             <div class="col-md-5 col-lg-5 order-lg-2">
                                 <div class="price">
-                                    {{ business.currency.toUpperCase() }}{{ variation.model.price }}
+                                    {{ getFormattedAmount(business.currency, variation.model.price) }}
                                 </div>
                             </div>
                             <div class="col-md-7 col-lg-7 order-lg-1">
@@ -327,12 +327,14 @@
 
         <div class="cart-bottom clearfix">
             <div class="total-price clearfix">
-                <span class="title">Total:  </span> <span class="number">{{ business.currency.toUpperCase() }}{{ totalAmount }}</span><i
+                <span class="title">Total:  </span> <span class="number">{{ displayTotalAmount }}</span><i
                 v-if="is_processing" class="fas fa-spin fa-spinner ml-2"></i>
             </div>
-            <div class="discount clearfix">
-                <span class="text-muted float-right mt-2" v-if="discount.amount > 0">{{ discount.name }} discount was applied. (- ${{ (discount.amount/100).toFixed(2)}})</span><i
-                v-if="is_processing" class="fas fa-spin fa-spinner ml-2"></i>
+            <div class="discount clearfix" v-if="discount.status === 'success'">
+                <span class="text-muted float-right mt-2">
+                  {{ getDiscountNameApplied }} discount was applied. (- {{ getDiscountAmountApplied }})
+                </span>
+              <i v-if="is_processing" class="fas fa-spin fa-spinner ml-2"></i>
             </div>
             <div class="btn-checkout">
                 <a :href="checkoutLink"><button class="btn btn-normal" :style="checkoutStyle" :disabled="is_processing || is_error">Checkout</button></a>
@@ -342,7 +344,8 @@
 </template>
 
 <script>
-import GetTextColor from '../../mixins/GetTextColor'
+import GetTextColor from '../../mixins/GetTextColor';
+import CurrencyNumber from '../../mixins/CurrencyNumber';
 
 export default {
     watch: {
@@ -367,7 +370,8 @@ export default {
         },
     },
     mixins: [
-        GetTextColor
+        GetTextColor,
+        CurrencyNumber,
     ],
     props: {
         customisation: {
@@ -409,7 +413,6 @@ export default {
         let i = 0;
         _.each(this.variations, (variation) => {
             this.errors[i] = [];
-            variation.model.price = (variation.model.price / 100).toFixed(2);
             vars.push(variation);
             i++;
         });
@@ -490,17 +493,24 @@ export default {
             this.variations[variation].cart.quantity = quantity;
 
             this.updateCart(productId, quantity, variation);
-        }
+        },
+
     },
     computed: {
-        totalAmount() {
+        displayTotalAmount() {
             let totalCartAmount = 0;
+
             _.each(this.variations, (variation) => {
                 totalCartAmount += variation.model.price * variation.cart.quantity;
             });
-            if (this.discount.amount) totalCartAmount -= (this.discount.amount / 100)
-            return totalCartAmount.toFixed(2);
+
+            if (this.discount.amount) {
+                totalCartAmount -= this.discount.amount;
+            }
+
+            return this.getFormattedAmount(this.business.currency, totalCartAmount);
         },
+
         currentThemeColors() {
             return this.themeColors[this.safeTheme]
         },
@@ -522,8 +532,39 @@ export default {
         },
         checkoutLink(){
             return this.getDomain(this.business.id + '/checkout', 'shop')
+        },
+        getDiscountNameApplied() {
+          if (this.discount.status !== 'success') {
+            return '';
+          }
+
+          let name = '';
+
+          _.each(this.discount.discount_information, discount => {
+            if (name === '') {
+              name += ' ' + discount.discount_applied.name;
+            } else {
+              name += ' & ' + discount.discount_applied.name;
+            }
+          });
+
+          name = name.trim();
+
+          return '[' + name + ']';
+        },
+        getDiscountAmountApplied() {
+          if (this.discount.status !== 'success') {
+            return this.getFormattedAmount(this.business.currency, 0);
+          }
+
+          let discountAmount = 0;
+
+          _.each(this.discount.discount_information, discount => {
+            discountAmount = discountAmount + discount.discount_amount;
+          });
+
+          return this.getFormattedAmount(this.business.currency, discountAmount);
         }
     }
-
 }
 </script>

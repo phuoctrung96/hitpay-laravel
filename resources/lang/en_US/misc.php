@@ -78,6 +78,7 @@ return [
         'gt' => 'Guatemala',
         'gw' => 'Guinea-Bissau',
         'gy' => 'Guyana',
+        'hk' => 'Hong Kong',
         'hn' => 'Honduras',
         'hr' => 'Croatia',
         'ht' => 'Haiti',

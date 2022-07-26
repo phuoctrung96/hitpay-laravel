@@ -50,17 +50,17 @@ class XeroSalesFeed extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $status = $this->option('status')[0];
         if (!isset($status))
         {
             echo 'status argument is required';
-            return false;
+            return 1;
         }
         if ($status != 'success' && $status != 'refund')
         {
-            return false;
+            return 1;
         }
 
         $businesses = Business::query()
@@ -69,7 +69,7 @@ class XeroSalesFeed extends Command
             ->get();
         if (!count($businesses)) {
             $this->warn('No business with xero token found');
-            return false;
+            return 1;
         }
 
         collect($businesses)->map(function ($business) use ($status) {
@@ -91,5 +91,7 @@ class XeroSalesFeed extends Command
                 Log::error($exception);
             }
         });
+
+        return 0;
     }
 }

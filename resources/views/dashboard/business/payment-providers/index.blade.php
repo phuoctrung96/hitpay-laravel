@@ -10,14 +10,11 @@
     @endif
   <payment-methods
     :current_business_user="{{ json_encode(resolve(\App\Services\BusinessUserPermissionsService::class)->getBusinessUser(Auth::user(), $business)) }}"
-    business_id="{{ $business->id }}"
 {{--    delete this later --}}
-    :business="{{ json_encode($business) }}"
     :providers="{{ json_encode($providers) }}"
     :disabled_providers="{{ json_encode($disabled_providers) }}"
     :banks_list="{{ json_encode($bankList) }}"
 {{--    end delete this later--}}
-    :user="{{json_encode(Auth::user()->load('businessUsers'))}}"
 {{--    delete this later --}}
     :business_verified="{{ json_encode($business_verified) }}"
 {{--    end delete this later--}}

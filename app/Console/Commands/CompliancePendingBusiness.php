@@ -30,9 +30,9 @@ class CompliancePendingBusiness extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
-        $verifications = Business\Verification::where('verified_at', '<', '2021-08-26 10:41:51')->get();
+        $verifications = Business\Verification::where('verified_at', '>', '2022-04-22 00:00:01')->get();
 
         $api_key = config('services.comply_advantage.key');
 
@@ -42,8 +42,11 @@ class CompliancePendingBusiness extends Command
             foreach ($verifications as $verification) {
                 if ($verification->type === 'business') {
                     $search_terms = [$verification->my_info_data['data']['person']['name']['value'], $verification->my_info_data['data']['entity']['basic-profile']['entity-name']['value']];
-                    foreach ($shareholders = $verification->my_info_data['data']['entity']['shareholders']['shareholders-list'] as $shareholder) {
-                        $search_terms[] = $shareholder['person-reference']['person-name']['value'] ?? $shareholder['entity-reference']['entity-name']['value'];
+
+                    if (isset($this->verification->submitted_data['shareholders'])) {
+                        foreach ($shareholders = $verification->my_info_data['data']['entity']['shareholders']['shareholders-list'] as $shareholder) {
+                            $search_terms[] = $shareholder['person-reference']['person-name']['value'] ?? $shareholder['entity-reference']['entity-name']['value'];
+                        }
                     }
 
                     $client_ref = $verification->business_id;
@@ -76,11 +79,13 @@ class CompliancePendingBusiness extends Command
                 }
             }
 
-            return;
+            return 0;
 
 
         } catch (Exception $exception) {
             Log::error($exception->getResponse()->getBody()->__toString());
+
+            return 1;
         }
     }
 }

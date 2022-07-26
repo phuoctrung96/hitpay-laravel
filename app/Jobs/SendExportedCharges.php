@@ -80,6 +80,8 @@ class SendExportedCharges implements ShouldQueue
     {
         ini_set('memory_limit', '512M');
 
+        $home_currency = strtoupper($this->business->currency);
+
         $filters = [];
 
         $charges = $this->business->charges()->with('receiptRecipients', 'target')->whereIn('status', [
@@ -154,10 +156,10 @@ class SendExportedCharges implements ShouldQueue
             'Refunded Amount',
             'Cashback',
             'Cashback Admin Fee',
-            'Converted Amount in SGD',
-            'HitPay Platform Fee Amount in SGD (Exclusive of Stripe Fee)',
-            'All Inclusive Fee Amount in SGD',
-            'Net Amount in SGD',
+            'Converted Amount in ' . $home_currency,
+            'HitPay Platform Fee Amount in ' . $home_currency . ' (Exclusive of Stripe Fee)',
+            'All Inclusive Fee Amount in ' . $home_currency,
+            'Net Amount in ' . $home_currency,
             'Payment Details',
             'Completed Date',
             'Store URL',
@@ -243,7 +245,7 @@ class SendExportedCharges implements ShouldQueue
                 'Refunded Amount' => getReadableAmountByCurrency($charge->currency, $refundedAmount),
                 'Cashback' => getReadableAmountByCurrency($charge->currency, $cashback_amount),
                 'Cashback Admin Fee' => $cashback_amount ? '0.00' : 0,
-                'Converted Amount in SGD' => $charge->currency !== 'sgd' && $charge->exchange_rate
+                'Converted Amount in ' . $home_currency => $charge->currency !== $charge->home_currency && $charge->exchange_rate
                     ? getReadableAmountByCurrency($charge->home_currency, $charge->home_currency_amount)
                     : null,
                 'HitPay Platform Fee Amount (Exclusive of Stripe Fee)' => $charge->payment_provider_transfer_type
@@ -283,11 +285,11 @@ class SendExportedCharges implements ShouldQueue
         if ($this->user instanceof User) {
             $this->user->notify(new SendFile($this->business->getName().' - Exported Transactions', [
                 'Please find attached the exported transactions'.$filters.' from '.$fromDate.' to '.$toDate,
-            ], ($fromDate.' - '.$toDate), $csv->getContent()));
+            ], ($fromDate.' - '.$toDate), $csv->toString()));
         } else {
             $this->business->notify(new SendFile('Your Exported Transactions', [
                 'Please find attached your exported transactions'.$filters.' from '.$fromDate.' to '.$toDate,
-            ], ($fromDate.' - '.$toDate), $csv->getContent()));
+            ], ($fromDate.' - '.$toDate), $csv->toString()));
         }
 
         /** @var Business\BusinessUser $businessAdmins */
@@ -299,7 +301,7 @@ class SendExportedCharges implements ShouldQueue
         foreach ($businessAdmins as $businessAdmin) {
             $businessAdmin->user->notify(new SendFile($this->business->getName().' - Exported Transactions', [
                 'Please find attached the exported transactions'.$filters.' from '.$fromDate.' to '.$toDate,
-            ], ($fromDate.' - '.$toDate), $csv->getContent()));
+            ], ($fromDate.' - '.$toDate), $csv->toString()));
         }
     }
 }

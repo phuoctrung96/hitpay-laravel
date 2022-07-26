@@ -31,14 +31,12 @@ class ShopifyRefund
     public function createFromRequest(Request $request): array
     {
         try {
-            if (!App::environment('production')) {
-                Log::info('createFromRequest:');
-                Log::info(print_r($request->post(),true));
-            }
+            Log::info('ShopifyRefund createFromRequest:');
+            Log::info(print_r($request->post(),true));
 
             $apiKey = $request->get('api_key');
 
-            $shopifyRefundId = $request->get('payment_id');
+            $shopifyRefundId = $request->get('id');
 
             $shopifyPaymentId = $request->get('payment_id');
 
@@ -53,8 +51,7 @@ class ShopifyRefund
             $businessShopifyPayment = $business->shopifyPayments()->where('invoice_id', $shopifyPaymentId)->first();
 
             if (!$businessShopifyPayment instanceof BusinessShopifyPayment) {
-                throw new \Exception("BusinessShopifyPayment not found.
-                    From invoice id {$shopifyPaymentId}");
+                throw new \Exception("BusinessShopifyPayment not found. From invoice id {$shopifyPaymentId}");
             }
 
             $shopifyPaymentData = $businessShopifyPayment->request_data;
@@ -65,23 +62,7 @@ class ShopifyRefund
 
                 if ($isProductionToSandbox) {
                     Log::info('isProductionToSandbox come');
-                    $businessShopifyRefund = $business->shopifyRefunds()->where('payment_id', $shopifyPaymentId)
-                        ->where('refund_id', $shopifyRefundId)->first();
-
-                    if (!$businessShopifyRefund instanceof BusinessShopifyRefund) {
-                        Log::info('create new refund data');
-                        $business->shopifyRefunds()->create([
-                            'payment_id' => $shopifyPaymentId,
-                            'refund_id' => $shopifyRefundId,
-                            'gid' => $request->get('gid'),
-                            'request_data' => $request->all()
-                        ]);
-                    } else {
-                        Log::info('become duplicate');
-                        // duplicate, throw exception
-                        throw new DuplicateRefundException("Duplicate shopify refund with
-                            Business ID {$business->getKey()} Payment ID {$shopifyPaymentId} and Refund ID {$shopifyRefundId}");
-                    }
+                    $businessShopifyRefund = $this->getBusinessShopifyRefund($business, $shopifyPaymentId, $shopifyRefundId, $request);
                 } else {
                     Log::info('request to sandbox A12');
                     try {
@@ -92,6 +73,10 @@ class ShopifyRefund
                         return [];
                     }
                 }
+            } else {
+                Log::info('refund going to production only, no have test mode');
+
+                $businessShopifyRefund = $this->getBusinessShopifyRefund($business, $shopifyPaymentId, $shopifyRefundId, $request);
             }
 
             $paymentRequest = $business->paymentRequests()->where('reference_number', $shopifyPaymentId)->first();
@@ -151,30 +136,7 @@ class ShopifyRefund
                 throw $exception;
             }
 
-            if ($request->get('shopify_token_real') === $request->get('shopify_token')) {
-                $shopifyToken = $request->get('shopify_token');
-            } else {
-                if (Config::get('services.shopify.is_possible_test_mode')) {
-                    $isTestMode = $request->get('test');
-                } else {
-                    // to testing like real payment on sandbox
-                    $isTestMode = false;
-                }
-
-                if (Config::get('services.shopify.business_test_sandbox_to_staging')) {
-                    if ($isTestMode && App::environment('sandbox')) {
-                        $shopifyToken = $request->get('shopify_token');
-                    } else {
-                        $shopifyToken = $request->get('shopify_token_real');
-                    }
-                } else {
-                    if ($isTestMode && App::environment('production')) {
-                        $shopifyToken = $request->get('shopify_token');
-                    } else {
-                        $shopifyToken = $request->get('shopify_token_real');
-                    }
-                }
-            }
+            $shopifyToken = $this->getShopifyToken($request);
 
             RefundSessionResolveJob::dispatch([
                 'business_id' => $business->getKey(),
@@ -236,30 +198,7 @@ class ShopifyRefund
             "merchantMessage" => $reasonMessage
         ];
 
-        if ($request->get('shopify_token_real') === $request->get('shopify_token')) {
-            $shopifyToken = $request->get('shopify_token');
-        } else {
-            if (Config::get('services.shopify.is_possible_test_mode')) {
-                $isTestMode = $request->get('test');
-            } else {
-                // to testing like real payment on sandbox
-                $isTestMode = false;
-            }
-
-            if (Config::get('services.shopify.business_test_sandbox_to_staging')) {
-                if ($isTestMode && App::environment('sandbox')) {
-                    $shopifyToken = $request->get('shopify_token_real');
-                } else {
-                    $shopifyToken = $request->get('shopify_token');
-                }
-            } else {
-                if ($isTestMode && App::environment('production')) {
-                    $shopifyToken = $request->get('shopify_token_real');
-                } else {
-                    $shopifyToken = $request->get('shopify_token');
-                }
-            }
-        }
+        $shopifyToken = $this->getShopifyToken($request);
 
         RefundSessionRejectJob::dispatch([
             'business_id' => $request->get('business_id'),
@@ -313,5 +252,73 @@ class ShopifyRefund
         $responseArray = $response->getBody()->getContents();
 
         return json_decode((string) $responseArray, true);
+    }
+
+    /**
+     * @param Request $request
+     * @return mixed
+     */
+    private function getShopifyToken(Request $request)
+    {
+        if ($request->get('shopify_token_real') === $request->get('shopify_token')) {
+            $shopifyToken = $request->get('shopify_token');
+        } else {
+            if (Config::get('services.shopify.is_possible_test_mode')) {
+                $isTestMode = $request->get('test');
+            } else {
+                // to testing like real payment on sandbox
+                $isTestMode = false;
+            }
+
+            if (Config::get('services.shopify.business_test_sandbox_to_staging')) {
+                if ($isTestMode && App::environment('staging')) {
+                    $shopifyToken = $request->get('shopify_token_real');
+                } else {
+                    $shopifyToken = $request->get('shopify_token');
+                }
+            } else {
+                if ($isTestMode && App::environment('sandbox')) {
+                    $shopifyToken = $request->get('shopify_token_real');
+                } else {
+                    $shopifyToken = $request->get('shopify_token');
+                }
+            }
+        }
+
+        if ($shopifyToken === null) {
+            Log::info('ShopifyToken null');
+        }
+
+        return $shopifyToken;
+    }
+
+    /**
+     * @param Business $business
+     * @param $shopifyPaymentId
+     * @param $shopifyRefundId
+     * @param Request $request
+     * @return \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Relations\HasMany|object|null
+     * @throws DuplicateRefundException
+     */
+    private function getBusinessShopifyRefund(Business $business, $shopifyPaymentId, $shopifyRefundId, Request $request)
+    {
+        $businessShopifyRefund = $business->shopifyRefunds()->where('payment_id', $shopifyPaymentId)
+            ->where('refund_id', $shopifyRefundId)->first();
+
+        if (!$businessShopifyRefund instanceof BusinessShopifyRefund) {
+            Log::info('create new refund data');
+            $business->shopifyRefunds()->create([
+                'payment_id' => $shopifyPaymentId,
+                'refund_id' => $shopifyRefundId,
+                'gid' => $request->get('gid'),
+                'request_data' => $request->all()
+            ]);
+        } else {
+            Log::info('become duplicate');
+            // duplicate, throw exception
+            throw new DuplicateRefundException("Duplicate shopify refund with Business ID {$business->getKey()} Payment ID {$shopifyPaymentId} and Refund ID {$shopifyRefundId}");
+        }
+
+        return $businessShopifyRefund;
     }
 }

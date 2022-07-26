@@ -120,7 +120,7 @@ class MigrateDatabase extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
         $this->totalUserDetected = str_pad($this->oldConnection->table('accounts')->count(), 6, ' ');
 
@@ -1020,6 +1020,8 @@ class MigrateDatabase extends Command
         $this->line('Total Invalid : '.$this->accountsCollection->count());
 
         Storage::append($this->filename.'-done.txt', 'done');
+
+        return 0;
     }
 
     /**

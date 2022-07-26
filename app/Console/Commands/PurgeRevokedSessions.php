@@ -23,8 +23,9 @@ class PurgeRevokedSessions extends Command
     /**
      * Execute the console command.
      */
-    public function handle() : void
+    public function handle() : int
     {
         // todo
+        return 0;
     }
 }

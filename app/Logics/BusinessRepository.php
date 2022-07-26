@@ -3,6 +3,8 @@
 namespace App\Logics;
 
 use App\Actions\Business\BasicDetails\UpdateStripeAccount;
+use App\Actions\Business\EmailTemplates\StoreDefault;
+use App\Actions\User\Register\BusinessForm;
 use App\Business;
 use App\Business\BusinessReferral;
 use App\Enumerations\Business\PaymentMethodType;
@@ -12,6 +14,7 @@ use App\Enumerations\PaymentProvider;
 use App\Enumerations\PaymentProvider as PaymentProviderEnum;
 use App\Events\Business\Created;
 use App\Events\Business\Updated;
+use App\Helpers\PhoneNumber;
 use App\Models\BusinessPartner;
 use App\Notifications\RegistrationInviteAccepted;
 use App\Role;
@@ -45,6 +48,8 @@ class BusinessRepository
      */
     public static function store(Request $request, User $user) : Business
     {
+        $countries = BusinessForm::withRequest($request)->process()['countries'];
+
         $data = Validator::validate($request->all(), [
             'identifier' => [
                 'nullable',
@@ -62,19 +67,14 @@ class BusinessRepository
                 'string',
                 'max:64',
             ],
-            'email' => [
-                'nullable',
-                'string',
-                'email',
-                'max:255',
-            ],
             'country' => [
                 'required',
                 'string',
-                Rule::in([ CountryCode::MALAYSIA, CountryCode::SINGAPORE ]),
+                Rule::in($countries->pluck('id')->toArray()),
             ],
             'phone_number' => [
                 'nullable',
+                'phone_number'
             ],
             'street' => [
                 'required_with:city,state,postal_code',
@@ -142,7 +142,15 @@ class BusinessRepository
             }
         }
 
+        if (!PhoneNumber::isValidLocalPhoneNumber($data['country'], $data['phone_number'])) {
+            throw ValidationException::withMessages([
+                'phone_number' => 'Please use local phone number for country ' . $data['country'],
+            ]);
+        }
+
+        $data['payment_enabled'] = false;
         $data['website'] = $website;
+        $data['email'] = $user->email;
 
         $data['id'] = Str::orderedUuid()->toString();
         $customer = null; // customer of stripe
@@ -150,15 +158,15 @@ class BusinessRepository
         if ($user->businessPartner) { // handle partner
             $data['business_type'] = Type::PARTNER;
 
-            if ($data['country'] === CountryCode::MALAYSIA) {
+            if ($data['country'] === CountryCode::SINGAPORE) {
+                // singapore partner should create payment provider of PayNow
+                $data['payment_provider'] = '';
+            } else {
                 $data['payment_provider'] = Customer::getStripePlatformByCountry($data['country']);
 
                 $customer = Customer::newByCountry($data['country'])->create('business_id:'.$data['id']);
 
                 $data['payment_provider_customer_id'] = $customer->id;
-            } else {
-                // singapore partner should create payment provider of PayNow
-                $data['payment_provider'] = '';
             }
         } else {
             $data['payment_provider'] = Customer::getStripePlatformByCountry($data['country']);
@@ -178,6 +186,7 @@ class BusinessRepository
 
                 /** @var Business $business */
                 $business = $user->businessesOwned()->create($data);
+
                 $business->businessReferral()->create([
                     'id' => Str::uuid(),
                     'code' => static::generateBusinessReferralCode($business),
@@ -229,14 +238,18 @@ class BusinessRepository
                     'name' => 'General',
                 ]);
 
+                try {
+                    StoreDefault::withBusiness($business)->process();
+                } catch (\Exception $exception) {
+                    // do nothing
+                }
+
                 if (
-                    $business->country === CountryCode::SINGAPORE ||
-                    $business->country === CountryCode::MALAYSIA
+                    in_array($business->country, CountryCode::listConstants())
                 ) {
                     // If the business is Singapore based (soon other licensed countries) we will create a custom account
                     // for the business.
                     //
-
                     if ($business->shouldHaveStripeCustomAccount()) {
                         try {
                             Create::new($business->payment_provider)->setBusiness($business)
@@ -317,6 +330,7 @@ class BusinessRepository
             ],
             'phone_number' => [
                 'nullable',
+                'phone_number'
             ],
             'address.street' => [
                 'nullable',
@@ -352,12 +366,44 @@ class BusinessRepository
                 'nullable',
                 'date_format:Y-m-d',
             ],
+            'street' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'city' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'state' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'postal_code' => [
+                'nullable',
+                'string',
+                'max:16',
+            ],
         ]);
 
         // todo: use mutators/setter in Business model instead
         if (isset($data['address'])) {
             $data = array_merge($data, $data['address']);
             unset($data['address']);
+        }
+
+        if (isset($data['introduction'])) {
+            $config = \HTMLPurifier_Config::createDefault();
+            $config->set('Cache.SerializerPath', Facades\App::bootstrapPath('cache/serializer_path'));
+            $purifier = new \HTMLPurifier($config);
+            $data['introduction'] = $purifier->purify($data['introduction']);
+        }
+
+        // skip phone_number because ShopState.vue not include update phone_number
+        if (isset($data['phone_number']) && $data['phone_number'] == '') {
+            unset($data['phone_number']);
         }
 
         $business = DB::transaction(function () use ($business, $data) : Business {
@@ -435,11 +481,7 @@ class BusinessRepository
             $paymentProvider->save();
 
             $business->gatewayProviders()->get()->each(function (Business\GatewayProvider $gatewayProvider) {
-                $methods = $gatewayProvider->methods ? json_decode($gatewayProvider->methods) : [];
-
-                if (!is_array($methods)) {
-                    $methods = json_decode($gatewayProvider->methods, true);
-                }
+                $methods = $gatewayProvider->methods ?? [];
 
                 $key = array_search(PaymentMethodType::CARD, $methods);
 
@@ -449,7 +491,7 @@ class BusinessRepository
 
                 unset($methods[$key]);
 
-                $gatewayProvider->methods = count($methods) ? json_encode($methods) : null;
+                $gatewayProvider->methods = count($methods) ? $methods : null;
                 $gatewayProvider->save();
             });
         }

@@ -89,10 +89,6 @@
 @endsection
 
 @push('body-stack')
-    <script>
-        window.Business = @json($business);
-    </script>
-
     <script type="text/javascript">
         function showSpinner() {
             $('#removeShopifyButton').append($('<i class="fa fa-spinner fa-spin ml-2">'));

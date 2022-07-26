@@ -7,6 +7,7 @@ use App\Enumerations\Business\PaymentMethodType;
 use App\Enumerations\Business\RecurringCycle;
 use App\Enumerations\Business\RecurringPlanStatus;
 use App\Enumerations\Business\SupportedCurrencyCode;
+use App\Enumerations\CurrencyCode;
 use App\Enumerations\PaymentProvider as PaymentProviderEnum;
 use App\Exceptions\CollectionFailedException;
 use App\Logics\ConfigurationRepository;
@@ -32,6 +33,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Stripe\BalanceTransaction;
 use Stripe\PaymentIntent as StripePaymentIntent;
+use Stripe\PaymentMethod;
 
 class RecurringBilling extends Model implements BusinessOwnableContract, ChargeableContract, UserOwnableContract
 {
@@ -78,7 +80,14 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
         throw new Exception('Unknown status detected');
     }
 
-    public function charge(int $cycle = 1) : Charge
+    /**
+     * @throws \Throwable
+     * @throws \Stripe\Exception\ApiErrorException
+     * @throws \App\Exceptions\HitPayLogicException
+     * @throws \ReflectionException
+     * @throws CollectionFailedException
+     */
+    public function charge(int $cycle = 1, $amount = null, $currency = null)
     {
         if ($this->isCompleted()
             || ($this->times_to_be_charged !== null
@@ -108,6 +117,22 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
             if (!$paymentProvider instanceof PaymentProvider) {
                 throw new Exception('You have to connect to Stripe account before you can charge a plan.');
             }
+        } elseif ($this->payment_provider === PaymentProviderEnum::STRIPE_MALAYSIA) {
+            $paymentProvider = $this->business->paymentProviders()
+                ->where('payment_provider', $this->business->payment_provider)
+                ->first();
+
+            if (!$paymentProvider instanceof PaymentProvider) {
+                throw new Exception('You have to connect to Stripe Malaysia account before you can charge a plan.');
+            }
+        } elseif ($this->payment_provider === PaymentProviderEnum::STRIPE_US) {
+            $paymentProvider = $this->business->paymentProviders()
+                ->where('payment_provider', $this->business->payment_provider)
+                ->first();
+
+            if (!$paymentProvider instanceof PaymentProvider) {
+                throw new Exception('You have to connect to Stripe US account before you can charge a plan.');
+            }
         } else {
             throw new Exception('Invalid payment provider set for recurring plan.');
         }
@@ -127,21 +152,23 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
         $charge->customer_state = $this->customer_state;
         $charge->customer_postal_code = $this->customer_postal_code;
         $charge->customer_country = $this->customer_country;
-        $charge->currency = $this->currency;
-        $charge->amount = bcmul($this->price, $cycle);
+        $charge->currency = $currency ? $currency : $this->currency;
+        $charge->amount = $amount ? getRealAmountForCurrency($charge->currency, $amount) : bcmul($this->price, $cycle);
 
         $charge->target()->associate($this);
 
-        $start = $this->expires_at->clone()->addDay();
-        $until = $this->getNextChargeDate($cycle);
+        if ($this->cycle != RecurringCycle::SAVE_CARD) {
+            $start = $this->expires_at->clone()->addDay();
+            $until = $this->getNextChargeDate($cycle);
 
-        $remark = 'Recurring Plan from '.$start->toDateString().' To '.$until->toDateString();
+            $remark = 'Recurring Plan from ' . $start->toDateString() . ' To ' . $until->toDateString();
 
-        $charge->remark = Str::limit($remark, 240);
+            $charge->remark = Str::limit($remark, 240);
+        }
 
         $filename = 'recurring-plan'.DIRECTORY_SEPARATOR.$charge->getKey().'.txt';
 
-        if ($this->payment_provider === PaymentProviderEnum::DBS_SINGAPORE) {
+        if ($this->payment_provider === PaymentProviderEnum::DBS_SINGAPORE && $this->currency === CurrencyCode::SGD) {
             $data = $this->data['dbs']['dda'];
 
             $collection = GPC::new($charge->id, $this->dbs_dda_reference)
@@ -176,13 +203,14 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
                 $fixedAmount,
                 $percentage,
             ] = $paymentProvider->getRateFor(
-                $this->business->country, $this->business->currency, $charge->currency, $charge->channel,
+                $charge->currency, $charge->channel,
                 $charge->payment_provider_charge_method, null, null, $charge->amount
             );
 
             $charge->home_currency = $this->currency;
             $charge->home_currency_amount = $this->price;
             $charge->exchange_rate = 1;
+
             $charge->fixed_fee = $fixedAmount;
             $charge->discount_fee_rate = $percentage;
             $charge->discount_fee = bcmul($charge->discount_fee_rate, $charge->home_currency_amount);
@@ -197,6 +225,7 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
                     $this->status = RecurringPlanStatus::COMPLETED;
                 }
             }
+
 
             try {
                 DB::transaction(function () use ($charge) {
@@ -226,12 +255,31 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
 
         $stripeChargeHelper = StripeCharge::new($this->business->payment_provider);
 
+        $paymentMethod = PaymentMethod::retrieve($this->payment_provider_payment_method_id);
+
+        [
+            $fixedAmount,
+            $percentage,
+        ] = $paymentProvider->getRateFor(
+            $this->currency,
+            $charge->channel,
+            $paymentMethod->type,
+            $paymentMethod->card->country,
+            $paymentMethod->card->brand,
+            $this->amount
+        );
+
         $stripePaymentIntent = StripePaymentIntent::create([
             'amount' => $charge->amount,
             'currency' => $charge->currency,
             'customer' => $this->payment_provider_customer_id,
             'payment_method' => $this->payment_provider_payment_method_id,
             // 'error_on_requires_action' => true,
+            'on_behalf_of' => $paymentProvider->payment_provider_account_id,
+            'transfer_data' => [
+                'destination' => $paymentProvider->payment_provider_account_id,
+            ],
+            'application_fee_amount' => (int) bcadd($fixedAmount, bcmul($this->price, $percentage)),
             'confirm' => true,
             'off_session' => true,
             'metadata' => [
@@ -251,21 +299,16 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
 
         $charge->payment_provider_charge_type = $stripeCharge->object;
         $charge->payment_provider_charge_id = $stripeCharge->id;
-        $charge->payment_provider_charge_method = $stripeCharge->payment_method_details->type;
-        $charge->payment_provider_transfer_type = 'destination';
+        $charge->payment_provider_charge_method = $paymentMethod->type;
+        $charge->payment_provider_transfer_type = 'application_fee';
         $charge->status = $stripeCharge->status;
-        $charge->data = $stripeCharge->toArray();
+        $charge->data = [
+            'stripe' => [
+                'charge' => $stripeCharge->toArray()
+            ],
+        ];
 
         $charge->closed_at = $charge->freshTimestamp();
-
-        [
-            $fixedAmount,
-            $percentage,
-        ] = $paymentProvider->getRateFor(
-            $this->business->country, $this->business->currency, $charge->currency, $charge->channel,
-            $charge->payment_provider_charge_method, $stripeCharge->payment_method_details->card->country,
-            $stripeCharge->payment_method_details->card->brand, $charge->amount
-        );
 
         $balanceTransaction = BalanceTransaction::retrieve($stripeCharge->balance_transaction);
 
@@ -276,39 +319,25 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
         $charge->discount_fee_rate = $percentage;
         $charge->discount_fee = bcmul($charge->discount_fee_rate, $charge->home_currency_amount);
 
-        $stripeTransfer = $stripeChargeHelper->transfer($stripeCharge->id, $charge->payment_provider_account_id,
-            $balanceTransaction->currency, bcsub($charge->home_currency_amount, $charge->getTotalFee()), $charge);
-
-        Storage::append($filename, "\n".$stripeTransfer->toJSON());
-
-        $transfer = new Transfer;
-        $transfer->business_id = $this->business->getKey();
-        $transfer->payment_provider = $charge->payment_provider;
-        $transfer->payment_provider_account_id = $charge->payment_provider_account_id;
-        $transfer->payment_provider_transfer_type = $stripeTransfer->object;
-        $transfer->payment_provider_transfer_id = $stripeTransfer->id;
-        $transfer->payment_provider_transfer_method = 'destination';
-        $transfer->currency = $stripeTransfer->currency;
-        $transfer->amount = $stripeTransfer->amount;
-        $transfer->status = 'succeeded';
-        $transfer->data = $stripeTransfer->toArray();
-
-        $this->expires_at = $until;
+        // $this->expires_at = $until;
         $this->failed_reason = null;
 
-        if ($this->times_to_be_charged !== null) {
-            $this->times_charged = $this->times_charged + $cycle;
+        if ($this->cycle != RecurringCycle::SAVE_CARD) {
+            $this->expires_at = $until;
 
-            if ($this->times_to_be_charged === $this->times_charged) {
-                $this->status = RecurringPlanStatus::COMPLETED;
+            if ($this->times_to_be_charged !== null) {
+                $this->times_charged = $this->times_charged + $cycle;
+
+                if ($this->times_to_be_charged === $this->times_charged) {
+                    $this->status = RecurringPlanStatus::COMPLETED;
+                }
             }
         }
 
         try {
-            DB::transaction(function () use ($charge, $transfer) {
+            DB::transaction(function () use ($charge) {
                 $this->save();
                 $this->business->charges()->save($charge);
-                $charge->transfers()->save($transfer);
             }, 3);
 
             return $charge;
@@ -321,7 +350,6 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
             $message .= json_encode([
                 $this->toArray(),
                 $charge->toArray(),
-                $transfer->toArray(),
             ], JSON_PRETTY_PRINT);
 
             LogFacade::critical($message);
@@ -364,8 +392,18 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
 
                 break;
 
+            case RecurringCycle::BIWEEKLY:
+                return $this->expires_at->addWeeks(2);
+
+                break;
+
             case RecurringCycle::MONTHLY:
                 return $this->expires_at->addMonths($cycleCount);
+
+                break;
+
+            case RecurringCycle::QUARTERLY:
+                return $this->expires_at->addMonths(3);
 
                 break;
 
@@ -412,5 +450,10 @@ class RecurringBilling extends Model implements BusinessOwnableContract, Chargea
     public function getCurrency() : string
     {
         return $this->getAttribute('currency');
+    }
+
+    public function markAsSuccessfulPluginCallback(){
+        $this->is_succeeded_webhook_callback = true;
+        $this->save();
     }
 }

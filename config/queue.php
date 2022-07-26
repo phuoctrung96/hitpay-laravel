@@ -56,7 +56,7 @@ return [
     */
 
     'failed' => [
-        'driver' => 'database',
+        'driver' => 'database-uuids',
         'database' => 'mysql',
         'table' => 'failed_jobs',
     ],

@@ -70,9 +70,9 @@
                 </div>
                 <div class="form-group mb-0">
                     <label for="description">Description</label>
-                    <textarea id="description" v-model="form.description" :class="{ 'is-invalid' : errors.description }"
-                              class="form-control bg-light" rows="4" title="Description"
-                              placeholder="A T-shirt is a style of unisex fabric shirt named after the T shape of its body and sleeves. Traditionally it has short sleeves and a round neckline, known as a crew neck, which lacks a collar…"></textarea>
+                    <ckeditor v-model="form.description"
+                              :class="{ 'is-invalid' : errors.description }"
+                    ></ckeditor>
                     <span v-if="errors.description" class="invalid-feedback" role="alert">{{
                             errors.description
                         }}</span>
@@ -173,7 +173,8 @@
                 </div>
             </div>
             <table v-if="form_control.has_variation && form.variations.length > 0"
-                   class="table table-hover border-top mb-0">
+                   class="table table-hover border-top mb-0" :class="[
+                                    {'is-invalid' : errors.variation}]">
                 <tr class="bg-light">
                     <th scope="col">Variants</th>
                     <th scope="col">Selling Price</th>
@@ -223,10 +224,15 @@
                     </tr>
                 </template>
             </table>
+            <span v-if="errors.variation" class="invalid-feedback p-4"
+                role="alert">{{ errors.variation }}</span>
             <div class="card-body border-top">
                 <h5 class="font-weight-bold mb-3">Images</h5>
                 <small class="d-block">The optimal product image size is 600*600, 800*800 and 1000*1000.</small>
                 <small>You can upload up to 6 images.</small>
+                <span v-if="errors.images" class="d-block small text-danger w-100 mt-1" role="alert">
+                        {{ errors.images }}
+                </span>
                 <div v-if="(images).length < imageLimit">
                     <label class="d-inline-flex mb-1" for="productImage">
                         <input type="file" id="productImage" class="custom-file-input d-none" accept="image/*"
@@ -280,11 +286,15 @@
 
 <script>
 import Multiselect from 'vue-multiselect'
+import CKEditor from 'ckeditor4-vue';
 
 Vue.component('multiselect', Multiselect)
 
 export default {
-    components: {Multiselect},
+    components: {
+      Multiselect,
+      ckeditor: CKEditor.component
+    },
     watch: {
         form: {
             handler(values) {
@@ -471,7 +481,6 @@ export default {
                     Material: 'Material',
                 },
             },
-
             form: {
                 name: '',
                 price: '',
@@ -556,7 +565,6 @@ export default {
 
         removeVariantChild(event, index, list) {
             event.preventDefault();
-
             list.splice(index, 1);
         },
 
@@ -615,7 +623,12 @@ export default {
                 errors.description = 'The description may not be greater than 65,536 characters.';
             }
 
-            this.showError(_.first(Object.keys(this.errors)));
+            if (this.form.variations.length === 1){
+              errors.variation = 'You can\'t create a product with just one variant' ;
+            }
+            if (this.form.variations.length > 100){
+              errors.variation = 'You can\'t create more than 100 variants' ;
+            }
 
             if (!this.form_control.has_variation && this.form_control.is_manageable) {
                 if (!this.form.quantity) {
@@ -629,12 +642,17 @@ export default {
                 }
             }
 
+            if((this.images).length > 6) {
+                errors.images = 'The price can\'t be greater than 6.'
+            }
+
             this.errors = errors;
 
             if (Object.keys(this.errors).length > 0
                 || (this.has_variation && this.form.variations.length === 0)
                 || Object.keys(this.variation_errors).length > 0) {
                 loading.remove();
+                this.showError(_.first(Object.keys(this.errors)));
 
                 this.is_updating = false;
 
@@ -673,7 +691,8 @@ export default {
 
                     if (this.form_control.is_variation_manageable) {
                         form.append('variation[' + i + '][quantity]', parseInt(value.quantity));
-                        form.append('variation[' + i + '][quantity_alert_level]', parseInt(value.quantity_alert_level));
+                        if (value.quantity_alert_level)
+                          form.append('variation[' + i + '][quantity_alert_level]', parseInt(value.quantity_alert_level));
                     }
 
                     form.append('variation[' + i + '][price]', value.price);
@@ -685,7 +704,8 @@ export default {
 
                 if (this.form_control.is_manageable && !this.has_variation) {
                     form.append('quantity', parseInt(this.form.quantity));
-                    form.append('quantity_alert_level', parseInt(this.form.quantity_alert_level));
+                    if(this.form.quantity_alert_level)
+                      form.append('quantity_alert_level', parseInt(this.form.quantity_alert_level));
                 }
             }
 
@@ -749,14 +769,18 @@ export default {
                 event.preventDefault();
             }
         },
-
         addImage(event) {
             event.preventDefault();
-
+            let i = this.images.length;
             event.target.files.forEach((file) => {
+                if(i == 6){
+                    return;
+                }
+                i++;
+
                 const max = 1600;
                 const reader = new FileReader();
-            
+
                 reader.readAsDataURL(file);
 
                 reader.onload = event => {

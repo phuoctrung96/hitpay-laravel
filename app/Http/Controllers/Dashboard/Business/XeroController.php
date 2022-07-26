@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard\Business;
 
 use App\Business;
 use App\Enumerations\Business\ChargeStatus;
+use App\Enumerations\Business\PluginProvider;
 use App\Http\Controllers\Controller;
 use App\Business\Xero;
 use App\Log;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use XeroAPI\XeroPHP\Api\IdentityApi;
 use XeroAPI\XeroPHP\ApiException;
@@ -76,7 +78,20 @@ class XeroController extends Controller
         });
 
 
+        $pluginProviders = [];
+        foreach (PluginProvider::CHANNELS as $channel) {
+            if(in_array($channel, [PluginProvider::SHOPIFY, PluginProvider::WOOCOMMERCE])) {
+                continue;
+            }
+
+            $pluginProviders[] = [
+                'key' => $channel,
+                'label' => Str::ucfirst(str_replace('_', ' ', $channel))
+            ];
+        }
+
         return Response::view('dashboard.business.xero.index', compact(
+            'pluginProviders',
             'business',
             'paginator',
             'xeroAccounts',
@@ -204,6 +219,7 @@ class XeroController extends Controller
             'paynow_btn_text' => 'required',
             'xero_branding_theme' => 'required',
             'xero_payout_account_id' => 'required',
+            'channels' => 'sometimes',
         ]);
         try {
             if(empty($business->xero_bank_account_id)) {
@@ -244,6 +260,7 @@ class XeroController extends Controller
             $business->xero_invoice_grouping = $requestData['invoice_grouping'];
             $business->xero_disable_sales_feed = $requestData['disable_sales_feed'];
             $business->xero_account_id = $requestData['xero_sales_account_id'];
+            $business->xero_channels = $requestData['channels'];
 
             if(!empty($requestData['xero_refund_account_id'])) {
                 $business->xero_refund_account_id = $requestData['xero_refund_account_id'];

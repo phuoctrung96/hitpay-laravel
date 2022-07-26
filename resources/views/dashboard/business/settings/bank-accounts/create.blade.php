@@ -23,7 +23,11 @@
         </div>
 
         <div class="col-12 col-xl-9 main-content">
-            <business-settings-bank-accounts-create :business="{{ json_encode($business->toArray()) }}" :banks="{{ json_encode($banks) }}" :bank_accounts_count="{{ $business->bankAccounts->count() }}"></business-settings-bank-accounts-create>
+            <business-settings-bank-accounts-create
+                :banks="{{ json_encode($banks) }}"
+                :bank_fields="{{ json_encode($bank_fields) }}"
+                :bank_accounts_count="{{ $business->bankAccounts->count() }}">
+            </business-settings-bank-accounts-create>
         </div>
     </div>
 @endsection

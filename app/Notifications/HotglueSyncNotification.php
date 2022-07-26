@@ -22,9 +22,13 @@ class HotglueSyncNotification extends Notification implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($from, $to, $jobid)
+    public function __construct($from, $to, $jobid, $status = false)
     {
-        $this->messageText = 'Failed to sync products from ' . $from . ' to ' . $to . ' per jobid: ' . $jobid;
+        $statusMessage = 'Failed to sync';
+        if ($status) {
+            $statusMessage = 'Successfully sync';
+        }
+        $this->messageText = $statusMessage . ' products from ' . $from . ' to ' . $to . ' per jobid: ' . $jobid;
     }
 
     /**

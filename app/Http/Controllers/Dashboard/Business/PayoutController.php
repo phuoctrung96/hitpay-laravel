@@ -23,7 +23,7 @@ class PayoutController extends Controller
                 $business->getKey());
         }
 
-        if ($business->country === CountryCode::MALAYSIA) {
+        if (in_array($business->country, CountryCode::listConstants())) {
             // if FPX ready then redirect to fpx
             return Facades\Response::redirectToRoute('dashboard.business.payment-provider.stripe.payout',
                 $business->getKey());

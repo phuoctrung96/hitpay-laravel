@@ -25,10 +25,12 @@ class ClearExpiredEmailAttachments extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle() : int
     {
         $date = Date::today()->subWeek();
 
         Storage::disk('local')->deleteDirectory("email-attachments/{$date->toDateString()}");
+
+        return 0;
     }
 }

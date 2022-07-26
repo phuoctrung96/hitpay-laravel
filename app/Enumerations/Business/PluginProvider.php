@@ -26,10 +26,12 @@ class PluginProvider
     public const APISHOPIFY = 'api_shopify';
     public const STORE = 'api_store';
     public const GOOGLE_FORMS = 'api_google_forms';
+    public const POINT_OF_SALE  = 'point_of_sale';
 
     public const DEFAULT_CHANNEL = self::CUSTOM;
 
     public const CHANNELS = [
+        self::POINT_OF_SALE,
         self::CUSTOM,
         self::SHOPIFY,
         self::WOOCOMMERCE,
@@ -88,33 +90,33 @@ class PluginProvider
      * @param false $forDropDown
      * @return string[]
      */
-    public static function getAll($forDropDown = false, $all = false)
+    public static function getAll($forDropDown = false, $all = false, $removeAPI = true)
     {
         if ($forDropDown) {
             $channels = [
-                self::SHOPIFY                                          => 'Shopify',
-                self::getProviderByChanel(self::CUSTOM)         => 'Payment Request APIs',
-                self::getProviderByChanel(self::XERO)           => 'Xero',
-                self::getProviderByChanel(self::PRESTASHOP)     => 'Prestashop',
-                self::getProviderByChanel(self::MAGENTO)        => 'Magento',
-                self::getProviderByChanel(self::ECWID)          => 'Ecwid',
-                self::getProviderByChanel(self::OPENCART)       => 'OpenCart',
-                self::getProviderByChanel(self::LINK)           => 'Link',
-                self::INVOICE                                          => 'Invoice',
-                self::getProviderByChanel(self::APIWOOCOMMERCE) => 'WooCommerce Plugin',
-                self::getProviderByChanel(self::STORE) => 'HitPay Store',
-                self::getProviderByChanel(self::GOOGLE_FORMS) => 'Google Forms',
+                self::APISHOPIFY                                            => 'Shopify Payments App',
+                self::getProviderByChanel(self::CUSTOM, $removeAPI)         => 'Payment Request APIs',
+                self::getProviderByChanel(self::XERO, $removeAPI)           => 'Xero',
+                self::getProviderByChanel(self::PRESTASHOP, $removeAPI)     => 'Prestashop',
+                self::getProviderByChanel(self::MAGENTO, $removeAPI)        => 'Magento',
+                self::getProviderByChanel(self::ECWID, $removeAPI)          => 'Ecwid',
+                self::getProviderByChanel(self::OPENCART, $removeAPI)       => 'OpenCart',
+                self::getProviderByChanel(self::LINK, $removeAPI)           => 'Link',
+                self::INVOICE                                               => 'Invoice',
+                self::getProviderByChanel(self::APIWOOCOMMERCE, $removeAPI) => 'WooCommerce Plugin',
+                self::getProviderByChanel(self::STORE, $removeAPI)          => 'HitPay Store',
+                self::getProviderByChanel(self::GOOGLE_FORMS, $removeAPI)   => 'Google Forms',
             ];
 
             if ($all)
-                $channels['all'] = 'All Channels';
+              $channels['all'] = 'All Channels';
             return $channels;
         }
 
         return [
-            self::SHOPIFY                                   => 'Shopify',
-            self::WOOCOMMERCE                               => 'WooCommerce',
-            self::getProviderByChanel(self::XERO)    => 'Xero',
+            self::SHOPIFY                                     => 'Shopify',
+            self::WOOCOMMERCE                                 => 'WooCommerce',
+            self::getProviderByChanel(self::XERO, $removeAPI) => 'Xero',
         ];
     }
 
@@ -122,8 +124,10 @@ class PluginProvider
      * @param $channel
      * @return string|string[]
      */
-    public static function getProviderByChanel($channel)
+    public static function getProviderByChanel($channel, $removeAPI = true)
     {
-        return str_replace(self::PREFIX, '', $channel);
+        return $removeAPI
+          ? str_replace(self::PREFIX, '', $channel)
+          : $channel;
     }
 }

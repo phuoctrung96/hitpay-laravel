@@ -131,7 +131,6 @@ class AuthSecretController extends Controller
         ]);
 
         $requestedSecret = Cache::get($this->getCacheKey($request));
-
         switch (true) {
 
             case is_null($requestedSecret):
@@ -169,9 +168,11 @@ class AuthSecretController extends Controller
         } else {
             $message = Lang::get('Auth secret successfully enabled!');
         }
-
         // todo - use toast ?
         $request->session()->flash('security.success', $message);
+
+        // Logout user on other devices, The password does not need for this case so we will skip to input the password
+        Auth::logoutOtherDevices(generateRandomString());
 
         return JsonResponse::create([
             'message' => $message,

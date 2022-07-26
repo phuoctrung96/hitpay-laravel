@@ -274,4 +274,15 @@ class BusinessPolicy
             ? $this->allow()
             : $this->deny();
     }
+
+    /**
+     * @param User|null $user
+     * @param Business $business
+     * @return \Illuminate\Auth\Access\Response
+     */
+    public function canManageCustomer(?User $user, Business $business): \Illuminate\Auth\Access\Response
+    {
+        return $this->businessUserPermissionsService
+            ->can($user, $business, 'canManageCustomer') ? $this->allow() : $this->deny();
+    }
 }

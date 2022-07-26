@@ -580,7 +580,6 @@ import axios from 'axios'
 export default {
     name: 'StripeOnboardVerificationIndividual',
     props: {
-        business: Object,
         provider: Object,
         account: Object,
         persons: Array,
@@ -590,6 +589,7 @@ export default {
     },
     data () {
         return {
+            business: window.Business,
             //csrf token
             csrf: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
             is_processing: false,

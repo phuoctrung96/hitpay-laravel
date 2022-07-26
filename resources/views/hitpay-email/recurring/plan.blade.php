@@ -191,7 +191,7 @@
         <td style="{{ $style['outer_td'] }}" valign="top">&nbsp;</td>
         <td class="container" style="{{ $style['outer_td'] }} {{ $style['outer_td_ext'] }}" width="580" valign="top">
             <div class="content" style="{{ $style['content'] }}">
-                <span class="preheader" style="{{ $style['preheader'] }}">Receipt from {{ $business_name }}.</span>
+                <span class="preheader" style="{{ $style['preheader'] }}">{{ $title }}</span>
                 <div class="header" style="{{ $style['header'] }}">
                     <table border="0" cellpadding="0" cellspacing="0" style="{{ $style['inner_table'] }}" width="100%">
                         <tr>
@@ -200,7 +200,7 @@
                                 @if (isset($business_logo))
                                     <img src="{{ $business_logo }}" height="48" alt="Logo" align="center" style="{{ $style['img'] }}">
                                 @endif
-                                <h1>{{ $business_name }}</h1>
+                                <h1>{{ ($isHaveTemplateEmail && $title) ? $title : $business_name }}</h1>
                             </td>
                         </tr>
                     </table>
@@ -211,7 +211,13 @@
                             <table border="0" cellpadding="0" cellspacing="0" style="{{ $style['special_1'] }}" width="100%">
                                 <tr>
                                     <td style="{{ $style['outer_td'] }}" valign="top">
-                                        <h1 style="color: #222222; font-family: sans-serif; font-weight: 300; line-height: 1.4; margin: 0; Margin-bottom: 30px; font-size: 25px; text-transform: capitalize; text-align: center">{{ $title }}</h1>
+                                        <h1 style="color: #222222; font-family: sans-serif; font-weight: 300; line-height: 1.4; margin: 0; Margin-bottom: 30px; font-size: 25px; text-transform: capitalize; text-align: center">
+                                            @if($isHaveTemplateEmail && $subtitle)
+                                                {{ $title }}
+                                            @else
+                                                {{ $subtitle }}
+                                            @endif
+                                        </h1>
                                         <table border="0" cellpadding="0" cellspacing="0" style="{{ $style['special_1'] }}"
                                                width="100%">
                                             <tr>
@@ -273,14 +279,30 @@
                                                                 valign="top" align="right">{{ $plan_price }}</td>
                                                         </tr>
                                                     </table>
-                                                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;"><a href="{{ $plan_url }}">
-                                                            @if ($plan_status === 'active')
-                                                                Click here to pay this invoice
-                                                            @else
-                                                                Click here to view this invoice
-                                                            @endif
-                                                        </a></p>
-                                                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">If you have any questions about this invoice, please contact <a href="mailto:{{ $business_email }}" target="_blank" style="color: #3498db; text-decoration: underline;">{{ $business_email }}</a></p>
+                                                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">
+                                                        @if($isHaveTemplateEmail && $button_text && $button_background_color && $button_text_color)
+                                                            <a href="{{ $plan_url }}" style="background-color: {{ $button_background_color }}; font-size: 14px; font-family: Helvetica, Arial, sans-serif; font-weight: bold; text-decoration: none; padding: 10px 16px; color: {{$button_text_color}}; border-radius: 5px; display: inline-block; mso-padding-alt: 0;">
+                                                                @if ($plan_status === 'active')
+                                                                    {{ $button_text }}
+                                                                @else
+                                                                    Click here to view this invoice
+                                                                @endif
+                                                            </a>
+                                                        @else
+                                                            <a href="{{ $plan_url }}" style="background-color: #011B5F; font-size: 14px; font-family: Helvetica, Arial, sans-serif; font-weight: bold; text-decoration: none; padding: 10px 16px; color: #ffffff; border-radius: 5px; display: inline-block; mso-padding-alt: 0;">
+                                                                @if ($plan_status === 'active')
+                                                                    Click here to pay this invoice
+                                                                @else
+                                                                    Click here to view this invoice
+                                                                @endif
+                                                            </a>
+                                                        @endif
+                                                    </p>
+                                                    @if($isHaveTemplateEmail && $footer)
+                                                        {!! $footer !!}
+                                                    @else
+                                                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">If you have any questions about this invoice, please contact <a href="mailto:{{ $business_email }}" target="_blank" style="color: #3498db; text-decoration: underline;">{{ $business_email }}</a></p>
+                                                    @endif
                                                 </td>
                                                 <td style="{{ $style['outer_td'] }}" valign="top">&nbsp;</td>
                                             </tr>

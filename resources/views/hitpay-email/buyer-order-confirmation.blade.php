@@ -1,6 +1,6 @@
 @extends('hitpay-email.layouts.base', [
-    'title' => 'Thank you for your order',
-    'preheader' => 'Thank you for your order',
+    'title' => ($isHaveTemplateEmail && $title) ? $title : 'Thank you for your order',
+    'preheader' => ($isHaveTemplateEmail && $title) ? $subtitle : 'Thank you for your order',
 ])
 
 @section('content')
@@ -9,8 +9,20 @@
             @if (isset($business_logo))
                 <img style="color: #222222; font-family: sans-serif; font-weight: 300; line-height: 1.4; margin: 0; Margin-bottom: 5px; font-size: 35px; text-transform: capitalize;" src="{{ $business_logo }}" width="48">
             @endif
-            <h2 style="color: #222222; font-family: sans-serif; font-weight: bold; line-height: 1.4; margin: 0; Margin-bottom: 30px; font-size: 35px; text-transform: capitalize;">{{ $business_name }}</h2>
-            <h1 style="color: #222222; font-family: sans-serif; font-weight: 300; line-height: 1.4; margin: 0; Margin-bottom: 30px; font-size: 25px; text-transform: capitalize;">View order details below</h1>
+            <h2 style="color: #222222; font-family: sans-serif; font-weight: bold; line-height: 1.4; margin: 0; Margin-bottom: 30px; font-size: 35px; text-transform: capitalize;">
+                @if($isHaveTemplateEmail && $title)
+                    {{ $title }}
+                @else
+                    {{ $business_name }}
+                @endif
+            </h2>
+            <h1 style="color: #222222; font-family: sans-serif; font-weight: 300; line-height: 1.4; margin: 0; Margin-bottom: 30px; font-size: 25px; text-transform: capitalize;">
+                @if($isHaveTemplateEmail && $subtitle)
+                    {{ $subtitle }}
+                @else
+                    View order details below
+                @endif
+            </h1>
         </div>
         <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;" width="100%">
             <tr>
@@ -52,8 +64,15 @@
                         <p style="font-family: sans-serif; font-size: 14px; font-weight: bold; Margin: 0;">Pickup Address :</p>
                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">{{ $business_address ?? 'Contact seller' }}</p>
                     @endif
-                    <p style="font-family: sans-serif; font-size: 14px; font-weight: bold; Margin: 0;">Seller Information :</p>
-                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">{{ $business_name }} ({{ $business_email }})</p>
+
+                    @if($isHaveTemplateEmail && $store_information_title && $store_information_value)
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: bold; Margin: 0;">{{ $store_information_title }}</p>
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">{{ $store_information_value }}</p>
+                    @else
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: bold; Margin: 0;">Seller Information :</p>
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">{{ $business_name }} ({{ $business_email }})</p>
+                    @endif
+
                     <table class="receipt" border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; Margin-bottom: 20px;" width="100%">
                         <tr class="receipt-subtle" style="color: #aaa;">
                             <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; border-bottom: 1px solid #eee; margin: 0; padding: 5px;" valign="top">Items</td>
@@ -125,12 +144,18 @@
                             </td>
                         </tr>
                     </table>
-                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Notice something wrong?
-                        <a href="mailto:{{ $business_email }}" target="_blank" style="color: #3498db; text-decoration: underline;">Contact our support team</a>
-                        and we'll be happy to help.
-                    </p>
-                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">{{ $business_name }}</p>
-                    <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Charge ID: {{ $charge_id }}</p>
+
+                    @if($isHaveTemplateEmail && $footer)
+                        {!! $footer !!}
+                    @else
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Notice something wrong?
+                            <a href="mailto:{{ $business_email }}" target="_blank" style="color: #3498db; text-decoration: underline;">Contact our support team</a>
+                            and we'll be happy to help.
+                        </p>
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">{{ $business_name }}</p>
+                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Charge ID: {{ $charge_id }}</p>
+                    @endif
+
                     @isset($application)
                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; Margin: 0; Margin-bottom: 15px;">Application Name: {{ $application['name'] }} AID: {{ $application['identifier'] }}</p>
                     @endisset

@@ -38,7 +38,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         window.Data = @json($data);
         @isset($recurringPlan)
             window.RecurringPlan = @json($recurringPlan)

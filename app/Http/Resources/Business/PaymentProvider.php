@@ -28,12 +28,10 @@ class PaymentProvider extends JsonResource
 
         /* @var \App\Business\PaymentProvider $this */
         $data['fee'] = $this->getRateFor(
-            $this->business->country,
-            $this->business->currency,
             $this->business->currency
         );
 
-        if (in_array($data['payment_provider'], collect(Core::$countries)->pluck('payment_provider')->toArray())) {
+        if (in_array($data['payment_provider'], collect(Core::getCountries())->pluck('payment_provider')->toArray())) {
             $accountData = $this->data;
 
             $data['payment_provider_account'] = [

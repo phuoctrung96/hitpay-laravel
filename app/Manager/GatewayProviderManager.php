@@ -17,7 +17,7 @@ class GatewayProviderManager
     {
         $gatewayProvider            = self::createNew();
         $gatewayProvider->name      = $data['name'];
-        $gatewayProvider->methods   = isset($data['methods']) && is_array($data['methods'])? json_encode($data['methods']): [];
+        $gatewayProvider->methods   = $data['methods'] ?? [];
         $gatewayProvider            = GatewayProviderRepository::store($business, $gatewayProvider);
 
         return $gatewayProvider;
@@ -26,7 +26,7 @@ class GatewayProviderManager
     public static function update(GatewayProvider $gatewayProvider, array $data) : GatewayProvider
     {
         $gatewayProvider->name      = $data['name'];
-        $gatewayProvider->methods   = isset($data['methods']) && is_array($data['methods'])? json_encode($data['methods']): [];
+        $gatewayProvider->methods   = $data['methods'] ?? [];
 
         return GatewayProviderRepository::update($gatewayProvider);
     }

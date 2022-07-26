@@ -191,7 +191,7 @@
                         <div class="information">
                             @foreach (preg_split('/\n|\r\n?/', $product->description) as $line)
                                 @if (($line = trim($line)) && strlen($line) > 0)
-                                    <p>{{ $line }}</p>
+                                    {!! $line !!}
                                 @endif
                             @endforeach
                         </div>

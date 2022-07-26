@@ -23,10 +23,6 @@
                     <a class="btn btn-primary" href="{{ route('dashboard.business.customer.create', $business->getKey()) }}">
                         <i class="fas fa-plus mr-2"></i> Add Customer
                     </a>
-                    <a class="btn btn-secondary"
-                       href="{{ route('dashboard.business.customer.bulk', $business->getKey()) }}">
-                        <i class="fas fa-plus mr-2"></i> Add Customers In Bulk
-                    </a>
                 </div>
                 @if(session('success_message'))
                     <div class="alert alert-success border-left-0 border-right-0 rounded-0 alert-dismissible fade show" role="alert">
@@ -112,16 +108,14 @@
             </ul>
             <business-help-guide :page_type="'customers'"></business-help-guide>
         </div>
-        <business-customer-export></business-customer-export>      
+        <business-customer-export></business-customer-export>
     </div>
-    
+
 @endsection
 
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
-
         function check(trigger) {
             let current = new URL(window.location.href);
             let query = current.search;

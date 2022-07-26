@@ -222,8 +222,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
-
         document.addEventListener('DOMContentLoaded', function () {
             var copyButton = document.getElementById('copyButton');
             if (copyButton) {

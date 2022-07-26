@@ -13,6 +13,15 @@
                     'status' => 'succeeded',
                 ]) }}">Succeeded</a>
             </div>
+            <div class="form-group">
+                <form class="input-group input-group-lg" action="{{ route('admin.transfer.fast-payment.index') }}">
+                    <input class="form-control border-0 shadow-sm" placeholder="Search by ID / Business ID ({{ $status }})" title="Search by ID / Business ID" name="keyword" value="{{ request('keyword') }}">
+                    <input type="hidden" name="status" value="{{ $status }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary shadow-sm"><i class="fas fa-search"></i></button>
+                    </div>
+                </form>
+            </div>
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-body p-4">
                     <h2 class="text-primary mb-0 title">HitPay Payouts</h2>

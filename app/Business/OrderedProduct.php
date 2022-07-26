@@ -6,7 +6,19 @@ use Exception;
 use HitPay\Model\UsesUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * @property int quantity
+ * @property int unit_price
+ * @property string name
+ * @property int discount_amount
+ * @property string stock_keeping_unit
+ * @property int business_product_id
+ * @property int price
+ * @property float tax_rate
+ * @property float tax_amount
+ */
 class OrderedProduct extends Model
 {
     use UsesUuid;

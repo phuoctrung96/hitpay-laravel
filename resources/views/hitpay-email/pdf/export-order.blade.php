@@ -1,16 +1,23 @@
 <style>
+    table, th{
+        font-size: 10px;
+    }
     table, th, td{
         border: 1px solid black;
-    }
-    table{
         border-collapse: collapse;
+        word-break:break-all;
+        word-wrap:break-word;
+    }
+    table {
+        width: 100%;
+        table-layout:fixed;
     }
 </style>
-<table border="0" cellpadding="0" cellspacing="0"
-       style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;" width="100%">
+<table>
     <tr>
     <th>#</th>
     <th>ID</th>
+    <th>Charge ID</th>
     <th>Reference</th>
     <th>Customer Name</th>
     <th>Customer Email</th>
@@ -22,14 +29,16 @@
     <th>Discount Amount</th>
     <th>Status</th>
     <th>Products</th>
-        <th>Buyer remarks</th>
+    <th>Variants</th>
+    <th>Buyer remarks</th>
     <th>Ordered Date</th>
     <th>Completed Date</th>
 
   </tr>
+    @php $incrementNumber=1; @endphp
     @foreach($data as $order)
         <tr>
-            <td>{{$order[0]}}</td>
+            <td>{{ $incrementNumber }}</td>
             <td>{{$order[1]}}</td>
             <td>{{$order[2]}}</td>
             <td>{{$order[3]}}</td>
@@ -45,6 +54,9 @@
             <td>{{$order[13]}}</td>
             <td>{{$order[14]}}</td>
             <td>{{$order[15]}}</td>
+            <td>{{$order[16]}}</td>
+            <td>{{$order[17]}}</td>
         </tr>
+        @php $incrementNumber++ @endphp
     @endforeach
 </table>

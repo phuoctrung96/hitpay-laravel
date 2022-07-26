@@ -4,7 +4,7 @@
 
 @php
 if ($business->hotglueIntegration()->whereType('ecommerce')->whereConnected(true)->first()) {
-    $business['hotglueIntegration'] = $business->hotglueIntegration()->with('jobInProgress')->get();
+    $business['hotglueIntegration'] = $business->hotglueIntegration()->with('jobInProgressJobCreated', 'jobInProgressJobQueued', 'jobDone', 'hotglueLocation')->whereType('ecommerce')->get();
 } else {
     $business['hotglueIntegration'] = [];
 }
@@ -24,6 +24,5 @@ unset($hotglueConfigs['secret_api_key']);
 @push('body-stack')
     <script>
         window.HotGlue = HotGlue;
-        window.Business = @json($business);
     </script>
 @endpush

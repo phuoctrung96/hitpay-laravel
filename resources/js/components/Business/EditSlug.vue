@@ -40,10 +40,10 @@
 export default {
     name: "EditSlug",
     props: {
-        business: {},
     },
     data: () => {
         return {
+            business: window.Business,
             payment_url: '',
             slug: '',
             errors: {

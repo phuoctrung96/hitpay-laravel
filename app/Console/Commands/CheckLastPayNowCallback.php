@@ -28,7 +28,7 @@ class CheckLastPayNowCallback extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         // If this value is not found, means the PayNow webhook isn't called for more than the time set.
         //

@@ -73,10 +73,10 @@
     <div class="form-group">
         <label for="mcc" class="small text-secondary">MCC</label>
 
-        <select 
+        <select
           v-model="form.mcc"
           :disabled="disabled"
-          class="custom-select">          
+          class="custom-select">
           <option
             v-for="opt in business_categories"
             :key="opt.id"
@@ -86,7 +86,7 @@
         </select>
 
         <span class="invalid-feedback" role="alert">{{ errors.mcc }}</span>
-    </div>    
+    </div>
 
     <div class="form-group">
         <label for="password" class="small text-secondary">Enter Your HitPay Account Password</label>
@@ -102,7 +102,7 @@
       @click="onSave(true)">
       {{ saveButtonTitle }} <i v-if="isProcessing" class="fas fa-circle-notch fa-spin"></i>
     </button>
-  
+
     <template v-if="shopeeConnected">
       <div class="hr"/>
 
@@ -134,7 +134,7 @@
 
 <script>
 import axios from 'axios'
-import Alert from '../../Admin/CheckoutCustomisation/Alert'
+import Alert from '../../Dashboard/CheckoutCustomization/Alert'
 
 export default {
   name: 'ShopeeSettings',
@@ -142,20 +142,20 @@ export default {
     Alert
   },
   props: {
-    business: Object,
     provider: Object,
     uen: String,
     mcc: String,
     verification: Object,
-    business_categories: Array    
+    business_categories: Array
   },
   data () {
     return {
+      business: window.Business,
       // Shopee data if any
       shopeeConnected: false,
       edit: false,
       form: {
-        store_name: '',        
+        store_name: '',
         company_uen: '',
         logo: null,
         banner: null,
@@ -202,7 +202,7 @@ export default {
       // Prefill fields from verification data
       const v = this.verification
 
-      if (v && v.my_info_data && v.my_info_data.data && v.my_info_data.data.entity && v.my_info_data.data.entity.addresses && 
+      if (v && v.my_info_data && v.my_info_data.data && v.my_info_data.data.entity && v.my_info_data.data.entity.addresses &&
         v.my_info_data.data.entity.addresses['addresses-list'] && v.my_info_data.data.entity.addresses['addresses-list'].length > 0) {
         const adr = v.my_info_data.data.entity.addresses['addresses-list'][0]
 
@@ -253,7 +253,7 @@ export default {
             this.error = true
           }
         }
-        
+
         this.isProcessing = false
       } else {
         this.edit = true
@@ -287,7 +287,7 @@ export default {
     },
     clearForm () {
       this.form = {
-        store_name: '',        
+        store_name: '',
         company_uen: '',
         logo: null,
         banner: null,

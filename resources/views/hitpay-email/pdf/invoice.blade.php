@@ -209,8 +209,8 @@
             <tr>
                 <td>{{$item['product']['name']}} {{$item['variation']['description'] ? $item['variation']['description'] : ''}} (Quantity: {{$item['quantity']}})</td>
                 <td>{{number_format((int) $item['discount'], 2)}}</td>
-                <td>{{App\Helpers\Currency::getReadableAmount($item['product']['price'] * $item['quantity'], $invoice->currency)}}</td>
-                @if($invoice->tax_setting)<td>{{App\Helpers\Currency::getReadableAmount($item['product']['price'] * $item['quantity'] * $invoice->tax_setting->rate / 100, $invoice->currency)}}</td>@endif
+                <td>{{App\Helpers\Currency::getReadableAmount($item['variation']['price'] * $item['quantity'], $invoice->currency)}}</td>
+                @if($invoice->tax_setting)<td>{{App\Helpers\Currency::getReadableAmount($item['variation']['price'] * $item['quantity'] * $invoice->tax_setting->rate / 100, $invoice->currency)}}</td>@endif
             </tr>
         @endforeach
 

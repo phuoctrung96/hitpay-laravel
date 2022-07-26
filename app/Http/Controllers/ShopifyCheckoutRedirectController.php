@@ -13,9 +13,10 @@ class ShopifyCheckoutRedirectController extends Controller
      */
     public function __invoke(Request $request)
     {
-        sleep(10);
+        sleep(15);
 
         $invoiceId = $request->get('invoice');
+        $status = $request->get('status');
 
         if ($invoiceId === null) {
             throw new \Exception("Invoice not set on shopify checkout redirection");
@@ -36,15 +37,27 @@ class ShopifyCheckoutRedirectController extends Controller
         }
 
         if (!is_array($businessShopifyPayment->data)) {
-            throw new \Exception("Shopify Payment ID {$businessShopifyPayment->id}, Invoice ID {$invoiceId},
-                business ID {$businessId} from shopify checkout redirection is not have array data. Do repeat redirect!");
+            if ($status === 'canceled' && isset($businessShopifyPayment->request_data['payment_method']['data']['cancel_url'])) {
+                $cancelUrl = $businessShopifyPayment->request_data['payment_method']['data']['cancel_url'];
+
+                header("Location: {$cancelUrl}");
+
+                exit;
+            }
         }
 
         $paymentResolveData = $businessShopifyPayment->data;
 
+        if ($paymentResolveData === null) {
+            throw new \Exception("Payment resolve data null with Shopify Payment ID {$businessShopifyPayment->id}, Invoice ID {$invoiceId}, business ID {$businessId}");
+        }
+
+        if (!isset($paymentResolveData['data'])) {
+            throw new \Exception("Payment resolve empty data with Shopify Payment ID {$businessShopifyPayment->id}, Invoice ID {$invoiceId}, business ID {$businessId}");
+        }
+
         if (!$this->validatePaymentSessionResolveData($paymentResolveData['data'])) {
-            throw new \Exception("There is issue on payment resolve data with
-                Shopify Payment ID {$businessShopifyPayment->id}, Invoice ID {$invoiceId}, business ID {$businessId}");
+            throw new \Exception("There is issue on payment resolve data with Shopify Payment ID {$businessShopifyPayment->id}, Invoice ID {$invoiceId}, business ID {$businessId}");
         }
 
         $redirectUrl = $paymentResolveData['data']['paymentSessionResolve']['paymentSession']['nextAction']['context']['redirectUrl'];

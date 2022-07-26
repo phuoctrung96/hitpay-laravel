@@ -87,7 +87,7 @@ class ShopifyCheckout
 
         $customer = $request->get('customer');
 
-        $customerEmail = $customer['email'];
+        $customerEmail = $customer['email'] ?? '';
         $customerName = $customer['billing_address']['given_name'] ?? '';
 
         $webhookUrl = route('securecheckout.shopify.webhook', [
@@ -156,7 +156,7 @@ class ShopifyCheckout
             $businessShopifyPayment = new BusinessShopifyPayment();
             $businessShopifyPayment->invoice_id = $savedRequest['id'];
             $businessShopifyPayment->business_id = $savedRequest['business_id'];
-            $businessShopifyPayment->email = $savedRequest['customer']['email'];
+            $businessShopifyPayment->email = isset($savedRequest['customer']['email']) ? $savedRequest['customer']['email'] : '';
         }
 
         $businessShopifyPayment->gid = $savedRequest['gid'];

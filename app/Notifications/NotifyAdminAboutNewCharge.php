@@ -75,7 +75,7 @@ class NotifyAdminAboutNewCharge extends Notification implements ShouldQueue
                     .'Payment Method : '.$this->charge->payment_provider_charge_method."\n";
 
                 if (in_array($this->charge->payment_provider, [
-                    PaymentProvider::STRIPE_SINGAPORE, PaymentProvider::STRIPE_MALAYSIA
+                    PaymentProvider::STRIPE_SINGAPORE, PaymentProvider::STRIPE_MALAYSIA, PaymentProvider::STRIPE_US
                 ])) {
                     $issuerName = '';
 

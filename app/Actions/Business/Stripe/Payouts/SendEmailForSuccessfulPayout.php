@@ -102,6 +102,11 @@ class SendEmailForSuccessfulPayout extends Action
         $notification = new NotifySuccessfulPayout($this->businessTransfer, $bankAccount ?? null, $csvFile);
 
         $this->business->notifyNow($notification);
+        $this->business->businessUsers()->each(function($businessUser) use ($notification) {
+            if ($businessUser->isAdmin()) {
+                $businessUser->user->notifyNow($notification);
+            }
+        });
     }
 
     /**

@@ -60,21 +60,18 @@ class Shopee
 
         if (isset($res->errcode) && $res->errcode > 0) {
           $msg = 'Shopee API failed with error ' . $res->errcode . ': ' . $res->debug_msg;
-          Log::critical($msg);
           throw new ShopeeException($msg);  
         } else {
           return $res;
         }
       } else {
         $msg = 'Shopee API failed with HTTP code: ' . $res->getStatusCode();
-        Log::critical($msg);
         throw new ShopeeException($msg);
       }
     }
 
     public static function confirmOrder (
       $business, 
-      $paymentProvider, 
       $paymentIntent,
       $shopeeData
     ) {
@@ -100,25 +97,7 @@ class Shopee
           $charge->payment_provider_charge_type = $paymentIntent->payment_provider_object_type;
           $charge->payment_provider_charge_id = $paymentIntent->payment_provider_object_id;
           $charge->payment_provider_charge_method = $paymentIntent->payment_provider_method;
-  
-          if ($paymentProvider) {
-            [
-              $fixedAmount,
-              $percentage,
-            ] = $paymentProvider->getRateFor(
-                $business->country, $business->currency, $charge->currency, $charge->channel,
-                $charge->payment_provider_charge_method
-            );    
-  
-            $charge->fixed_fee = $fixedAmount;
-            $charge->discount_fee_rate = $percentage;
-            $charge->discount_fee = bcmul($charge->discount_fee_rate, $charge->home_currency_amount);  
-          } else {
-            Log::critical("[SHOPEE] Look what? The server detected a business without Shopee Pay enabled but able to make payment via" .
-              " Shopee Pay. Please check if anything missed out when collecting payment.\n" .
-              " Charge ID : " . $charge->id);
-          }
-  
+   
           $charge->payment_provider_transfer_type = 'wallet';
           $charge->status = ChargeStatus::SUCCEEDED;
           $charge->exchange_rate = 1;

@@ -18,7 +18,11 @@
                     </button>
                 </div>
             @endif
-            <business-settings-bank-accounts-edit :business="{{ json_encode($business->toArray()) }}" :_bank_account="{{ json_encode($bankAccount->toArray()) }}" :banks="{{ json_encode($banks) }}"></business-settings-bank-accounts-edit>
+            <business-settings-bank-accounts-edit
+                :_bank_account="{{ json_encode($bankAccount->toArray()) }}"
+                :banks="{{ json_encode($banks) }}"
+                :bank_fields="{{ json_encode($bank_fields) }}">
+            </business-settings-bank-accounts-edit>
         </div>
     </div>
 @endsection

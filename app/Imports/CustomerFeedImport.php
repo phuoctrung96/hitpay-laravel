@@ -39,7 +39,8 @@ class CustomerFeedImport implements ToCollection
             $feedLog->error_msg = json_encode($errors, true);
             $feedLog->feed_date = \date('Y-m-d');
             $feedLog->save();
-            $this->business->notify(new CustomerBulkUploadNotification($feedLog));
+            // Removed due to production bug
+            //$this->business->notify(new CustomerBulkUploadNotification($feedLog));
         }
     }
 

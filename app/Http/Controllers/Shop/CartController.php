@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Actions\Business\OnlineStore\Discounts\DiscountCalculator;
 use App\Business;
 use App\Business\ProductVariation;
 use Exception;
@@ -101,6 +102,7 @@ class CartController extends Controller
      * @param string $index
      *
      * @throws \Illuminate\Validation\ValidationException
+     * @throws Exception
      */
     public function updateProduct(Request $request, Business $business, string $index)
     {
@@ -172,12 +174,13 @@ class CartController extends Controller
             $totalCartAmount = $totalCartAmount + bcmul($value['quantity'], $variation->price);
             $totalCartQuantity = $totalCartQuantity + $value['quantity'];
         }
-        $discounts = $business->discounts->sortByDesc('minimum_cart_amount');
 
-        $discount = $this->getDiscount($discounts, $totalCartAmount);
+        $discount = DiscountCalculator::withBusiness($business)->setCart($cart)->process();
+
         $data = [
             'discount' => $discount
         ];
+
         return json_encode($data);
     }
 
@@ -213,6 +216,7 @@ class CartController extends Controller
      *
      * @return \Illuminate\Http\Response
      * @throws \ReflectionException
+     * @throws Exception
      */
     public function showCartPage(Request $request, Business $business)
     {
@@ -242,15 +246,14 @@ class CartController extends Controller
                 'image' => optional($variation->product->images->first())->getUrl(),
             ];
         }
-        $discounts = $business->discounts->sortByDesc('minimum_cart_amount');
 
-        $discount = $this->getDiscount($discounts, $totalCartAmount);
+        $discount = DiscountCalculator::withBusiness($business)->setCart($cart)->process();
 
         return Response::view('shop.cart', [
             'checksum' => $cart['checksum'],
             'business' => $business,
             'variations' => $variationsArray,
-            'discount' => $discount,
+            'discount' => $discount
         ]);
     }
 

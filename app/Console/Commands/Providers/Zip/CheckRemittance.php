@@ -26,8 +26,10 @@ class CheckRemittance extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
       CheckRemittanceJob::dispatchNow($this->argument('date_from'), $this->argument('date_to'));
+
+      return 0;
     }
 }

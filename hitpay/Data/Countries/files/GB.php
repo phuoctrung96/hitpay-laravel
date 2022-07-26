@@ -2,11 +2,32 @@
 
 use App\Enumerations\CurrencyCode;
 
+$banks = [];
+
+$pathBanks = base_path('hitpay/Data/Countries/files/GB/banks');
+
+$files = is_dir($pathBanks) ? File::files($pathBanks) : [];
+
+foreach ($files as $file) {
+    $banks[] = require $file->getPathname();
+}
+
+$paymentProviders = [];
+
+$pathPaymentProviders = base_path('hitpay/Data/Countries/files/GB/payment_providers');
+
+$files = File::files($pathPaymentProviders);
+
+foreach ($files as $file) {
+    $paymentProviders[] = require $file->getPathname();
+}
+
 return [
     'id' => 'gb',
     'alpha_2' => 'gb',
     'alpha_3' => 'gbr',
     'name' => 'United Kingdom',
+    'default_currency' => CurrencyCode::GBP,
     'currencies' => [
         CurrencyCode::GBP,
         CurrencyCode::EUR,
@@ -27,6 +48,6 @@ return [
         CurrencyCode::RON,
         CurrencyCode::CZK
     ],
-    'banks' => \HitPay\Data\Countries\GB::banks()->toArray(),
-    'payment_providers' => \HitPay\Data\Countries\GB::paymentProviders()->toArray(),
+    'banks' => $banks,
+    'payment_providers' => $paymentProviders,
 ];

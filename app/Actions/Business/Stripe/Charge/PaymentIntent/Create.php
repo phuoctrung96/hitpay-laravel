@@ -43,6 +43,12 @@ class Create extends Action
             'fpx',
         ]);
 
+        if (in_array($method, [ 'card', 'card_present' ]) && !$this->business->payment_enabled) {
+            throw new BadRequest(
+                "This account can't accept any card payments until it is approved by us. Please contact our support for more details."
+            );
+        }
+
         $businessPaymentIntent = new Business\PaymentIntent;
 
         $businessPaymentIntent->business_id = $this->businessCharge->business_id;
@@ -114,7 +120,7 @@ class Create extends Action
         } catch (Stripe\Exception\ApiErrorException $exception) {
             $stripeAccount = Stripe\Account::retrieve($businessPaymentIntent->payment_provider_account_id);
 
-            Facades\Log::critical(
+            Facades\Log::info(
                 "The business (ID : {$this->business->getKey()}, Charge Enabled: `{$stripeAccount->charges_enabled}`, Disabled Reason: `{$stripeAccount->requirements->disabled_reason}`) is having issue when a customer is intending to apy them via Stripe. Got code `{$exception->getStripeCode()}` and message: {$exception->getMessage()}"
             );
 

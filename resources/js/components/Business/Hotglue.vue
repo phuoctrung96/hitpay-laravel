@@ -1,7 +1,7 @@
 <template>
     <div>
-        <h5>Sync products and inventory between Shopify and Hitpay</h5>
-        <p><a href="#" target="_blank">See how it works</a></p>
+        <h5>Sync products and inventory between Shopify and HitPay</h5>
+        <p><a href="https://hitpay.zendesk.com/hc/en-us/articles/5929906750233-How-do-I-sync-products-inventory-and-orders-between-HitPay-and-Shopify-" target="_blank">See how it works</a></p>
         <div class="card" v-if="hotglueLinkedDetails.length>0">
             <div class="tbl-sync-list p-2">
                 <table>
@@ -16,7 +16,7 @@
                                     </svg>
                                 </button>
                             </td>
-                            <td align="center" style="width: 5%">
+                            <td align="center" style="width: 6%">
                                 <i class="fas fa-3x fa-long-arrow-alt-left color-gray" v-if="hotglueIntegration.type == 'ecommerce'"></i>
                                 <i class="fas fa-3x fa-long-arrow-alt-right color-gray" v-else></i>
                             </td>
@@ -32,14 +32,49 @@
                             </td>
                             <td style="width: 15%">
                                 <p class="mb-0">Last Synced On</p>
-                                <p class="mb-0 small pr-2 pt-1">{{ hotglueIntegration.job_in_progress.length > 0 ? 'Sync in progress' : formatDate(hotglueIntegration.last_sync_date) }}</p>
+                                <p class="mb-0 small pr-2 pt-1">{{ (hotglueIntegration.job_in_progress_job_created.length > 0 || hotglueIntegration.job_in_progress_job_queued.length > 0) && (hotglueIntegration.selected_location_id || hotglueIntegration.hotglue_location.length === 0) ? 'Sync in progress' : formatDate(hotglueIntegration.last_sync_date) }}</p>
                             </td>
-                            <td align="right" style="width: 33%">
+                            <td align="center" style="width: 16%">
                                 <div v-if="hotglueIntegration.connected">
-                                    <div v-if="hotglueIntegration.job_in_progress.length === 0">
+                                    <div v-if="(hotglueIntegration.job_in_progress_job_created.length > 0 || hotglueIntegration.job_in_progress_job_queued.length > 0 || (hotglueIntegration.job_done && hotglueIntegration.job_done[0].status === 'SYNCED')) && (hotglueIntegration.selected_location_id || hotglueIntegration.hotglue_location.length === 0)">
+                                        <div v-if="isSyncCompleted(hotglueIntegration, index)">
+                                            <p class="mb-0">Sync</p>
+                                            <span class="badge bg-danger text-white">completed</span>
+                                        </div>
+                                        <div v-else>
+                                            <p class="mb-0">Progress</p>
+                                            <div class="progress mb-3">
+                                                <div id="progress-bar" class="progress-bar progress-bar-animated progress-bar-striped" role="progressbar" v-bind:style="{ width: hotglueIntegration.progress_percent + '%' }" v-bind:aria-valuenow="hotglueIntegration.progress_percent" aria-valuemin="0" aria-valuemax="100">
+                                                    {{ hotglueIntegration.progress_percent }}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else-if="!hotglueIntegration.selected_location_id && hotglueIntegration.hotglue_location.length > 0">
+                                        <div class="form-group">
+                                            <label>Inventory Location</label>
+                                            <select class="form-control" @change="saveInventoryLocation($event, hotglueIntegration.id)">
+                                                <option selected disabled>Choose ...</option>
+                                                <option v-for="location in hotglueIntegration.hotglue_location" :key="location.ecommerce_location_id" :value="location.ecommerce_location_id">
+                                                    {{ location.name }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div v-else>
+                                        <p class="mb-0">Sync</p>
+                                        <span class="badge bg-danger text-white">{{ hotglueIntegration.job_done[0].status }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td align="right" style="width: 16%">
+                                <div v-if="hotglueIntegration.connected">
+                                    <div v-if="(hotglueIntegration.job_in_progress_job_created.length === 0 && hotglueIntegration.job_in_progress_job_queued.length === 0) && (hotglueIntegration.selected_location_id || hotglueIntegration.hotglue_location.length === 0)">
                                         <button class="btn bg-default btn-sm mb-0" align="right" @click.prevent="syncNow(hotglueIntegration)">Sync Now</button>
                                         <p class="mb-0 small pr-2 pt-1 disconnect" @click.prevent="disconnect(hotglueIntegration.id, hotglueIntegration.type)" v-if="hotglueIntegration.type == 'ecommerce'"><i class="fas fa-spinner fa-spin" v-if="disconnectEcommerceLoading"></i> Disconnect</p>
                                         <p class="mb-0 small pr-2 pt-1 disconnect" @click.prevent="disconnect(hotglueIntegration.id, hotglueIntegration.type)" v-else><i class="fas fa-spinner fa-spin" v-if="disconnectProductLoading"></i> Disconnect</p>
+                                    </div>
+                                    <div v-else-if="!hotglueIntegration.selected_location_id && hotglueIntegration.hotglue_location.length > 0">
                                     </div>
                                     <div v-else>
                                         <button class="btn bg-default btn-sm mb-0 animatedDots" align="right">Syncing</button>
@@ -89,20 +124,6 @@
                 </table>
             </div>
         </div>
-        <div class="d-flex justify-content-between mt-2">
-            <div class="d-flex">
-                <div v-if="product_flow_periodic_sync" class="custom-control custom-checkbox" @click="syncAllHitPayOrders">
-                    <input type="checkbox" class="custom-control-input" id="syncAllHitpayOrder" v-model="sync_all_hitpay_orders">
-                    <label class="custom-control-label" for="syncAllHitpayOrder">Sync all hitpay orders to shopify</label>
-                </div>
-            </div>
-            <div class="d-flex" alight="right">
-                <div v-if="product_flow_periodic_sync" class="custom-control custom-checkbox float-right" @click="productPeriodicSync">
-                    <input type="checkbox" class="custom-control-input" id="syncHitpayProduct" v-model="sync_hitpay_product">
-                    <label class="custom-control-label" for="syncHitpayProduct">Sync hitpay products to shopify</label>
-                </div>
-            </div>
-        </div>
     </div>
 </template>
 
@@ -119,9 +140,10 @@
                 loadingProduct: false,
                 isProcessingPeriodicSync: false,
                 isProcessingSyncAllHitpayOrders: false,
+                isProcessingSaveLocation: false,
                 disconnectEcommerceLoading: false,
                 disconnectProductLoading: false,
-                product_flow_periodic_sync: false,
+                ecommerce_flow_periodic_sync: false,
                 sync_hitpay_product: false,
                 sync_integration_id: null,
                 sync_all_hitpay_orders: false,
@@ -135,16 +157,16 @@
             });
             this.hotglueLinkedDetails = Business.hotglueIntegration;
             Business.hotglueIntegration.forEach(integration => {
-               if (integration.connected == 1 && integration.flow == this.hotglue_configs.product_flow_id) {
-                    this.product_flow_periodic_sync = true;
+                if (integration.connected == 1 && integration.flow == this.hotglue_configs.ecommerce_flow_id) {
+                    this.ecommerce_flow_periodic_sync = true;
                     this.sync_integration_id = integration.id;
-               }
-               if (integration.periodic_sync == 1) {
-                    this.sync_hitpay_product = true;
-               }
-               if (integration.sync_all_hitpay_orders == 1) {
-                    this.sync_all_hitpay_orders = true;
-               }
+                }
+                if (integration.periodic_sync == 1) {
+                        this.sync_hitpay_product = true;
+                }
+                if (integration.sync_all_hitpay_orders == 1) {
+                        this.sync_all_hitpay_orders = true;
+                }
             });
         },
 
@@ -161,7 +183,7 @@
                 ).then(({data}) => {
                     this.loadingProduct = false;
                     this.hotglueLinkedDetails = data;
-                    this.product_flow_periodic_sync = true;
+                    this.ecommerce_flow_periodic_sync = true;
                 });
             },
 
@@ -240,12 +262,66 @@
                     } else {
                         this.disconnectProductLoading = false;
                     }
-                    this.product_flow_periodic_sync = false;
+                    this.ecommerce_flow_periodic_sync = false;
                 });
             },
 
             formatDate(date) {
                 return date ? moment(String(date)).format('DD/MM/YYYY h:mm:ss a') : '-';
+            },
+
+            saveInventoryLocation(event, integrationId) {
+                if (this.isProcessingSaveLocation) {
+                    return;
+                }
+                var location = event.target.options[event.target.selectedIndex].text;
+                if (confirm("Set " + location + " as default inventory location?")) {
+                    this.isProcessingSaveLocation = true;
+                    setTimeout(() => {
+                        axios.put(this.getDomain('business/' + Business.id + '/integration/hotglue/inventory-location', 'dashboard'),
+                            { id: integrationId, location_id: event.target.value }
+                        ).then(({data}) => {
+                            this.hotglueLinkedDetails = data;
+                            this.isProcessingSaveLocation = false;
+                        });
+                    }, 1000);
+                }
+            },
+
+            isSyncCompleted(data, i) {
+                var now = moment(new Date());
+                if (data.job_in_progress_job_created.length > 0 && data.job_in_progress_job_queued.length === 0) {
+                    var job_created_at = moment(data.job_in_progress_job_created[0].created_at);
+                    var diff = now.diff(job_created_at, 'seconds');
+                    var percent = diff < 60 ? ((diff / 60) * 0.5) * 100 : 50;
+                    this.hotglueLinkedDetails[i]['progress_percent'] = percent.toFixed(2);
+                    setInterval(() => {
+                        if (percent >= 50) {
+                            window.location.reload(true);
+                        } else {
+                            this.$forceUpdate();
+                        }
+                    }, 30000);
+                    return false;
+                } else if (data.job_done[0].status === 'SYNCED') {
+                    var sync_date = moment(data.job_done[0].sync_date);
+                    var diff = now.diff(sync_date, 'seconds');
+                    this.hotglueLinkedDetails[i]['progress_percent'] = 100;
+                    setInterval(() => {
+                        if (diff < 6) {
+                            window.location.reload(true);
+                        } else {
+                            this.$forceUpdate();
+                        }
+                    }, 5000);
+                    return diff < 6 ? false : true;
+                } else if (data.job_in_progress_job_queued.length > 0) {
+                    this.hotglueLinkedDetails[i]['progress_percent'] = 75;
+                    setInterval(() => {
+                        window.location.reload(true);
+                    }, 30000);
+                    return false;
+                }
             }
         }
     }

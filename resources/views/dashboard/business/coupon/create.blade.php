@@ -9,13 +9,8 @@
             ]) }}"><i class="fas fa-reply fa-fw mr-3"></i> Back to Coupons</a>
         </div>
         <div class="col-12 col-lg-8 main-content">
-            <business-coupon-create-edit></business-coupon-create-edit>
+            <business-coupon-create></business-coupon-create>
         </div>
     </div>
 @endsection
 
-@push('body-stack')
-    <script>
-        window.Business = @json($business);
-    </script>
-@endpush

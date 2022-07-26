@@ -36,6 +36,10 @@ class ConfirmCharge extends Command
         $charge->business->confirmCharge($charge);
       } else {
         echo "Error: Charge " . $charge_id . " not found.";
+
+        return 1;
       }
+
+      return 0;
     }
 }

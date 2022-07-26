@@ -367,6 +367,14 @@ class Order extends Model
         if ($this->exists) {
             $this->notify(new NotifyOrderConfirmation($this));
             $this->business->notify(new NotifyNewCheckoutOrder($this));
+            $this->business->businessUsers()->each(function($businessUser) {
+                if ($businessUser->isAdmin()) {
+                    $businessUser->user->notify(new NotifyNewCheckoutOrder($this));
+                }
+            });
+            if ($businessCustomer = $this->business->customers()->where('email', $this->customer_email)->first()) {
+                $businessCustomer->notify(new NotifyOrderConfirmation($this));
+            }
         }
     }
 

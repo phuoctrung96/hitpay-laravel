@@ -16,6 +16,7 @@
                     @if (in_array($paymentProvider->payment_provider, [
                         \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA,
                         \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE,
+                        \App\Enumerations\PaymentProvider::STRIPE_US,
                     ]))
                         @php($route = 'stripe')
                         <div><i class="fab fa-stripe fa-4x"></i></div>
@@ -66,6 +67,7 @@
                               @if (in_array($paymentProvider->payment_provider, [
                                   \App\Enumerations\PaymentProvider::STRIPE_MALAYSIA,
                                   \App\Enumerations\PaymentProvider::STRIPE_SINGAPORE,
+                                  \App\Enumerations\PaymentProvider::STRIPE_US,
                               ]))
                                 @foreach ([
                                     'card',
@@ -106,7 +108,7 @@
                                     Direct Debit
                                 </option>
                               @endif
-                            </select>                              
+                            </select>
 
                             @error('method')
                                 <span class="invalid-feedback" role="alert">{{ $message }}</span>

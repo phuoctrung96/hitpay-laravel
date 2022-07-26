@@ -35,7 +35,7 @@
                             <span v-if="error.amount" class="text-danger" role="alert"><small v-html="error.amount"></small></span>
                         </div>
                         <div class="mt-3">
-                            <a href="https://hitpay.zendesk.com/hc/en-us/articles/900004328183-What-are-the-charges-for-refunds-and-chargebacks-" target="_blank">What are the charges for refunds?</a>
+                            Transaction fee are non-refundable. <a href="https://hitpay.zendesk.com/hc/en-us/articles/900004328183-What-are-the-charges-for-refunds-and-chargebacks-" target="_blank">Learn more</a>
                         </div>
                         <div class="text-right">
                             <button type="button" class="btn btn-danger" @click="refund" :disabled="is_processing">

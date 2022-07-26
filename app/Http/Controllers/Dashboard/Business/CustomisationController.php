@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
+use App\Helpers\PaymentLink;
+use App\Helpers\Rates;
+use App\Enumerations\Business\PluginProvider;
 
 class CustomisationController extends Controller
 {
@@ -42,7 +45,9 @@ class CustomisationController extends Controller
         $customisation->payment_order = $customisation->all_methods;
       }
 
-      return Response::view('dashboard.business.customisation.index', compact('business', 'customisation'));
+      $channels = $this->getAllChannels();
+
+      return Response::view('dashboard.business.customisation.index', compact('business', 'customisation', 'channels'));
     }
 
     public function patch(Request $request, Business $business, BusinessManagerInterface $businessManager) {
@@ -52,9 +57,52 @@ class CustomisationController extends Controller
         'customColor' => ['string', 'max:7'],
         'theme' => [ Rule::in(['hitpay', 'custom', 'light']) ],
         'payment_order.*' => [ Rule::in(array_keys($businessManager->getByBusinessAvailablePaymentMethods($business, null, true))) ],
-        'method_rules' => ['json']
+        'method_rules' => ['json'],
+        'admin_fee_settings' => ['json'],
       ]);
 
       $business->updateCustomisation($validatedData);
+    }
+
+    public function getRateForAmount(Request $request, Business $business, BusinessManagerInterface $businessManager) {
+      Gate::inspect('view', $business)->authorize();
+
+      $channels = $this->getAllChannels();
+
+      $validatedData = $request->validate([
+        'currency' => [
+          'required',
+          'string'
+        ],
+        'amount' => [
+            'required',
+            'numeric',
+            'between:0.01,' . PaymentLink::MAX_AMOUNT
+        ]
+      ]);
+
+      // Return rates for channels and methods for specific amount
+      $rates = [];
+
+      foreach ($channels as $channel => $name) {
+        $rates[$channel] = [
+          'name' => $name,
+          'rates' => Rates::getRatesForCheckoutSettings(
+            $business, 
+            // Same call as in index method
+            array_keys($businessManager->getByBusinessAvailablePaymentMethods($business, null, true)),
+            $validatedData['currency'],
+            $channel,
+            $validatedData['amount']
+          )
+        ];  
+      }
+
+      
+      return Response::json($rates);
+    }
+
+    function getAllChannels () {
+      return PluginProvider::getAll(true, false, false);
     }
 }

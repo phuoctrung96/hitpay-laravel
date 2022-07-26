@@ -1,13 +1,16 @@
 <style>
     table, th, td{
         border: 1px solid black;
-    }
-    table{
         border-collapse: collapse;
+        word-break:break-all;
+        word-wrap:break-word;
+    }
+    table {
+        width: 100%;
+        table-layout:fixed;
     }
 </style>
-<table border="0" cellpadding="0" cellspacing="0"
-       style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;" width="100%">
+<table>
     <tr>
         <th>#</th>
         <th>ID</th>

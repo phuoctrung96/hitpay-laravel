@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Enumerations\Business\ChargeStatus;
 use App\Business;
+use App\Enumerations\Business\PluginProvider;
+use App\Enumerations\PaymentProvider;
 use App\Services\XeroApiFactory;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -43,7 +45,7 @@ class XeroClearingToBank extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $businesses = Business::query()
             ->whereNotNull('xero_payment_fee_account_id')
@@ -59,21 +61,26 @@ class XeroClearingToBank extends Command
                 Log::error($exception);
             }
         }
+
+        return 0;
     }
 
     private function makePayout(Business $business)
     {
         try {
             $api = XeroApiFactory::makeAccountingApi($business);
-            $amount = $this->getAmount($business);
+            $amounts = $this->getAmount($business);
 
-            if($transfers = $this->makeBankTransfersContainer($business, $amount)) {
-                $api->createBankTransfer(
-                    $business->xero_tenant_id,
-                    $transfers
-                );
+            foreach ($amounts as $paymentProvider => $amount) {
+                if($transfers = $this->makeBankTransfersContainer($business, $amount)) {
+                    $api->createBankTransfer(
+                        $business->xero_tenant_id,
+                        $transfers,
+                        $paymentProvider
+                    );
 
-                $this->info('Send amount '.$amount.' to bank account for business #' . $business->id);
+                    $this->info('Send amount '.$amount.' to bank account for business #' . $business->id);
+                }
             }
         } catch (ApiException $exception) {
             dump($exception->getResponseBody(), $exception);
@@ -120,17 +127,26 @@ class XeroClearingToBank extends Command
             ->getAccounts()[0];
     }
 
-    private function getAmount(Business $business): float
+    private function getAmounts(Business $business): array
     {
         $orderSales = $business->charges()
             ->with('target')
             ->where('currency', 'sgd')
             ->where('status', ChargeStatus::SUCCEEDED)
             ->whereDate('closed_at', '=', date('Y-m-d', strtotime('-1 day')))
+            ->when('all' !== $business->xero_channels && !in_array('all', $business->xero_channels), function($query, $business) {
+                return $query->where(function ($query, $business) {
+                    return $query
+                        ->where('plugin_provider', $business->xero_channels)
+                        ->when(PluginProvider::POINT_OF_SALE === $business->xero_channels, function ($query) {
+                            return $query->orWhere('channel', PluginProvider::POINT_OF_SALE);
+                        });
+                });
+            })
             ->get();
 
-        $spend = 0;
-        $received = 0;
+        $spend = [];
+        $received = [];
 
         /** @var Business\Charge $orderSale */
         foreach ($orderSales as $orderSale) {
@@ -138,10 +154,28 @@ class XeroClearingToBank extends Command
                 continue;
             }
 
-            $spend += $orderSale->getTotalFee();
-            $received += $orderSale->amount;
+            $paymentProvider = $orderSale->payment_provider;
+            if(in_array($paymentProvider, [PaymentProvider::DBS_SINGAPORE, PaymentProvider::GRABPAY, PaymentProvider::SHOPEE_PAY, PaymentProvider::ZIP])) {
+                $paymentProvider = 'group';
+            }
+
+            if(!isset($spend[$paymentProvider])) {
+                $spend[$paymentProvider] = 0;
+            }
+
+            if(!isset($received[$paymentProvider])) {
+                $received[$paymentProvider] = 0;
+            }
+
+            $spend[$paymentProvider] += $orderSale->getTotalFee();
+            $received[$paymentProvider] += $orderSale->amount;
         }
 
-        return ($received - $spend) / 100;
+        $amounts = [];
+        foreach ($received as $key => $value) {
+            $amounts[$key] = ($value - $spend[$key]) / 100;
+        }
+
+        return $amounts;
     }
 }

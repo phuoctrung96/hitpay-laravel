@@ -29,6 +29,11 @@
                     <img :alt="business.name" id="avatar" :src="cover_image_url"
                          class="listing align-self-center rounded border mr-3">
                     <div class="media-body align-self-center">
+                        <div class="form-row">
+                            <div class="col-12">
+                                <p v-if="errors.image" class="text-danger small mb-2" role="alert">{{ errors.image }}</p>
+                            </div>
+                        </div>
                         <p v-if="is_cover_image_succeeded" class="text-success font-weight-bold mb-0 mt-3">
                             <i class="fas fa-check-circle mr-2"></i> Cover image uploaded successfully!</p>
                         <label v-else class="d-inline-flex mb-1" for="profilePictureImage">
@@ -36,7 +41,8 @@
                                    accept="image/*" :disabled="is_processing" @change="handleImage">
                             <span id="uploadBtn" class="btn btn-primary btn-sm">
                             <i class="fas fa-cloud-upload-alt"></i> Upload
-                        </span> </label>
+                            </span> 
+                        </label>
                         <a class="text-danger small" href="#" @click.prevent="deleteImage()">Remove</a>
                         <div class="mw-sm">
                             <p class="small text-muted mb-0 mt-1">For best results, use an image at least 1922 by 445
@@ -50,22 +56,22 @@
                 <p class="text-uppercase text-muted">Store Settings</p>
                 <div class="mb-3">
                     <div class="custom-control custom-switch">
-                        <input id="switch-store" v-model="business.shop_state" type="checkbox"
+                        <input id="switch-store" v-model="store_settings.shop_state" type="checkbox"
                                class="custom-control-input"
                                :disabled="is_processing">
-                        <label v-if="business.shop_state" for="switch-store" class="custom-control-label">Store is
+                        <label v-if="store_settings.shop_state" for="switch-store" class="custom-control-label">Store is
                             enabled</label>
-                        <label v-if="!business.shop_state" for="switch-store" class="custom-control-label">Store is
+                        <label v-if="!store_settings.shop_state" for="switch-store" class="custom-control-label">Store is
                             disabled</label>
                     </div>
-                    <div v-if="!business.shop_state" class="form-check mt-2">
+                    <div v-if="!store_settings.shop_state" class="form-check mt-2">
                         <input type="checkbox" class="form-check-input"
                                v-model="if_schedule_time" id="enableDateTime"
                                :disabled="is_processing">
                         <label class="form-check-label" for="enableDateTime">Schedule a time to make store
                             online</label>
                     </div>
-                    <template v-if="!business.shop_state && if_schedule_time">
+                    <template v-if="!store_settings.shop_state && if_schedule_time">
                         <datepicker placeholder="Date" format="dd-MM-yyyy" v-model="enable_date"
                                     :disabled-dates="disableDates"
                                     class="mt-2 mr-2"></datepicker>
@@ -81,18 +87,19 @@
                 <div class="form-row">
                     <div class="col-12">
                         <label for="introduction" class="small text-muted text-uppercase">About Us Section</label>
-                        <textarea id="introduction" v-model="business.introduction" class="form-control"
-                                  :class="{
+                      <ckeditor id="introduction" v-model="business.introduction"
+                                :class="{
                             'is-invalid': errors.introduction,
                             'bg-light': !(is_processing || is_succeeded),
-                        }" :disabled="is_processing || is_succeeded"></textarea>
+                        }" :disabled="is_processing || is_succeeded"
+                      ></ckeditor>
                         <span class="invalid-feedback" role="alert">{{ errors.introduction }}</span>
                     </div>
                 </div>
                 <div class="form-row mt-2">
                     <div class="col-12">
                         <label for="thank_message" class="small text-muted text-uppercase">Custom thank message</label>
-                        <textarea id="thank_message" v-model="business.thank_message" class="form-control"
+                        <textarea id="thank_message" v-model="store_settings.thank_message" class="form-control"
                                   :class="{
                             'is-invalid': errors.thank_message,
                             'bg-light': !(is_processing || is_succeeded),
@@ -100,25 +107,16 @@
                         <span class="invalid-feedback" role="alert">{{ errors.thank_message }}</span>
                     </div>
                 </div>
-                <div class="custom-control custom-switch mt-2">
-                    <input id="switch-shipping" v-model="business.enabled_shipping" type="checkbox"
-                           class="custom-control-input"
-                           :disabled="is_processing">
-                    <label v-if="business.enabled_shipping" for="switch-shipping" class="custom-control-label">Shipping is
-                        enabled</label>
-                    <label v-if="!business.enabled_shipping" for="switch-shipping" class="custom-control-label">Shipping is
-                        disabled</label>
-                </div>
-                <div class="custom-control custom-switch mt-2">
-                    <input id="switch-redirect" v-model="business.is_redirect_order_completion" type="checkbox"
+                <div class="custom-control custom-switch mt-3">
+                    <input id="switch-redirect" v-model="store_settings.is_redirect_order_completion" type="checkbox"
                            class="custom-control-input"
                            :disabled="is_processing">
                     <label for="switch-redirect" class="custom-control-label">Redirect after order completion</label>
                 </div>
                 <div class="form-row mt-2">
                     <div class="col-12">
-                        <input id="url_redirect_order_completion" v-model="business.url_redirect_order_completion" 
-                                v-if="business.is_redirect_order_completion" class="form-control" 
+                        <input id="url_redirect_order_completion" v-model="store_settings.url_redirect_order_completion"
+                                v-if="store_settings.is_redirect_order_completion" class="form-control mt-1 mb-3"
                                 :class="{
                                 'is-invalid': errors.url_redirect_order_completion,
                                 'bg-light': !(is_processing || is_succeeded),
@@ -126,66 +124,10 @@
                         <span class="invalid-feedback" role="alert">{{ errors.url_redirect_order_completion }}</span>
                     </div>
                 </div>
-                <h5 class="text-center mt-3">Pick Up Address</h5>
-                <div class="form-row">
-                    <div class="col-12 mb-3">
-                        <label for="street" class="small text-muted text-uppercase">Street</label>
-                        <input id="street" v-model="business.street" class="form-control" :class="{
-                            'is-invalid': errors.street,
-                            'bg-light': !(is_processing || is_succeeded),
-                        }" :disabled="is_processing || is_succeeded">
-                        <span class="invalid-feedback" role="alert">{{ errors.street }}</span>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="col-12 col-sm-6 mb-3">
-                        <label for="city" class="small text-muted text-uppercase">City</label>
-                        <input id="city" v-model="business.city" class="form-control" :class="{
-                            'is-invalid': errors.city,
-                            'bg-light': !(is_processing || is_succeeded),
-                        }" :disabled="is_processing || is_succeeded">
-                        <span class="invalid-feedback" role="alert">{{ errors.city }}</span>
-                    </div>
-                    <div class="col-12 col-sm-6 mb-3">
-                        <label for="state" class="small text-muted text-uppercase">State</label>
-                        <input id="state" v-model="business.state" class="form-control" :class="{
-                            'is-invalid': errors.state,
-                            'bg-light': !(is_processing || is_succeeded),
-                        }" :disabled="is_processing || is_succeeded">
-                        <span class="invalid-feedback" role="alert">{{ errors.state }}</span>
-                    </div>
-                    <div class="col-12 col-sm-6 mb-3">
-                        <label for="postal_code" class="small text-muted text-uppercase">Postal Code</label>
-                        <input id="postal_code" v-model="business.postal_code" class="form-control" :class="{
-                            'is-invalid': errors.postal_code,
-                            'bg-light': !(is_processing || is_succeeded),
-                        }" :disabled="is_processing || is_succeeded">
-                        <span class="invalid-feedback" role="alert">{{ errors.postal_code }}</span>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="col-12 col-sm-6 mb-3">
-                        <label for="country" class="small text-muted text-uppercase">Country</label>
-                        <input id="country" type="text" readonly class="form-control-plaintext"
-                               :value="business.country_name">
-                    </div>
-                    <div class="col-12 col-sm-6 mb-3">
-                        <label for="country" class="small text-muted text-uppercase">Self Pick-Up</label>
-                        <div class="custom-control custom-switch">
-                            <input id="can_pick_up" v-model="business.can_pick_up" type="checkbox"
-                                   class="custom-control-input"
-                                   :disabled="is_processing || is_succeeded">
-                            <label for="can_pick_up" class="custom-control-label">Customer can pick up</label>
-                        </div>
-                        <button v-if="business.can_pick_up" class="btn btn-primary mt-2" data-toggle="modal"
-                                data-target="#timeSlotsModal">Time Slots for Pick-ups
-                        </button>
-                    </div>
-                </div>
                 <div class="form-row">
                     <div class="col-12 mb-3">
                         <label for="seller_notes" class="small text-muted text-uppercase">Seller Notes</label>
-                        <textarea id="seller_notes" v-model="business.seller_notes" class="form-control"
+                        <textarea id="seller_notes" v-model="store_settings.seller_notes" class="form-control"
                                   :class="{
                             'is-invalid': errors.seller_notes,
                             'bg-light': !(is_processing || is_succeeded),
@@ -196,16 +138,16 @@
                 <h5 class="text-center mt-3">Social network</h5>
                 <div class="form-row">
                     <div class="col-6 mb-3">
-                        <label for="street" class="small text-muted text-uppercase">Instagram</label>
-                        <input id="street" v-model="business.url_instagram" class="form-control" :class="{
+                        <label for="url_instagram" class="small text-muted text-uppercase">Instagram</label>
+                        <input id="url_instagram" v-model="store_settings.url_instagram" class="form-control" :class="{
                             'is-invalid': errors.url_instagram,
                             'bg-light': !(is_processing || is_succeeded),
                         }" :disabled="is_processing || is_succeeded">
                         <span class="invalid-feedback" role="alert">{{ errors.url_instagram }}</span>
                     </div>
                     <div class="col-6 mb-3">
-                        <label for="street" class="small text-muted text-uppercase">Facebook</label>
-                        <input id="street" v-model="business.url_facebook" class="form-control" :class="{
+                        <label for="url_facebook" class="small text-muted text-uppercase">Facebook</label>
+                        <input id="url_facebook" v-model="store_settings.url_facebook" class="form-control" :class="{
                             'is-invalid': errors.url_facebook,
                             'bg-light': !(is_processing || is_succeeded),
                         }" :disabled="is_processing || is_succeeded">
@@ -214,16 +156,16 @@
                 </div>
                 <div class="form-row">
                     <div class="col-6 mb-3">
-                        <label for="street" class="small text-muted text-uppercase">Twitter</label>
-                        <input id="street" v-model="business.url_twitter" class="form-control" :class="{
+                        <label for="url_twitter" class="small text-muted text-uppercase">Twitter</label>
+                        <input id="url_twitter" v-model="store_settings.url_twitter" class="form-control" :class="{
                             'is-invalid': errors.url_twitter,
                             'bg-light': !(is_processing || is_succeeded),
                         }" :disabled="is_processing || is_succeeded">
                         <span class="invalid-feedback" role="alert">{{ errors.url_twitter }}</span>
                     </div>
                     <div class="col-6 mb-3">
-                        <label for="street" class="small text-muted text-uppercase">Tiktok</label>
-                        <input id="street" v-model="business.url_tiktok" class="form-control" :class="{
+                        <label for="url_tiktok" class="small text-muted text-uppercase">Tiktok</label>
+                        <input id="url_tiktok" v-model="store_settings.url_tiktok" class="form-control" :class="{
                             'is-invalid': errors.url_tiktok,
                             'bg-light': !(is_processing || is_succeeded),
                         }" :disabled="is_processing || is_succeeded">
@@ -237,65 +179,6 @@
                 </button>
                 <p v-if="is_succeeded" class="text-success font-weight-bold mb-0 mt-3">
                     <i class="fas fa-check-circle mr-2"></i> Saved successfully!</p>
-            </div>
-            <div class="modal fade" id="timeSlotsModal" tabindex="-1" role="dialog"
-                 aria-hidden="true" data-backdrop="static" data-keyboard="false">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="timeSlotsLabel">Date and Time slots for pick-up</h5>
-                            <button id="btnclose" type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <a :class="{ 'text-danger' : pick_up_slots.has_slots }"
-                               @click="triggerSlots($event, !pick_up_slots.has_slots)"
-                               href="#" class="float-right small">
-                                {{ pick_up_slots.has_slots ? 'Disable slots' : 'Enable slots' }}
-                            </a>
-                            <div v-if="pick_up_slots.has_slots">
-                                <a v-for="(item, index) in usable_data.week_days_list"
-                                   v-if="!pick_up_slots.slots.find(x => x.day === index)"
-                                   @click="addSlot($event, index)" class="btn btn-outline-secondary btn-sm m-1"
-                                   href="#">
-                                    + {{ item }}
-                                </a>
-                            </div>
-                            <span class="small text-danger d-text-block">{{ errors.slots }}</span>
-                            <template v-if="pick_up_slots.has_slots">
-                                <div v-for="slot in pick_up_slots.slots">
-                                    <div class="form-group row mb-0">
-                                        <label class="col-12 col-form-label">
-                                            <a class="small text-danger float-right" href="#"
-                                               @click="removeSlot($event, slot.day)">Remove</a>
-                                            <span class="font-weight-bold">{{
-                                                    usable_data.week_days_list[slot.day]
-                                                }}</span>
-                                        </label>
-                                        <div class="col-12 mb-3">
-                                            <span class="mr-2">From: </span>
-                                            <vue-timepicker format="hh:mm A" v-model="slot.times.from"
-                                                            close-on-complete></vue-timepicker>
-                                            <span class="mr-2">To: </span>
-                                            <vue-timepicker format="hh:mm A" v-model="slot.times.to"
-                                                            close-on-complete></vue-timepicker>
-                                            <span v-if="slot.error != ''" class="invalid-feedback d-block"
-                                                  role="alert">{{ slot.error }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                        <div class="modal-footer">
-                            <button id="btnCreate"
-                                    class="btn btn-success shadow-sm"
-                                    @click="saveSlots()" :disabled="is_processing">{{ 'Save' }}
-                                <i class="fas fa-spin fa-spinner" :class="{'d-none' : !is_processing}"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         <div id="confirmImageModal" class="modal" tabindex="-1" role="dialog" data-backdrop="static">
@@ -330,59 +213,34 @@ import Datepicker from 'vuejs-datepicker';
 import 'vue2-timepicker/dist/VueTimepicker.css';
 
 import VueTimepicker from 'vue2-timepicker';
+import CKEditor from 'ckeditor4-vue';
 
 export default {
     components: {
         Datepicker,
-        VueTimepicker
+        VueTimepicker,
+        ckeditor: CKEditor.component
     },
 
     data() {
         return {
             business: {
-                country_name: null,
-                street: null,
-                city: null,
-                state: null,
-                postal_code: null,
-                can_pick_up: false,
-                slots: [],
                 introduction: null,
-                seller_notes: null,
-                schedule_time: false,
-                phone_number: null,
-                currency_name: null,
-                identifier: null,
-                name: null,
-                email: null,
-                display_name: null,
-                statement_description: null,
-                enabled_shipping: true,
+            },
+
+            store_settings: {
+                shop_state: true,
+                seller_notes: '',
+                enable_datetime: null,
                 thank_message: null,
                 is_redirect_order_completion: false,
                 url_redirect_order_completion: null,
                 url_facebook: '',
                 url_instagram: '',
                 url_twitter: '',
-                url_tiktok: ''
+                url_tiktok: '',
             },
 
-            pick_up_slots: {
-                has_slots: false,
-                slots: [],
-            },
-
-            usable_data: {
-                week_days_list: {
-                    Monday: 'Monday',
-                    Tuesday: 'Tuesday',
-                    Wednesday: 'Wednesday',
-                    Thursday: 'Thursday',
-                    Friday: 'Friday',
-                    Saturday: 'Saturday',
-                    Sunday: 'Sunday',
-                }
-            },
             errors: {},
             is_processing: false,
             is_succeeded: false,
@@ -405,48 +263,13 @@ export default {
         };
     },
     watch: {
-        'pick_up_slots.slots': {
-            handler(values) {
-                if (values.length > 0) {
-                    this.errors.slots = '';
-                }
-                _.forEach(values, function (value) {
-                    if (value.times.from != '' && value.times.to != '') {
 
-                        let from = "01/01/2011 " + value.times.from;
-                        let to = "01/01/2011 " + value.times.to;
-                        let fromDate = new Date(Date.parse(from));
-                        let toDate = new Date(Date.parse(to));
-
-                        if (fromDate > toDate) {
-                            value.error = "'To' time cannot be earlier than 'from' time"
-                        } else {
-                            value.error = '';
-                        }
-                    }
-                });
-            },
-            deep: true
-        }
     },
 
     mounted() {
         this.business = Business;
-        this.business.can_pick_up = this.business.can_pick_up ?? false;
-        this.business.seller_notes = this.business.seller_notes ?? '';
 
-        if (Business.slots != null) {
-            this.pick_up_slots.has_slots = true;
-            this.pick_up_slots.slots = this.orderSlot(JSON.parse(Business.slots));
-        }
-
-        if (this.business.enable_datetime === null)
-            this.if_schedule_time = false;
-        else {
-            this.if_schedule_time = true;
-            this.enable_date = new Date(EnableDate);
-            this.enable_time = EnableTime;
-        }
+        this.retrieveStoreSettings();
 
         this.default_cover_image_url = Data.default_cover_image_url;
 
@@ -474,79 +297,86 @@ export default {
     },
 
     methods: {
+        retrieveStoreSettings() {
+          this.is_processing = true;
+
+          axios.get(
+            this.getDomain('v1/business/' + this.business.id + '/store-settings', 'api'),
+            {
+              withCredentials: true
+            }
+          ).then(({data}) => {
+            this.is_processing = false;
+
+            this.business = data.business;
+            this.store_settings = data.store_settings;
+
+            this.formatEnableDatetime();
+          }).catch(({response}) => {
+            console.log(response);
+          });
+        },
+        formatEnableDatetime() {
+          if (this.store_settings.shop_state) {
+            this.if_schedule_time = false;
+          } else {
+            if (this.store_settings.enable_datetime) {
+              this.if_schedule_time = true;
+              this.enable_date = new Date(this.store_settings.enable_datetime);
+              this.enable_time = this.store_settings.enable_time;
+            } else {
+              this.if_schedule_time = false;
+            }
+          }
+        },
         saveChanges() {
             this.is_processing = true;
             this.errors = {};
 
-            if (!this.business.shop_state && this.if_schedule_time) {
+            if (!this.store_settings.shop_state && this.if_schedule_time) {
                 if (this.enable_date === '' || this.enable_time === '') {
                     this.errors.shop_state = "Please fill in date and time to make store online.";
                 }
             }
 
-            if(this.business.can_pick_up){
-                if( this.business.street == null || this.business.street.trim() == '' ) {
-                    this.errors.street = 'The street field is required.';
-                } else if(this.business.street.length > 255) {
-                    this.errors.street = 'The street field may not be greater than 255 characters.';
-                }
-
-                if( this.business.city == null || this.business.city.trim() == '' ){
-                    this.errors.city = 'The city field is required.';
-                } else if(this.business.city.length > 255) {
-                    this.errors.city = 'The city field may not be greater than 255 characters.';
-                }
-
-                if ( this.business.state == null || this.business.state.trim() == '' ){
-                    this.errors.state = 'The state field is required.';
-                } else if(this.business.state.length > 255) {
-                    this.errors.state = 'The state field may not be greater than 255 characters.';
-                }
-
-                if( this.business.postal_code == null || this.business.postal_code.trim() == '') {
-                    this.errors.postal_code = 'The postal code field is required.';
-                } else if(this.business.postal_code.length > 16) {
-                    this.errors.postal_code = 'The postal code may not be greater than 16 characters.';
-                }
+            if (this.store_settings.thank_message && this.store_settings.thank_message.length > 1000) {
+              this.errors.thank_message = 'The custom thank message may not be greater than 1000 characters.';
             }
 
-            if(this.business.thank_message.length > 1000) {
-                this.errors.thank_message = 'The custom thank message may not be greater than 1000 characters.';
-            }
-
-            if(this.business.is_redirect_order_completion && !this.isValidURL(this.business.url_redirect_order_completion)){
+            if (this.store_settings.is_redirect_order_completion) {
+              if (!this.store_settings.url_redirect_order_completion) {
+                this.errors.url_redirect_order_completion = "Please input url or set uncheck redirect after order completion";
+              }
+              if (
+                this.store_settings.url_redirect_order_completion &&
+                this.store_settings.url_redirect_order_completion !== "" &&
+                !this.isValidURL(this.store_settings.url_redirect_order_completion)
+              ) {
                 this.errors.url_redirect_order_completion = "The url is invalid";
+              }
             }
 
-            if(this.business.url_instagram != '' & !this.isValidURLNotHttp(this.business.url_instagram)) {
+            if (this.store_settings.url_instagram && this.store_settings.url_instagram !== '' && !this.isValidURLNotHttp(this.store_settings.url_instagram)) {
                 this.errors.url_instagram = 'The URL Instagram is invalid.';
-            }
-
-            if(this.business.url_instagram.length > 255) {
+            } else if (this.store_settings.url_instagram && this.store_settings.url_instagram.length > 255) {
                 this.errors.url_instagram = 'The Instagram may not be greater than 255 characters.';
             }
 
-            if(this.business.url_facebook.length > 255) {
+            if (this.store_settings.url_facebook && this.store_settings.url_facebook.length > 255) {
                 this.errors.url_facebook = 'The Facebook may not be greater than 255 characters.';
-            }
-
-            if(this.business.url_facebook != '' & !this.isValidURLNotHttp(this.business.url_facebook)) {
+            } else if (this.store_settings.url_facebook && this.store_settings.url_facebook !== '' && !this.isValidURLNotHttp(this.store_settings.url_facebook)) {
                 this.errors.url_facebook = 'The URL Facebook is invalid.';
             }
-            
-            if(this.business.url_twitter.length > 255) {
-                this.errors.url_twitter = 'The Twitter may not be greater than 255 characters.';
-            }
 
-            if(this.business.url_twitter != '' & !this.isValidURLNotHttp(this.business.url_twitter)) {
+            if (this.store_settings.url_twitter && this.store_settings.url_twitter.length > 255) {
+                this.errors.url_twitter = 'The Twitter may not be greater than 255 characters.';
+            } else if (this.store_settings.url_twitter && this.store_settings.url_twitter !== '' && !this.isValidURLNotHttp(this.store_settings.url_twitter)) {
                 this.errors.url_twitter = 'The URL Twitter is invalid.';
             }
 
-            if(this.business.url_tiktok.length > 255) {
+            if (this.store_settings.url_tiktok && this.store_settings.url_tiktok.length > 255) {
                 this.errors.url_tiktok = 'The Tiktok may not be greater than 255 characters.';
-            }
-
-            if(this.business.url_tiktok != '' & !this.isValidURLNotHttp(this.business.url_tiktok)) {
+            } else if (this.store_settings.url_tiktok && this.store_settings.url_tiktok !== '' && !this.isValidURLNotHttp(this.store_settings.url_tiktok)) {
                 this.errors.url_tiktok = 'The URL Tiktok is invalid.';
             }
 
@@ -555,24 +385,58 @@ export default {
                 return;
             }
 
-            if (this.business.shop_state || !this.if_schedule_time) {
+            if (this.store_settings.shop_state || !this.if_schedule_time) {
                 this.enable_date = '';
                 this.enable_time = '';
             }
 
-            this.business.enable_datetime = this.getEnableDate();
+            this.store_settings.enable_datetime = this.getEnableDate();
 
-            axios.put(this.getDomain('business/' + this.business.id + '/setting/shop/update', 'dashboard'), this.business).then(({data}) => {
+            let submissionData = {
+              introduction: this.business.introduction,
+              shop_state: this.store_settings.shop_state,
+              seller_notes: this.store_settings.seller_notes,
+              enable_datetime: this.getEnableDate(),
+              thank_message: this.store_settings.thank_message,
+              is_redirect_order_completion: this.store_settings.is_redirect_order_completion,
+              url_redirect_order_completion: this.store_settings.url_redirect_order_completion,
+              url_instagram: this.store_settings.url_instagram,
+              url_facebook: this.store_settings.url_facebook,
+              url_twitter: this.store_settings.url_twitter,
+              url_tiktok: this.store_settings.url_tiktok,
+            }
+
+            axios.put(
+              this.getDomain('v1/business/' + this.business.id + '/store-settings', 'api'),
+              submissionData,
+              {
+                withCredentials: true
+              }
+            ).then(({data}) => {
                 this.is_processing = false;
                 this.is_succeeded = true;
-                this.business = data;
+
+                this.business = data.business;
+                this.store_settings = data.store_settings;
+
+                this.formatEnableDatetime();
 
                 setTimeout(() => {
                     this.is_notification_succeeded = false;
                     this.is_succeeded = false;
                 }, 3000);
-            });
+            }).catch(({response}) => {
+                if (response.status === 422) {
+                    this.is_processing = false;
+                    this.is_succeeded = false;
 
+                    _.forEach(response.data.errors, (value, key) => {
+                        this.errors[key] = _.first(value);
+                    });
+
+                    this.showError(_.first(Object.keys(this.errors)));
+                }
+            });
         },
         showError(firstErrorKey) {
             if (firstErrorKey !== undefined) {
@@ -613,6 +477,7 @@ export default {
                 return this.enable_date.getFullYear() + '-' + fromMonth + '-' + fromDay + ' ' + hour24;
             } else return null;
         },
+
         isValidURL(string) {
             var res = string.match(/(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
             return (res !== null)
@@ -620,35 +485,6 @@ export default {
         isValidURLNotHttp(string) {
             var res = string.match(/[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g);
             return (res !== null)
-        },
-        triggerSlots(event, status) {
-            event.preventDefault();
-
-            this.pick_up_slots.has_slots = status;
-        },
-
-        addSlot(event, key) {
-            event.preventDefault();
-
-            if (this.pick_up_slots.slots.length < 7) {
-                this.pick_up_slots.slots.push({
-                    day: key,
-                    times: {
-                        from: '',
-                        to: '',
-                    },
-                    error: ''
-                });
-
-                this.pick_up_slots.slots = this.orderSlot(this.pick_up_slots.slots);
-            }
-        },
-        removeSlot(event, key) {
-            event.preventDefault();
-
-            let slot = this.pick_up_slots.slots.indexOf(this.pick_up_slots.slots.find(x => x.day === key));
-
-            this.pick_up_slots.slots.splice(slot, 1);
         },
 
         handleImage() {
@@ -659,6 +495,7 @@ export default {
 
         uploadImage() {
             this.is_processing = true;
+            this.errors = {};
 
             var size = parseFloat(this.image.size / (1024 * 1024)).toFixed(2);
             if( size > 2){
@@ -685,6 +522,10 @@ export default {
                     this.is_cover_image_succeeded = false;
                 }, 5000);
             }).catch(() => {
+                this.is_cover_image_succeeded = false;
+                this.is_processing = false;
+                this.image_modal.modal('hide'); 
+                this.errors.image = 'The image was invalid';
                 console.log('FAILURE!!');
             });
         },
@@ -695,72 +536,6 @@ export default {
             }).catch(({error}) => {
                 console.log(error);
             });
-        },
-        saveSlots() {
-            if (this.pick_up_slots.has_slots) {
-                if (this.pick_up_slots.slots.length > 0) {
-                    let err = false;
-                    _.each(this.pick_up_slots.slots, value => {
-                        if (value.error != '') {
-                            err = true;
-                            return;
-                        }
-                        if (value.times.from === '' || value.times.to === '') {
-                            err = true;
-                            value.error = "Please fill in both times";
-                            return;
-                        }
-                    });
-                    if (err) {
-                        this.is_processing = false;
-                        return;
-                    }
-                    this.business.slots = JSON.stringify(this.pick_up_slots.slots);
-                } else {
-                    this.errors.slots = 'Please choose date and time slots for your delivery';
-                }
-            } else {
-                this.business.slots = null;
-            }
-
-            if (!this.business.can_pick_up) {
-                this.business.slots = null;
-            }
-
-            axios.post(this.getDomain('business/' + this.business.id + '/setting/shop/slots', 'dashboard'), this.business).then(({data}) => {
-                this.business = data;
-
-                this.is_processing = false;
-                this.is_succeeded = true;
-                $("#timeSlotsModal").modal('hide');
-
-                setTimeout(() => {
-                    this.is_succeeded = false;
-                }, 5000);
-            }).catch(({response}) => {
-                if (response.status === 422) {
-                    _.forEach(response.data.errors, (value, key) => {
-                        this.errors[key] = _.first(value);
-                    });
-
-                    this.showError(_.first(Object.keys(this.errors)));
-                }
-            });
-        },
-
-        orderSlot(slots) {
-            let arr = ['', '', '', '', '', '', '']
-            slots.forEach(day => {
-                if (day.day === 'Monday') arr[0] = day
-                if (day.day === 'Tuesday')  arr[1] = day
-                if (day.day === 'Wednesday') arr[2] = day
-                if (day.day === 'Thursday') arr[3] = day
-                if (day.day === 'Friday') arr[4] = day
-                if (day.day === 'Saturday') arr[5] = day
-                if (day.day === 'Sunday') arr[6] = day
-            });
-
-            return arr.filter(str => str !== '')
         },
     },
     computed: {

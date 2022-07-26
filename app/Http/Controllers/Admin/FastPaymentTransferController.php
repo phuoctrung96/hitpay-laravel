@@ -47,6 +47,16 @@ class FastPaymentTransferController extends Controller
             $status = 'pending';
         }
 
+        if ($request->has('keyword')) {
+            $keyword = $request->get('keyword');
+            if ($keyword) {
+                $transfers->where(function($query) use ($keyword) {
+                    $query->where('id', $keyword);
+                    $query->orWhere('business_id', $keyword);
+                });
+            }
+        }
+
         $paginator = $transfers->orderByDesc('id')->paginate();
 
         $paginator->appends('status', $status);
@@ -107,7 +117,7 @@ class FastPaymentTransferController extends Controller
             $transfer->payment_provider_account_id = $data['bank_swift_code'].'@'.$data['bank_account_no'];
             $transfer->save();
 
-            ProcessOutgoingFast::dispatch($transfer);
+            ProcessOutgoingFast::dispatch($transfer)->onQueue('main-server');
 
             Session::flash('success_message', 'The fast transfer is updated and being processed now.');
         }
@@ -122,7 +132,7 @@ class FastPaymentTransferController extends Controller
      */
     public function trigger(Transfer $transfer)
     {
-        ProcessOutgoingFast::dispatch($transfer);
+        ProcessOutgoingFast::dispatch($transfer)->onQueue('main-server');
 
         Session::flash('success_message', 'The fast transfer is being processed now.');
 

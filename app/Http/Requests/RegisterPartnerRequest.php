@@ -69,7 +69,7 @@ class RegisterPartnerRequest extends FormRequest
             ],
             'email' => [
                 'required',
-                'email',
+                'email:rfc,dns',
                 'max:255',
                 Rule::unique('users', 'email'),
             ],
@@ -80,7 +80,7 @@ class RegisterPartnerRequest extends FormRequest
             ],
             'country' => [
                 'required',
-                Rule::in(array_keys(Core::$countries)),
+                Rule::in(array_keys(Core::getCountries())),
             ],
         ];
     }

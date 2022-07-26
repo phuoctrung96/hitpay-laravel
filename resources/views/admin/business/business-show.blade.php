@@ -339,6 +339,21 @@
                     <button class="btn btn-danger mt-3 btn-block" type="submit">Reject</button>
                 </form>
             @endif
+
+            @if ($business->payment_enabled)
+                <form method="post" action="{{ route('admin.business.set_payment_enabled', [$business->getKey(),])}}">
+                    @csrf
+                    <input type="hidden" name="payment_enabled" value="0" />
+                    <button class="btn btn-warning mt-3 btn-block">Set Disable Payment</button>
+                </form>
+            @else
+                <form method="post" action="{{ route('admin.business.set_payment_enabled', [$business->getKey(),])}}">
+                    @csrf
+                    <input type="hidden" name="payment_enabled" value="1" />
+                    <button class="btn btn-warning mt-3 btn-block">Set Enable Payment</button>
+                </form>
+            @endif
+
             <button class="btn btn-danger mt-3 btn-block" data-toggle="modal"
                     data-target="#deleteBusinessModal">Delete business
             </button>

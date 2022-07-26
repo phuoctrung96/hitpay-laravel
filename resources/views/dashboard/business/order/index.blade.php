@@ -15,8 +15,8 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
-        window.Orders = @json($orders);
+        {{--window.Orders = @json($orders);--}}
         window.Statuses = @json($statuses);
+        window.CurrentStatus = @json($currentStatus);
     </script>
 @endpush

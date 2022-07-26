@@ -2,10 +2,12 @@
 
 namespace App\Logics\Business;
 
+use App\Actions\Business\EmailTemplates\ConvertEmailTemplate;
 use App\Business;
 use App\Business\Charge;
 use App\Business\Charge as ChargeModel;
 use App\Business\ChargeReceiptRecipient;
+use App\Business\EmailTemplate;
 use App\Business\Order as OrderModel;
 use App\Business\Refund as RefundModel;
 use App\Business\Transfer as TransferModel;
@@ -23,6 +25,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\Request;
 use Illuminate\Mail\Message;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
@@ -133,16 +137,29 @@ class ChargeRepository
 
         $currentBusinessUser = resolve(\App\Services\BusinessUserPermissionsService::class)->getBusinessUser(Auth::user(), $business);
 
-        $per_page = null;
         if ($currentBusinessUser->isCashier()) {
-            $per_page = 10;
+            $perPage = 10;
+
+            $collection = $paginator->limit($perPage)->get();
+
+            $count = $collection->count();
+
+            if ($count === 0) {
+                $perPage = 1;
+            }
+
+            $paginator = new LengthAwarePaginator($collection->all(), $count, $perPage, 1, [
+                'path' => Paginator::resolveCurrentPath(),
+            ]);
         } else {
+            $per_page = null;
+
             if ($request->has('per_page')) {
                 $per_page = (int)$request->per_page;
             }
-        }
 
-        $paginator = $paginator->paginate($per_page);
+            $paginator = $paginator->paginate($per_page);
+        }
 
         $paginator->transform(function (Charge $charge) {
             if ($charge->walletTransactions->count()) {
@@ -210,7 +227,7 @@ class ChargeRepository
         } elseif ($chargeModel->status !== ChargeStatus::SUCCEEDED) {
             App::abort(403, 'You can only refund a charge which is succeeded.');
         } elseif (in_array($chargeModel->payment_provider,
-            collect(Core::$countries)->pluck('payment_provider')->toArray())) {
+            collect(Core::getCountries())->pluck('payment_provider')->toArray())) {
             if ($chargeModel->payment_provider_transfer_type === 'destination') {
                 StripeCharge::new($chargeModel->payment_provider);
 
@@ -308,7 +325,9 @@ class ChargeRepository
                         throw $exception;
                     }
 
-                    return static::createRefund($chargeModel, $refund, $amount);
+                    static::createRefund($chargeModel, $refund, $amount);
+
+                    return $chargeModel;
                 }
 
                 throw new HitPayLogicException('Unknown transfer type detected for transfer.');
@@ -346,7 +365,9 @@ class ChargeRepository
                     throw $exception;
                 }
 
-                return static::createRefund($chargeModel, $refund, $amount);
+                static::createRefund($chargeModel, $refund, $amount);
+
+                return $chargeModel;
             } elseif ($chargeModel->payment_provider_transfer_type === 'application_fee') {
                 StripeCharge::new($chargeModel->payment_provider);
 
@@ -385,9 +406,15 @@ class ChargeRepository
                     throw $exception;
                 }
 
-                SubmitChargeForMonitoring::dispatch($chargeModel, $chargeModel->business, $refund);
+                $refundModel = static::createRefund($chargeModel, $refund, $amount);
 
-                return static::createRefund($chargeModel, $refund, $amount);
+                try {
+                     SubmitChargeForMonitoring::dispatch($chargeModel, $chargeModel->business, $refundModel);
+                }catch (\Throwable $exception){
+                    Log::critical("Dispatch job to submit charge for monitoring #{$chargeModel->getKey()} failed. Error: {$exception->getMessage()} ({$exception->getFile()}:{$exception->getLine()})");
+                }
+
+                return $chargeModel;
             }
 
             throw new HitPayLogicException('Unknown charge type detected for Charge ID: ' . $chargeModel->getKey());
@@ -460,7 +487,7 @@ class ChargeRepository
             $chargeModel->save();
             $refundModel->save();
 
-            return $chargeModel;
+            return $refundModel;
         }, 3);
     }
 
@@ -494,19 +521,58 @@ class ChargeRepository
             }
 
             $orderModel->notify(new NotifyOrderConfirmation($orderModel));
+            if ($businessCustomer = $business->customers()->where('email', $orderModel->customer_email)->first()) {
+                $businessCustomer->notify(new NotifyOrderConfirmation($orderModel));
+            }
         }
         if ($chargeModel->payment_provider_charge_method === 'card_present') {
             $stripeChargeData = ($chargeModel->data['stripe']['charge'] ?? $chargeModel->data);
 
-            $application = [
-                'application' => [
-                    'identifier' => $stripeChargeData['payment_method_details']['card_present']['receipt']['dedicated_file_name'],
-                    'name' => $stripeChargeData['payment_method_details']['card_present']['receipt']['application_preferred_name'],
-                ],
-            ];
+            if (
+                isset($stripeChargeData['payment_method_details']['card_present']['receipt']['dedicated_file_name']) &&
+                isset($stripeChargeData['payment_method_details']['card_present']['receipt']['application_preferred_name'])) {
+
+                $application = [
+                    'application' => [
+                        'identifier' => $stripeChargeData['payment_method_details']['card_present']['receipt']['dedicated_file_name'],
+                        'name' => $stripeChargeData['payment_method_details']['card_present']['receipt']['application_preferred_name'],
+                    ],
+                ];
+            }
         }
         if ($sendWithoutSetting || $business->subscribedEvents()->where('event', Event::CUSTOMER_RECEIPT)->first() != null) {
-            Mail::send('hitpay-email.receipt', [
+            $isHaveTemplateEmail = false;
+
+            $businessEmailTemplate = $business->emailTemplate()->first();
+
+            if ($businessEmailTemplate instanceof EmailTemplate) {
+                $isHaveTemplateEmail = true;
+            }
+
+            $title = null;
+            $subtitle = null;
+            $footer = null;
+
+            if ($isHaveTemplateEmail) {
+                $emailTemplate = ConvertEmailTemplate::withBusiness($business)
+                    ->setEmailTemplateData($businessEmailTemplate->payment_receipt_template)
+                    ->setCharge($chargeModel)
+                    ->process();
+
+                $emailSubject = $emailTemplate['email_subject'] ?? null;
+
+                if ($emailSubject === null) {
+                    $emailSubject = 'Your Receipt from ' . $business->name . ' via ' . Config::get('app.name');
+                }
+
+                $title = $emailTemplate['title'] ?? null;
+                $subtitle = $emailTemplate['subtitle'] ?? null;
+                $footer = $emailTemplate['footer'] ?? null;
+            } else {
+                $emailSubject = 'Your Receipt from ' . $business->name . ' via ' . Config::get('app.name');
+            }
+
+            Mail::send('hitpay-email.receipt',[
                     'charge_id' => $chargeModel->id,
                     'business_logo' => $business->logo ? $business->logo->getUrl() : asset('hitpay/logo-000036.png'),
                     'business_name' => $business->name,
@@ -519,8 +585,12 @@ class ChargeRepository
                     'target_name' => $orderModel->name ?? null,
                     'recurring_plan_dbs_dda_reference' => isset($orderModel->dbs_dda_reference) ? 'Bill Reference:' . $orderModel->dbs_dda_reference : null,
                     'tax_setting' => $chargeModel->invoice->tax_setting ?? null,
-                ] + ($application ?? []), function (Message $message) use ($business, $email) {
-                $message->to($email)->subject('Your Receipt from ' . $business->name . ' via ' . Config::get('app.name'));
+                    'isHaveTemplateEmail' => $isHaveTemplateEmail,
+                    'title' => $title,
+                    'subtitle' => $subtitle,
+                    'footer' => $footer,
+                ] + ($application ?? []), function (Message $message) use ($business, $email, $emailSubject) {
+                $message->to($email)->subject($emailSubject);
             });
         }
 

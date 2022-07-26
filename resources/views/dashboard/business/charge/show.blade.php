@@ -1,4 +1,7 @@
-@php($customer_name = $charge->display('customer_name'))
+@php
+$customer_name = $charge->display('customer_name');
+@endphp
+
 @extends('layouts.business', [
     'title' => 'Charge for '.$customer_name,
 ])
@@ -68,6 +71,10 @@
                     </span></p>
                     @switch ($charge->status)
                         @case ('succeeded')
+                            @if($charge->admin_fee)
+                              <p class="text-dark small mb-0">Payment Request: {{ $charge->display('payment_request_amount') }}</p>
+                            @endif
+
                             <p class="text-dark small mb-0">All Inclusive Fee:
                                 <span class="text-muted">{{ $charge->display('all_inclusive_fee') }}</span></p>
                             <p class="text-dark small mb-0">Collected at {{ $charge->closed_at->format('h:ia \o\n F d, Y (l)') }}</p>
@@ -141,7 +148,6 @@
 
 @push('body-stack')
     <script type="text/javascript">
-        window.Business = @json($business);
         window.Charge = @json($charge);
     </script>
     <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>

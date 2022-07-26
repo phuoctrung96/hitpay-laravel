@@ -15,8 +15,3 @@
     </div>
 @endsection
 
-@push('body-stack')
-    <script>
-        window.Business = @json($business);
-    </script>
-@endpush

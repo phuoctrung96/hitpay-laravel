@@ -53,6 +53,11 @@ class BusinessController extends Controller
 
         $this->authorizeForUser($user, 'view', $business);
 
+        // show email verification form
+        if (!$user->hasVerifiedEmail()) {
+            return Response::view('dashboard.authentication.verify', []);
+        }
+
         $businessCountry = $business->country();
 
         if (!$businessCountry::skip_verification) {
@@ -66,12 +71,16 @@ class BusinessController extends Controller
                 }
             }
         }
+        $date = Date::now()->toDateString();
 
         // Today amounts per currency
         $totalCollectionForThisMonthFromDatabase = $business->charges()
             ->selectRaw('currency, sum(amount) as sum')
             ->where('status', ChargeStatus::SUCCEEDED)
-            ->whereDate('closed_at', Date::now()->toDateString())
+            ->whereBetween('closed_at', [
+                "{$date} 00:00:00",
+                "{$date} 23:59:59",
+            ])
             ->groupBy('currency')
             ->pluck('sum', 'currency');
 
@@ -98,32 +107,20 @@ class BusinessController extends Controller
         }
 
         $todayCharges = $business->charges()
-          ->where('status', ChargeStatus::SUCCEEDED)
-          ->whereDate('closed_at', Date::now()->toDateString())
-          ->orderBy('closed_at')
-          ->get();
+            ->where('status', ChargeStatus::SUCCEEDED)
+            ->whereBetween('closed_at', [
+                "{$date} 00:00:00",
+                "{$date} 23:59:59",
+            ])
+            ->orderBy('closed_at')
+            ->count();
 
-        // Last transactions
-        $lastTransactionsDb = $business->charges()
+        // Has transactions
+        $hasTransactions = $business->charges()
           ->where('status', ChargeStatus::SUCCEEDED)
-          ->orderBy('business_id')
           ->orderByDesc('closed_at')
-          ->limit(5)
-          ->get();
-
-        $lastTransactions = [];
-
-        foreach ($lastTransactionsDb as $t) {
-          $lastTransactions[] = [
-            'id' => $t->plugin_provider_order_id ?? $t->plugin_provider_reference ?? $t->id,
-            'closed_at' => $t->closed_at,
-            'customer_email' => $t->customer_email,
-            'payment_provider' => $t->payment_provider,
-            'payment_provider_charge_method' => $t->payment_provider_charge_method,
-            'currency' => $t->currency,
-            'amount' => number_format(getReadableAmountByCurrency($t->currency, $t->amount), 2)
-          ];
-        }
+          ->limit(1)
+          ->exists();
 
         // Payment methods
         $providersDb = $business->paymentProviders()->get();
@@ -178,8 +175,8 @@ class BusinessController extends Controller
         // Resulting data
         $dailyData = array(
           'currencies' => $totalCollectionForThisMonth,
-          'transactionsCount' => $todayCharges->count(),
-          'lastTransactions' => $lastTransactions,
+          'transactionsCount' => $todayCharges,
+          'hasTransactions' => $hasTransactions,
           'lastPayouts' => $payouts,
           'providers' => $providers ?? null
         );
@@ -312,8 +309,12 @@ class BusinessController extends Controller
             }
         }
 
+        /* @var \App\User $user */
+        $user = Auth::user()->load('businessUsers');
+
         return Response::view('dashboard.business', compact(
             'business',
+            'user',
             'dailyData',
             'storeName',
             'storeLink',
@@ -334,6 +335,12 @@ class BusinessController extends Controller
         if (Gate::inspect('store', Business::class)->allowed()) {
             $src_url = $request->get('src');
             $user = Auth::user();
+
+            // show email verification form
+            if (!$user->hasVerifiedEmail()) {
+                return Response::view('dashboard.authentication.verify', []);
+            }
+
             $email = $user->email;
 
             $businessFormData = BusinessForm::withRequest($request)->process();
@@ -366,7 +373,24 @@ class BusinessController extends Controller
     {
         Gate::inspect('store', Business::class)->authorize();
 
-        $business = BusinessRepository::store($request, Auth::user());
+        /** @var \App\User $user */
+        $user = Auth::user();
+
+        if (!$user->hasVerifiedEmail()) {
+            return Response::redirectToRoute('dashboard.business.create', [
+                'src' => 'create-business',
+            ]);
+        }
+
+        // prevent bots
+        $this->validate($request, [
+            'recaptcha_token' => [
+                'required',
+                'captcha'
+            ],
+        ]);
+
+        $business = BusinessRepository::store($request, $user);
 
         if(!empty(Auth::user()->xero_data)) {
             ApiKeyManager::create($business);
@@ -407,7 +431,7 @@ class BusinessController extends Controller
             try {
                 $onboardWithWati = new BusinessOnboarding($business);
 
-                $onboardWithWati->onboard();
+                // $onboardWithWati->onboard();
             } catch (\Exception $e) {
                 Log::error(json_encode([
                     $e->getFile().':'.$e->getLine(),

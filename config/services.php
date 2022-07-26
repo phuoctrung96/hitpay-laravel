@@ -27,6 +27,15 @@ return [
             'client_id' => env('STRIPE_MY_CLIENT_ID'),
             'endpoint_secret' => env('STRIPE_MY_ENDPOINT_SECRET'),
             'endpoint_secret_connect' => env('STRIPE_MY_ENDPOINT_SECRET_CONNECT'),
+            'disable_alipay' => env('STRIPE_MY_DISABLE_ALIPAY', false)
+        ],
+
+        'us' => [
+            'key' => env('STRIPE_US_KEY'),
+            'secret' => env('STRIPE_US_SECRET'),
+            'client_id' => env('STRIPE_US_CLIENT_ID'),
+            'endpoint_secret' => env('STRIPE_US_ENDPOINT_SECRET'),
+            'endpoint_secret_connect' => env('STRIPE_US_ENDPOINT_SECRET_CONNECT'),
         ],
 
         'sg' => [

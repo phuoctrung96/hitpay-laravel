@@ -23,8 +23,9 @@
           autocomplete="last_name"
           :error="errors.last_name"
           :disabled="is_processing"/>
-
-      <LoginInput
+      <div class="is-password">
+        <LoginInput
+          v-if="showPassword"
           v-model="form.password"
           label="Password"
           :marginBottom="35"
@@ -33,14 +34,39 @@
           :disabled="is_processing"
           :isPassword="true"/>
 
-      <LoginInput
+        <LoginInput
+          v-else
+          v-model="form.password"
+          label="Password"
+          :marginBottom="35"
+          type="text"
+          :error="errors.password"
+          :disabled="is_processing"/>
+        <span class="sh-password show" v-if="showPassword" @click="togglePassword"><img src="/images/ico-show-password.svg"></span>
+        <span class="sh-password hide" v-else @click="togglePassword"><img src="/images/ico-hide-password.svg"></span>
+      </div>
+      <div class="is-password">
+        <LoginInput
+          v-if="showConfirmPassword"
           v-model="form.password_confirmation"
           label="Confirm Password"
           :marginBottom="35"
           type="password"
           :error="errors.password_confirmation"
-          :disabled="is_processing"
-          :isPassword="true"/>
+          :disabled="is_processing"/>
+
+        <LoginInput
+          v-else
+          v-model="form.password_confirmation"
+          label="Confirm Password"
+          :marginBottom="35"
+          type="text"
+          :error="errors.password_confirmation"
+          :disabled="is_processing"/>
+        <span class="sh-password show" v-if="showConfirmPassword" @click="toggleConfirmPassword"><img src="/images/ico-show-password.svg"></span>
+        <span class="sh-password hide" v-else @click="toggleConfirmPassword"><img src="/images/ico-hide-password.svg"></span>
+      </div>
+      <!--CAPTCHA-->
 
       <CheckoutButton
           class="login-button-override"
@@ -64,6 +90,8 @@ import LoginRegisterLayout from './LoginRegisterLayout'
 import CheckoutButton from '../Shop/CheckoutButton'
 import LoginInput from './LoginInput'
 import LoginSelect from './LoginSelect'
+import Vue from 'vue'
+import { VueReCaptcha } from 'vue-recaptcha-v3'
 
 export default {
   name: "AuthenticationRegister",
@@ -71,14 +99,15 @@ export default {
     LoginRegisterLayout,
     CheckoutButton,
     LoginInput,
-    LoginSelect
+    LoginSelect,
   },
   props: {
       name: String,
       email: String,
       referral: String,
       business_referral: String,
-      countries: Array
+      countries: Array,
+      recaptcha_sitekey: String,
   },
   data() {
     return {
@@ -92,11 +121,21 @@ export default {
             email: this.email,
             password: '',
             password_confirmation: '',
+            recaptcha_token: ''
         },
-        is_processing: false
+        is_processing: false,
+        showPassword: true,
+        showConfirmPassword: true,
     }
   },
-
+  mounted() {
+    Vue.use(VueReCaptcha, {
+      siteKey: this.recaptcha_sitekey,
+      loaderOptions: {
+        useRecaptchaNet: true
+      }
+    })
+  },
     methods: {
       async register() {
           this.httpError = ''
@@ -139,9 +178,15 @@ export default {
               this.showError(_.first(Object.keys(this.errors)));
           } else {
             try {
-                this.form.partner_referral = this.referral;
-                this.form.business_referral = this.business_referral;
+              // verify CAPTCHA
+              await this.$recaptchaLoaded()
+              this.form.recaptcha_token = await this.$recaptcha('register')
+
+              this.form.partner_referral = this.referral;
+              this.form.business_referral = this.business_referral;
+
               const res =  await axios.post(this.getDomain('register', 'dashboard'), this.form)
+
               window.location.href = res.data.redirect_url
             } catch (error) {
               if (error.response.status === 422) {
@@ -159,6 +204,10 @@ export default {
       },
 
       showError(firstErrorKey) {
+          if (firstErrorKey === 'recaptcha_token') {
+              alert('Invalid CAPTCHA, please refresh the page and try again');
+          }
+
           if (firstErrorKey !== undefined) {
               this.scrollTo('#' + firstErrorKey);
 
@@ -167,6 +216,12 @@ export default {
 
           this.is_processing = false;
       },
+      togglePassword(){
+           this.showPassword = !this.showPassword;
+      },
+      toggleConfirmPassword(){
+           this.showConfirmPassword = !this.showConfirmPassword;
+      }
   },
 }
 </script>

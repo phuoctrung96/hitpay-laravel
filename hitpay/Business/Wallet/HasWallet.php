@@ -511,6 +511,115 @@ trait HasWallet
         return $transfer;
     }
 
+    /**
+     * Payout to Stripe Wallet.
+     *
+     * This method should be call from cron job.
+     *
+     * @param  \App\Business\PaymentProvider  $paymentProvider
+     * @param  string  $currency
+     * @param  int|null  $amount
+     *
+     * @return \App\Business\Transfer
+     * @throws \App\Exceptions\WalletException
+     * @throws \Throwable
+     */
+    public function payoutToStripe(
+        PaymentProvider $paymentProvider, string $currency, int $amount = null
+    ) : Transfer {
+        $amount = null; // Temporary disabled amount to be passed in and withdraw all amount. Just in case.
+
+        if (!$paymentProvider->exists) {
+            throw new WalletException('The payment provider is not exist.');
+        } elseif ($this->getKey() !== $paymentProvider->business_id) {
+            throw new WalletException(sprintf('The payment provider ID: %s is not belongs to this business ID: %s.',
+                $paymentProvider->getKey(), $this->getKey()));
+        }
+
+        if (in_array($paymentProvider->payment_provider, [
+            Enumerations\PaymentProvider::STRIPE_MALAYSIA,
+            Enumerations\PaymentProvider::STRIPE_US
+        ])) {
+            $outgoingDescription = 'Paid out to ' .
+                Enumerations\PaymentProvider::displayName($paymentProvider->payment_provider) .
+                ' (Account No: ' . $paymentProvider->payment_provider_account_id . ')';
+
+            $meta = [
+                'account_no' => $paymentProvider->payment_provider_account_id,
+            ];
+        } else {
+            throw new WalletException(sprintf('The payment provider \'%s\' is currently not supported.',
+                $paymentProvider->payment_provider));
+        }
+
+        $availableWallet = $this->availableBalance($currency);
+
+        if ($availableWallet->balance <= 0) {
+            throw new WalletException('The wallet has insufficient balance.');
+        } elseif (is_null($amount)) {
+            $amount = $availableWallet->balance;
+        } elseif ($availableWallet->balance - $amount < 0) {
+            throw new WalletException('Insufficient balance for payout.');
+        }
+
+        $lastPayout = $availableWallet->transactions()
+            ->where('event', WalletEnums\Event::PAID_TO_BANK)
+            ->orderByDesc('created_at')
+            ->first();
+
+        if ($lastPayout instanceof Wallet\Transaction) {
+            $transactionsToBeAttached = $availableWallet->transactions()
+                ->where('created_at', '>=', $lastPayout->created_at)
+                ->get();
+        } else {
+            $transactionsToBeAttached = $availableWallet->transactions()->get();
+        }
+
+        $transfer = new Transfer;
+
+        $transfer->payment_provider_transfer_method = 'wallet_' . $paymentProvider->payment_provider;
+        $transfer->payment_provider = $paymentProvider->payment_provider;
+        $transfer->payment_provider_account_id = $paymentProvider->payment_provider_account_id;
+        $transfer->currency = $currency;
+        $transfer->amount = $amount;
+        $transfer->remark = 'HitPay balance payouts for '.Facades\Date::now()->toDateString();
+
+        $transfer->data = [
+            'payment_provider' => $paymentProvider->data,
+        ];
+
+        $transfer->status = 'request_pending';
+
+        Facades\DB::beginTransaction();
+
+        try {
+            $this->transfers()->save($transfer);
+
+            if ($transactionsToBeAttached->count()) {
+                $transfer->transactions()->attach($transactionsToBeAttached->pluck('id'));
+            }
+
+            $availableWallet->outgoing(
+                WalletEnums\Event::PAID_TO_BANK,
+                $amount,
+                $outgoingDescription,
+                $meta ?? [],
+                $transfer,
+                null,
+                null,
+                false
+            );
+
+            Facades\DB::commit();
+        } catch (Throwable $exception) {
+            Facades\DB::rollBack();
+
+            throw $exception;
+        }
+
+        return $transfer;
+    }
+
     public function administrativeDeduction(
         string $currency, int $amount, string $outgoingDescription = 'Administration Deduction'
     ) : Wallet\Transaction {
@@ -666,7 +775,7 @@ trait HasWallet
         if ($refundableAmount - $amountToBeRefunded <= 0) {
             $charge->status = ChargeStatus::REFUNDED;
             $charge->balance = null;
-            $charge->closed_at = $charge->freshTimestamp();
+            $charge->refunded_at = $charge->freshTimestamp();
         } else {
             $charge->balance = $refundableAmount - $amountToBeRefunded;
         }
@@ -752,8 +861,13 @@ trait HasWallet
             throw $exception;
         }
 
-        Jobs\Wallet\Refund::dispatch($refund);
-        SubmitChargeForMonitoring::dispatch($charge, $charge->business, $refund);
+        Jobs\Wallet\Refund::dispatch($refund)->onQueue('main-server');
+
+        try {
+             SubmitChargeForMonitoring::dispatch($charge, $charge->business, $refund);
+        }catch (Throwable $exception){
+            Facades\Log::critical("Dispatch job to submit charge for monitoring #{$charge->getKey()} failed. Error: {$exception->getMessage()} ({$exception->getFile()}:{$exception->getLine()})");
+        }
 
         return $refund;
     }
@@ -896,8 +1010,12 @@ trait HasWallet
             throw $exception;
         }
 
-        Jobs\Wallet\Refund::dispatch($refund);
-        SubmitChargeForMonitoring::dispatch($charge, $charge->business, $refund);
+        Jobs\Wallet\Refund::dispatch($refund)->onQueue('main-server');
+        try {
+             SubmitChargeForMonitoring::dispatch($charge, $charge->business, $refund);
+        }catch (Throwable $exception){
+            Facades\Log::critical("Dispatch job to submit charge for monitoring #{$charge->getKey()} failed. Error: {$exception->getMessage()} ({$exception->getFile()}:{$exception->getLine()})");
+        }
 
         return $refund;
     }

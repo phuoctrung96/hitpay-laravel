@@ -25,6 +25,14 @@ class BusinessReferralPayoutService
             return null;
         }
 
+        if (strtoupper($charge->currency) !== strtoupper($charge->business->currency)) {
+            return null;
+        }
+
+        if (strtoupper($charge->currency) !== strtoupper($charge->business->referredBy->business->currency)) {
+            return null;
+        }
+
         return BusinessReferralPayout::create([
             'id' => Str::uuid(),
             'business_id' => $referredBy->business->id,

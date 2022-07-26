@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Business;
+use App\Enumerations\Business\Channel;
 use App\Enumerations\Business\OrderStatus;
 use Illuminate\Support\Facades\Log;
 use App\Notifications\SendFile;
@@ -49,19 +50,21 @@ class SendExportedOrders implements ShouldQueue
     {
         $orders = $this->business->orders();
 
-        $status = $this->status;
+        $statuses = $this->status;
 
-        if ($status === 'requires_business_action') {
-            $orders->where('status', OrderStatus::REQUIRES_BUSINESS_ACTION);
-        } elseif ($status === 'requires_customer_action') {
-            $orders->where('status', OrderStatus::REQUIRES_CUSTOMER_ACTION);
-        } elseif ($status === 'requires_payment_method') {
-            $orders->where('status', OrderStatus::REQUIRES_PAYMENT_METHOD);
-        } elseif ($status === 'completed') {
-            $orders->where('status', OrderStatus::COMPLETED);
-        } elseif ($status === 'canceled') {
-            $orders->where('status', OrderStatus::CANCELED)->orWhere('status', OrderStatus::EXPIRED);
+        if ($statuses) {
+            $statuses = is_array($statuses) ? $statuses : explode(',', $statuses);
         }
+
+        if (!is_array($statuses) || count($statuses) <= 0) {
+            $statuses = [
+                OrderStatus::COMPLETED,
+                OrderStatus::REQUIRES_BUSINESS_ACTION,
+                OrderStatus::CANCELED,
+            ];
+        }
+
+        $orders->whereIn('status', $statuses);
 
         if (key_exists('from_date', $this->data) && key_exists('to_date', $this->data)) {
             $fromDate = Date::parse($this->data['from_date']);
@@ -99,6 +102,8 @@ class SendExportedOrders implements ShouldQueue
                 $orderedProductVariant->add($variant);
             }
 
+            $orderStatus = "";
+
             if ($order->status === 'requires_business_action') {
                 $orderStatus = 'Pending';
             } elseif ($order->status === 'requires_customer_action') {
@@ -118,19 +123,27 @@ class SendExportedOrders implements ShouldQueue
             }
             $charge = $order->charges->last();
 
+            $discountName = $order->automatic_discount_reason;
+            $discountAmount = getFormattedAmount($order->currency, $order->additional_discount_amount);
+
+            if ($order->channel === Channel::STORE_CHECKOUT) {
+                $discountName = $order->automatic_discount_name;
+                $discountAmount = getFormattedAmount($order->currency, $order->automatic_discount_amount);
+            }
+
             $singleData = [
-                $i++,
-                $order->id,
-                $charge ? $charge->id : '',
-                $order->reference,
+                ($i+1),
+                $order->id ?: "",
+                $charge->id ?: "",
+                $order->reference ?: "",
                 $order->customer_name,
                 $order->customer_email,
-                $order->customer_phone_number,
-                $order->display('customer_address'),
+                $order->customer_phone_number ?: "",
+                $order->display('customer_address') ?: "",
                 $order->currency,
                 getFormattedAmount($order->currency, $order->amount, false),
-                $order->automatic_discount_reason,
-                getFormattedAmount($order->currency, $order->additional_discount_amount),
+                $discountName ?: "",
+                $discountAmount ?: "",
                 $orderStatus,
                 $orderedProducts->implode(', '),
                 $orderedProductVariant->implode(', '),
@@ -140,6 +153,8 @@ class SendExportedOrders implements ShouldQueue
             ];
 
             $data[] = $singleData;
+
+            $i++;
         }
 
         if ($this->data['docType'] == 'csv') {
@@ -166,13 +181,11 @@ class SendExportedOrders implements ShouldQueue
                 'Completed Date',
             ]);
 
-            $i = 1;
-
             $csv->insertAll($data);
 
             $this->business->notify(new SendFile('Your Exported Orders', [
                 'Please find attached your exported orders from ' . $fromDate . ' to ' . $toDate,
-            ], ($fromDate . ' - ' . $toDate), $csv->getContent(), $this->data['docType']));
+            ], ($fromDate . ' - ' . $toDate), $csv->toString(), $this->data['docType']));
         } elseif ($this->data['docType'] == 'pdf') {
             $vars['data'] = $data;
             $pdf = PDF::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView('hitpay-email.pdf.export-order', $vars);

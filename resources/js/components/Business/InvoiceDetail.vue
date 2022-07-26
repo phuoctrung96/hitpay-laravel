@@ -232,6 +232,22 @@
                     </div>
                     <div v-if="invoice.allow_partial_payments" class="mt-3" >
                         <label for="allow_partial_payments" class="">Partial payments are allowed</label>
+                      <div v-for="(payment, index) in partial_payments" class="item mt-1">
+                        Payment {{ (index + 1) }}
+                        <div class="d-flex justify-content-between payment-method mt-1">
+                          <div class="form-group w-50 mr-4">
+                            <input type="text" class="form-control" v-model="partial_payments[index].amount"
+                                   placeholder="Amount" disabled>
+                          </div>
+                          <div class="form-group w-50">
+                            <datepicker id="due_date" disabled v-model="partial_payments[index].due_date"
+                                        :bootstrap-styling="true"
+                                        input-class="bg-white" placeholder="Due date" :format="'dd/MM/yyyy'"
+                                        class="w-100"
+                            ></datepicker>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div v-else class="mt-3">
                         <label for="allow_partial_payments" class="">Partial payments are not allowed</label>
@@ -421,7 +437,7 @@ export default {
             this.partial_payments = window.partialPayments;
             let paid_pending = 0;
             this.partial_payments.forEach(function(part, index, arr) {
-                arr[index].due_date = arr[index].due_date ? window.Invoice.due_date : "";
+                arr[index].due_date = arr[index].due_date ? new Date((arr[index].due_date).replace(/-/g, "/")) : "";
                 if(arr[index].payment_request.status == "pending" ){
                      paid_pending += parseFloat(arr[index].payment_request.amount)
                 }
@@ -484,7 +500,7 @@ export default {
 
             // Apply each element to the Date function
             var date = new Date(t[0], t[1]-1, t[2], t[3], t[4], t[5]);
-            return ((date.getDate() > 9) ? date.getDate() : ('0' + date.getDate())) + '.' +((date.getMonth() > 8) ? (date.getMonth() + 1) : ('0' + (date.getMonth() + 1))) + '.' + date.getFullYear();
+            return ((date.getDate() > 9) ? date.getDate() : ('0' + date.getDate())) + '/' +((date.getMonth() > 8) ? (date.getMonth() + 1) : ('0' + (date.getMonth() + 1))) + '/' + date.getFullYear();
         },
         disallowDecimal(event) {
             if (event.keyCode === 190) {

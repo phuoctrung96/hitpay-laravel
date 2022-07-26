@@ -9,7 +9,9 @@ use App\Http\Resources\Business\Shipping;
 use App\Logics\Business\ShippingRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\URL;
 
 class ShippingController extends Controller
 {
@@ -33,7 +35,10 @@ class ShippingController extends Controller
     {
         Gate::inspect('view', $business)->authorize();
 
-        return Shipping::collection($business->productCategories()->get());
+        return Response::json([
+            'is_enabled' => $business->shopSettings->enabled_shipping,
+            'shippings' => Shipping::collection($business->shippings()->get()),
+        ]);
     }
 
     /**
@@ -111,5 +116,19 @@ class ShippingController extends Controller
         ShippingRepository::delete($shipping);
 
         return Response::json([], 204);
+    }
+
+    public function enable(Request $request, BusinessModel $business)
+    {
+        $shopSettingsData = $this->validate($request, [
+            'enabled_shipping' => 'required|boolean',
+        ]);
+
+        if ($business->shopSettings) {
+                $business->shopSettings->enabled_shipping = $shopSettingsData['enabled_shipping'];
+            $business->shopSettings->save();
+        } else $business->shopSettings()->create($shopSettingsData);
+
+        return Response::json([], 200);
     }
 }

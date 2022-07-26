@@ -14,6 +14,8 @@ abstract class Country
 
     private static array $processedData = [];
 
+    const USE_LOCAL_PHONE_NUMBER_ONLY = false;
+
     /**
      * Get the raw data of the country.
      *
@@ -27,14 +29,16 @@ abstract class Country
         $class = static::getClass();
 
         if (!key_exists($class, self::$rawData)) {
-            $data = require_once base_path("hitpay/Data/Countries/files/{$class}.php");
+            $data = require base_path("hitpay/Data/Countries/files/{$class}.php");
 
             if (!App::isProduction()) {
-                $testData = require_once base_path("hitpay/Data/Countries/files_test/{$class}.php");
+                if (file_exists(base_path("hitpay/Data/Countries/files_test/{$class}.php"))) {
+                    $testData = require base_path("hitpay/Data/Countries/files_test/{$class}.php");
 
-                unset($testData['id']);
+                    unset($testData['id']);
 
-                $data = static::mergeDataRecursively($data, $testData);
+                    $data = static::mergeDataRecursively($data, $testData);
+                }
             }
 
             self::$rawData[$class] = $data;
@@ -59,6 +63,21 @@ abstract class Country
 
         if (!isset(static::$processedData[$class][$dataKey])) {
             static::$processedData[$class][$dataKey] = Collection::make(static::getRawData($dataKey, []));
+        }
+
+        return static::$processedData[$class][$dataKey];
+    }
+
+    /**
+     * Get default currency for the country.
+     */
+    public static function default_currency() : string
+    {
+        $class = static::getClass();
+        $dataKey = 'default_currency';
+
+        if (!isset(static::$processedData[$class][$dataKey])) {
+            static::$processedData[$class][$dataKey] = static::getRawData($dataKey, []);
         }
 
         return static::$processedData[$class][$dataKey];

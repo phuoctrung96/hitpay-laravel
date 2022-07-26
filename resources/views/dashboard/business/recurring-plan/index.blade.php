@@ -116,8 +116,3 @@
     </div>
     <business-help-guide :page_type="'recurring_plans'"></business-help-guide>
 @endsection
-@push('body-stack')
-    <script>
-        window.Business = @json($business->toArray());
-    </script>
-@endpush

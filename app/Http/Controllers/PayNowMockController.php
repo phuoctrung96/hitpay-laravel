@@ -108,20 +108,9 @@ class PayNowMockController extends Controller
             $charge->closed_at = $charge->freshTimestamp();
 
             if ($paymentProviderModel) {
-                [
-                    $fixedAmount,
-                    $percentage,
-                ] = $paymentProviderModel->getRateFor(
-                    $business->country, $business->currency, $charge->currency, $charge->channel,
-                    $charge->payment_provider_charge_method, null, null, $charge->amount
-                );
-
                 $charge->home_currency = $charge->currency;
                 $charge->home_currency_amount = $charge->amount;
                 $charge->exchange_rate = 1;
-                $charge->fixed_fee = $fixedAmount;
-                $charge->discount_fee_rate = $percentage;
-                $charge->discount_fee = bcmul($charge->discount_fee_rate, $charge->home_currency_amount);
 
                 if ($hasPlatformProvider ?? false) {
                     $charge->commission_amount = bcmul($charge->commission_rate, $charge->amount);
@@ -234,7 +223,7 @@ class PayNowMockController extends Controller
 
     private function getPaymentIntentAndBusiness(string $hash) : array
     {
-        
+
         if (App::environment('production')) {
             App::abort(404);
         }
@@ -248,7 +237,7 @@ class PayNowMockController extends Controller
         if (!isset($content['reference'], $content['amount'], $content['expiry_at'])) {
             App::abort(404);
         } elseif (Date::createFromFormat('YmdHis', $content['expiry_at'])->isPast()) {
-            
+
             App::abort(403, 'The PayNow link is expired.');
         }
 

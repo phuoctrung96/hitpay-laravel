@@ -15,6 +15,7 @@ use HitPay\Data\FeeCalculator;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Artisan;
 use Stripe;
 use Throwable;
 
@@ -191,6 +192,7 @@ _MESSAGE
                     $targetModel->save();
                     $targetModel->updateProductsQuantities();
                     $targetModel->notifyAboutNewOrder();
+                    Artisan::queue('sync:hitpay-order-to-ecommerce --order_id=' . $targetModel->id);
                 }
             }, 3);
         } catch (Throwable $exception) {

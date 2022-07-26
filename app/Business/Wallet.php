@@ -51,16 +51,6 @@ final class Wallet extends Model
     ];
 
     /**
-     * The currencies which the wallet is supporting.
-     *
-     * @var array
-     */
-    private static $walletCurrencies = [
-        CurrencyCode::SGD,
-        CurrencyCode::MYR,
-    ];
-
-    /**
      * @inheritdoc
      */
     protected static function boot()
@@ -70,7 +60,7 @@ final class Wallet extends Model
         static::creating(function (self $model) {
             if (!static::isSupportingType($model->type)) {
                 throw new Exception('The wallet type \''.$model->type.'\' is invalid.');
-            } elseif (!static::isSupportingCurrency($model->currency)) {
+            } elseif (!static::isSupportingCurrency($model->business, $model->currency)) {
                 throw new Exception('The wallet currency \''.$model->currency.'\' is invalid.');
             }
         });
@@ -128,9 +118,9 @@ final class Wallet extends Model
      *
      * @return bool
      */
-    public static function isSupportingCurrency(string $currency) : bool
+    public static function isSupportingCurrency(Business $business, string $currency) : bool
     {
-        return in_array($currency, self::$walletCurrencies);
+        return $business->currenciesAvailable()->contains($currency);
     }
 
     /**

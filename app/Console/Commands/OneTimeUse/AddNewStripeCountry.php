@@ -28,76 +28,149 @@ class AddNewStripeCountry extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         Stripe::setApiKey(env('STRIPE_SG_SECRET'));
         Stripe::setApiVersion(AppServiceProvider::STRIPE_VERSION);
 
         foreach (CountrySpec::all(['limit' => 500]) as $country) {
             $supported_countries = array_map(fn($c) => strtoupper($c), array_keys($country->supported_bank_account_currencies->toArray()));
+
+            // as per: https://stripe.com/docs/connect/cross-border-payouts
+            if (in_array($country->id, ['HR', 'CZ', 'IS', 'LI', 'CH'])) {
+                $default_currency = 'CurrencyCode::EUR';
+            } else {
+                $default_currency = "CurrencyCode::" . strtoupper($country->default_currency);
+            }
+
             $currencies_text = "CurrencyCode::" . implode(",\n        CurrencyCode::", $supported_countries);
 
-            if (class_exists('\HitPay\Data\Countries\\' . $country->id)) {
-                $this->line("{$country->id} already exists, skipping... ", null);
-            } else {
-                $this->line("    Adding country: {$country->id}", null);
+            $this->line("    Adding country: {$country->id}", null);
 
-                $this->line("- Creating country class", null);
-                // create country class
-                $country_class = <<<CODE
+            $this->line("- Creating country class", null);
+
+            $skip_verification = in_array($country->id, ['SG', 'MY']) ? 'false' : 'true';
+            // create country class
+            $country_class = <<<CODE
 <?php
 
 namespace HitPay\Data\Countries;
 
 class {$country->id} extends Country {
-    const skip_verification = true;
+    const skip_verification = {$skip_verification};
 }
 CODE;
 
-                file_put_contents(
-                    base_path('hitpay/Data/Countries/' . $country->id . '.php'),
-                    $country_class
-                );
+            file_put_contents(
+                base_path('hitpay/Data/Countries/' . $country->id . '.php'),
+                $country_class
+            );
 
-                $alpha_2 = strtolower($country->id);
-                $country_name = self::getCountryNameFromCode($country->id);
-                $alpha_3 = strtolower(self::getAlpha3($country_name));
+            $alpha_2 = strtolower($country->id);
+            $country_name = self::getCountryNameFromCode($country->id);
+            $alpha_3 = strtolower(self::getAlpha3($country_name));
 
-                $this->line("- Creating country file", null);
+            $this->line("- Creating country file", null);
 
-                // create country file
-                $country_file = <<<CODE
+            // create country file
+            $country_file = <<<CODE
 <?php
 
 use App\Enumerations\CurrencyCode;
+
+\$banks = [];
+
+\$pathBanks = base_path('hitpay/Data/Countries/files/{$country->id}/banks');
+
+\$files = is_dir(\$pathBanks) ? File::files(\$pathBanks) : [];
+
+foreach (\$files as \$file) {
+    \$banks[] = require \$file->getPathname();
+}
+
+\$paymentProviders = [];
+
+\$pathPaymentProviders = base_path('hitpay/Data/Countries/files/{$country->id}/payment_providers');
+
+\$files = File::files(\$pathPaymentProviders);
+
+foreach (\$files as \$file) {
+    \$paymentProviders[] = require \$file->getPathname();
+}
 
 return [
     'id' => '{$alpha_2}',
     'alpha_2' => '{$alpha_2}',
     'alpha_3' => '{$alpha_3}',
     'name' => '{$country_name}',
+    'default_currency' => {$default_currency},
     'currencies' => [
         {$currencies_text}
     ],
-    'banks' => \HitPay\Data\Countries\\{$country->id}::banks()->toArray(),
-    'payment_providers' => \HitPay\Data\Countries\\{$country->id}::paymentProviders()->toArray(),
+    'banks' => \$banks,
+    'payment_providers' => \$paymentProviders,
 ];
 
 CODE;
-                file_put_contents(
-                    base_path('hitpay/Data/Countries/files/' . $country->id . '.php'),
-                    $country_file
-                );
+            file_put_contents(
+                base_path('hitpay/Data/Countries/files/' . $country->id . '.php'),
+                $country_file
+            );
+
+            $country_test_file = <<<CODE
+<?php
+
+\$banks = [];
+
+\$pathBanks = base_path('hitpay/Data/Countries/files_test/{$country->id}/banks');
+
+\$files = is_dir(\$pathBanks) ? File::files(\$pathBanks) : [];
+
+foreach (\$files as \$file) {
+    \$banks[] = require \$file->getPathname();
+}
+
+return [
+    'banks' => \$banks,
+];
+
+CODE;
+
+            file_put_contents(
+                base_path('hitpay/Data/Countries/files_test/' . $country->id . '.php'),
+                $country_test_file
+            );
 
 
-                $this->line("- Creating country folders", null);
-                // create country folder
-                @mkdir(base_path('hitpay/Data/Countries/files/' . $country->id));
-                // create banks folder
-                @mkdir(base_path('hitpay/Data/Countries/files/' . $country->id . '/banks'));
-                // create payment_providers folder
-                @mkdir(base_path('hitpay/Data/Countries/files/' . $country->id . '/payment_providers'));
+            $this->line("- Creating country folders", null);
+            // create country folder
+            @mkdir(base_path('hitpay/Data/Countries/files/' . $country->id));
+            @mkdir(base_path('hitpay/Data/Countries/files_test/' . $country->id));
+            // create banks folder
+            @mkdir(base_path('hitpay/Data/Countries/files/' . $country->id . '/banks'));
+            @mkdir(base_path('hitpay/Data/Countries/files_test/' . $country->id . '/banks'));
+            // create payment_providers folder
+            @mkdir(base_path('hitpay/Data/Countries/files/' . $country->id . '/payment_providers'));
 
+            $test_bank_file = <<<CODE
+<?php
+
+return [
+    'id' => 'TEST[1100]',
+    'bank_name' => 'TEST IBAN BANK',
+    'bank_code' => null,
+    'head_office_swift_bic' => null,
+    'branches' => [
+    ],
+];
+CODE;
+
+            $test_bank_path = base_path('hitpay/Data/Countries/files_test/' . $country->id . '/banks/TEST[1100].php');
+            if (!file_exists($test_bank_path)) {
+                file_put_contents($test_bank_path, $test_bank_file);
+            }
+
+            if (!in_array($country->id, ['SG', 'MY'])) {
                 $this->line("- Creating stripe_us payment provider file", null);
 
                 // create stripe_us payment provider

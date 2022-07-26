@@ -42,7 +42,7 @@ class XeroPayout extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $businesses = Business::whereNotNull('xero_payout_account_id')
             ->get();
@@ -50,6 +50,8 @@ class XeroPayout extends Command
             $this->info($business->id . ', ' . $business->xero_email);
             $this->makePayout($business);
         }
+
+        return 0;
     }
 
     private function makePayout(Business $business)

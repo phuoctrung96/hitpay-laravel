@@ -41,7 +41,7 @@ class UpdateHotglueProductQuantity extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $businessId = $this->option('business_id');
         $productId = $this->option('product_id');
@@ -50,22 +50,22 @@ class UpdateHotglueProductQuantity extends Command
         $business = Business::find($businessId);
         if (!$business) {
             Log::critical('Hotglue update product quanity for business ' . $businessId . ' not found');
-            return;
+            return 1;
         }
 
         $product = $business->productBases()->findOrFail($productId);
-        if ($product->isProduct()) {
-            $product = $business->products()->findOrFail($product->getKey());
-        } else {
+
+        if (!$product->shopify_inventory_item_id) {
             $product = $business->products()->findOrFail($product->parent_id);
         }
 
-        if ($sku = $product->stock_keeping_unit) {
-            $hotglueProducts = HotglueProductTracker::with('hotglueJob')->whereStockKeepingUnit($sku)->first();
+        if ($itemId = $product->shopify_inventory_item_id) {
+            $hotglueProducts = HotglueProductTracker::with('hotglueJob')->where('item_id', $itemId)->first();
+            $hotglueIntegration = HotglueIntegration::find($hotglueProducts->hotglueJob->hotglue_integration_id);
 
-            if ($hotglueProducts) {
-                Log::info('Hotglue update product sku: ' . $sku . ' quantity: ' . $orderedQuantity . ' for business ' . $businessId . ' start process');
-    
+            if ($hotglueProducts && $hotglueIntegration) {
+                Log::info('Hotglue update product item_id: ' . $itemId . ' quantity: ' . $orderedQuantity . ' for business ' . $businessId . ' start process');
+
                 $client = new Client;
                 $url = config('services.hotglue.api_host') . '/' . config('services.hotglue.env_id') . '/' . config('services.hotglue.product_flow_id') . '/' . $business->id . '/jobs';
                 $response = $client->post($url, [
@@ -74,7 +74,8 @@ class UpdateHotglueProductQuantity extends Command
                         'state' => [
                             'inventory' => [
                                 [
-                                    'sku' => $sku,
+                                    'variant_id' => $itemId,
+                                    'location_id' => (string) $hotglueIntegration->selected_location_id,
                                     'inventory_quantity' => (int) $orderedQuantity
                                 ]
                             ]
@@ -86,12 +87,10 @@ class UpdateHotglueProductQuantity extends Command
                         'x-api-key'=> config('services.hotglue.public_api_key')
                     ],
                 ]);
-    
+
                 $response = json_decode((string) $response->getBody(), true);
-    
+
                 if ($response) {
-                    $hotglueIntegration = $business->hotglueIntegration()->whereType(HotglueJob::PRODUCTS)->where('connected', true)->first();
-    
                     HotglueJob::firstOrCreate([
                         'job_id' => $response['job_id']
                     ], [
@@ -99,15 +98,18 @@ class UpdateHotglueProductQuantity extends Command
                         'job_id' => $response['job_id'],
                         'job_name' => $response['job_name'],
                         'status' => $response['status'],
-                        'aws_path' => $response['s3_root']
+                        'aws_path' => $response['s3_root'],
+                        'job_type' => HotglueJob::QUANTITY_SYNC
                     ]);
-                    Log::info('Hotglue update product job successfully created for sku: ' . $sku . ' quantity: ' . $orderedQuantity);
+                    Log::info('Hotglue update product job successfully created for item_id: ' . $itemId . ' quantity: ' . $orderedQuantity);
                 } else {
-                    Log::critical('Hotglue update product failed to created job for sku: ' . $sku . ' quantity: ' . $orderedQuantity);
+                    Log::critical('Hotglue update product failed to created job item_id: ' . $itemId . ' quantity: ' . $orderedQuantity);
                 }
-    
-                Log::info('Hotglue update product sku: ' . $sku . ' quantity: ' . $orderedQuantity . ' for business ' . $businessId . ' end process');
+
+                Log::info('Hotglue update product item_id: ' . $itemId . ' quantity: ' . $orderedQuantity . ' for business ' . $businessId . ' end process');
             }
         }
+
+        return 0;
     }
 }

@@ -4,42 +4,40 @@ namespace App\Http\Controllers;
 
 use App\Business;
 use App\Business\Charge;
-use App\Business\PaymentRequest;
 use App\Business\PaymentProvider as PaymentProviderModel;
-use App\Enumerations\Business\PluginProvider;
-use App\Enumerations\CurrencyCode;
-use App\Enumerations\PaymentProvider;
+use App\Business\PaymentRequest;
 use App\Enumerations\Business\ChargeStatus;
 use App\Enumerations\Business\PaymentRequestStatus;
+use App\Enumerations\Business\PluginProvider;
+use App\Enumerations\PaymentProvider;
 use App\Helpers\Currency;
 use App\Helpers\Link;
+use App\Helpers\Rates;
 use App\Http\Controllers\Shop\Controller;
-use App\Manager\ChargeManagerInterface;
 use App\Manager\BusinessManagerInterface;
+use App\Manager\ChargeManagerInterface;
 use App\Manager\PaymentRequestManagerInterface;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\URL;
 use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Request as GuzzleHttpRequest;
 use GuzzleHttp\Exception\ClientException;
-use Psr\Http\Message\ResponseInterface;
-use GuzzleHttp\Exception\RequestException;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\URL;
 use Validator;
 
 class PaymentRequestCheckoutController extends Controller
 {
     /**
-     * @param Request $request
-     * @param ChargeManagerInterface $chargeManager
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Business  $business
+     * @param  \App\Business\PaymentRequest  $paymentRequest
+     * @param  \App\Manager\ChargeManagerInterface  $chargeManager
+     * @param  \App\Manager\BusinessManagerInterface  $businessManager
+     * @param  \App\Manager\PaymentRequestManagerInterface  $paymentRequestManager
      *
-     * @return \Illuminate\Http\Response
-     * @throws \App\Exceptions\HitPayLogicException
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
      */
     public function paymentCheckout(
         Request $request,
@@ -61,9 +59,15 @@ class PaymentRequestCheckoutController extends Controller
                     $chargePaymentRequest = PaymentRequest::findOrFail($charge->plugin_provider_reference);
                     Log::info('Deeplink success for ' . $charge->getKey());
 
-                    if (isset($chargePaymentRequest->redirect_url)) {
-                        $url = $chargePaymentRequest->redirect_url . '?status=completed&reference=' . $chargePaymentRequest->id;
-                        return redirect()->away($url);
+                    if ($chargePaymentRequest instanceof PaymentRequest) {
+                        $redirectUrl = $chargePaymentRequest->getRedirectUrl([
+                            'status' => 'completed',
+                            'reference' => $chargePaymentRequest->id,
+                        ]);
+                    }
+
+                    if (isset($redirectUrl) && !is_null($redirectUrl)) {
+                        return redirect()->away($redirectUrl);
                     } else {
                         return redirect()->route('securecheckout.payment.request.completed', ['p_charge' => $charge->getKey()]);
                     }
@@ -83,7 +87,7 @@ class PaymentRequestCheckoutController extends Controller
                   }
                 }
             } else {
-                Log::error('Invalid charge ID or change is not succeeded');
+                Log::info('Invalid charge ID or change is not succeeded');
             }
 
             // There is an error if we get there
@@ -445,7 +449,7 @@ class PaymentRequestCheckoutController extends Controller
         $params['business'] = $business->getFilteredData();
         // stripe
         $params['stripePkey'] = $businessManager->getStripePublishableKey($business);
-        
+
         // pusher
         $params['pusher'] = [
             'key' => config('broadcasting.connections.pusher.key'),
@@ -549,14 +553,18 @@ class PaymentRequestCheckoutController extends Controller
         $defaultMethod = $this->getMethodParam($request);
         $defaultUrlCompleted = URL::route('securecheckout.payment.request.completed', ['p_charge' => $charge->getKey()]);
 
+        // create rates list
+        $rates = Rates::getRatesForAllMethods(
+          $business,
+          $paymentMethods,
+          $charge->currency,
+          $paymentRequest->channel,
+          $paymentRequest->amount,
+          $paymentRequest->add_admin_fee === 1
+        );
+
         $stripePublishableKey = $businessManager->getStripePublishableKey($business);
 
-        return compact(
-            'business', 'charge', 'countries',
-            'paymentMethods', 'amount', 'data', 'referer',
-            'defaultUrlCompleted', 'symbol', 'mode',
-            'defaultMethod', 'cashback',
-            'campaignRule', 'zeroDecimal', 'stripePublishableKey', 'expire_date'
-        );
+        return compact('business', 'charge', 'countries', 'paymentMethods', 'amount', 'data', 'referer', 'defaultUrlCompleted', 'symbol', 'mode', 'defaultMethod', 'cashback', 'campaignRule', 'rates', 'zeroDecimal', 'stripePublishableKey', 'expire_date');
     }
 }

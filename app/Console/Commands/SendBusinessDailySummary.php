@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Business;
 use App\Business\Charge;
 use App\Enumerations\Business\ChargeStatus;
-use App\Enumerations\TransactionStatus;
 use App\Notifications\SummarizeDailyCollection;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -31,7 +30,7 @@ class SendBusinessDailySummary extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle() : int
     {
         $yesterday = Carbon::yesterday();
 
@@ -49,7 +48,15 @@ class SendBusinessDailySummary extends Command
                 if ($business instanceof Business) {
                     $business->notify(new SummarizeDailyCollection($yesterday, $transactions->toArray()));
                 }
+
+                $business->businessUsers()->each(function($businessUser) use ($yesterday, $transactions) {
+                    if ($businessUser->isAdmin()) {
+                        $businessUser->user->notify(new SummarizeDailyCollection($yesterday, $transactions->toArray()));
+                    }
+                });
             }
         }
+
+        return 0;
     }
 }

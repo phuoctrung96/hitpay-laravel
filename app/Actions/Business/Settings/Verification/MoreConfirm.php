@@ -3,6 +3,8 @@
 namespace App\Actions\Business\Settings\Verification;
 
 use App\Business\Verification;
+use App\Enumerations\Business\ComplianceRiskLevel;
+use App\Jobs\CheckCompliance;
 use Illuminate\Support\Facades;
 
 class MoreConfirm extends Action
@@ -84,6 +86,16 @@ class MoreConfirm extends Action
             'business_description' => $data['business_description'] ?? null,
         ]);
 
+        $riskLevel = $this->data['type'] === 'personal'
+            ? ComplianceRiskLevel::HIGH_RISK
+            : ComplianceRiskLevel::LOW_RISK;
+
+        if (!$this->business->complianceNotes && $this->data['type']) {
+            $this->business->complianceNotes()->create([
+                'risk_level' => $riskLevel,
+            ]);
+        }
+
         $this->business->verified_wit_my_info_sg = true;
 
         $this->business->save();
@@ -91,6 +103,8 @@ class MoreConfirm extends Action
         $this->updateBusinessAddressFromVerification($verification);
 
         $this->addPersonToStripeIfRequired();
+
+        CheckCompliance::dispatch($verification);
 
         return $verification;
     }

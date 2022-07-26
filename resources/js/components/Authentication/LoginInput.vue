@@ -13,10 +13,6 @@
                 :autocomplete="autocomplete"
                 :autofocus="autofocus"
                 :disabled="disabled">
-            <span class="sh-password show" v-if="isPassword && !isShowPassword" @click="switchVisibility()"><img src="/images/ico-show-password.svg"></span>
-            <span class="sh-password hide" v-if="isPassword && isShowPassword" @click="switchVisibility()">
-                <img src="/images/ico-hide-password.svg">
-            </span>
         </div>
         <span class="small text-muted">{{helper}}</span>
         <div class="invalid-feedback error d-block">
@@ -53,26 +49,7 @@ export default {
         marginBottom: {
             type: Number,
             default: 0
-        },
-        isPassword: {
-            type: Boolean,
-            default: false
-        },
-        isShowPassword: {
-            type: Boolean,
-            default: false
-        }
-    },
-    methods: {
-        switchVisibility() {
-            if(this.isShowPassword) {
-                this.isShowPassword = false;
-                this.type = "password";
-            }else {
-                this.isShowPassword = true;
-                this.type = "text";
-            }
-        }
+        }     
     }
 }
 </script>
@@ -81,29 +58,6 @@ export default {
 .login-input {
     .is-form-control{
         position: relative;
-        span{
-            font-size: 0;
-            &.sh-password{
-                position: absolute;
-                right: 16px;
-                top: 50%;
-                margin-top: -6px;
-                cursor: pointer;
-                &.show{
-                    img{
-                        max-width: 17px;
-                        height: auto;
-                    }
-                }
-                &.hide{
-                    margin-top: -9px;
-                    img{
-                        max-width: 17px;
-                        height: auto;
-                    }
-                }
-            }
-        }
     }
     .label{
         font-size: 13px;

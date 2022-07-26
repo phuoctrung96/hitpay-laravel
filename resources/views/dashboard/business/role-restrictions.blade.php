@@ -12,7 +12,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business->toArray());
         window.Restrictions = @json($restrictions);
     </script>
 @endpush

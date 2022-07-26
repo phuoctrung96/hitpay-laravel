@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property mixed business_id
  * @property Business[] businesses
- * @property int commission
+ * @property float commission
  * @property User user
  * @property Business business
  * @property \Illuminate\Support\Carbon|mixed last_commission_done_at
@@ -33,6 +33,21 @@ class BusinessPartner extends Model
         'platforms' => 'array',
         'pricing' => 'array',
     ];
+
+    /**
+     * The "booting" method of the model.
+     *
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // auto-sets values on creation
+        static::creating(function (self $model) : void {
+            $model->commission = $model->commission ?? 0.1;
+        });
+    }
 
     public static function findByCode(?string $code): ?self
     {
@@ -62,7 +77,7 @@ class BusinessPartner extends Model
         );
     }
 
-    public function commission(): HasMany
+    public function commissions(): HasMany
     {
         return $this->hasMany(PartnerCommission::class);
     }

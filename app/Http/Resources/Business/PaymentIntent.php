@@ -41,6 +41,7 @@ class PaymentIntent extends JsonResource
         switch ($this->payment_provider) {
             case PaymentProvider::STRIPE_SINGAPORE:
             case PaymentProvider::STRIPE_MALAYSIA:
+            case PaymentProvider::STRIPE_US:
                 if ($data['object_type'] === 'payment_intent') {
                     if ($this->status === 'requires_source_action'
                         || $this->status === 'requires_action'

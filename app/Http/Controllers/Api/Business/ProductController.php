@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Business;
 
 use App\Business as BusinessModel;
 use App\Business\Product as ProductModel;
+use App\Enumerations\Business\ProductStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Business\Product;
 use App\Logics\Business\ProductRepository;
@@ -76,10 +77,30 @@ class ProductController extends Controller
             }
         }
 
-        $products->whereNotNull('published_at');
+        $status = $request->get('status', 'published');
+        $shopifyOnly = $request->get('shopify_only', 0);
+
+        switch ($status) {
+
+            case 'draft':
+                $products->where('status', ProductStatus::DRAFT);
+
+                break;
+
+            default:
+                $products->where('status', ProductStatus::PUBLISHED)
+                    ->whereNotNull('published_at');
+
+                if ($shopifyOnly) {
+                    $products->whereNotNull('shopify_id');
+                }
+        }
+
         $products->orderByDesc('id');
 
-        return Product::collection($products->paginate()->appends($request->except('page')));
+        $perPage = $request->get('perPage');
+
+        return Product::collection($products->paginate($perPage)->appends($request->except('page')));
     }
 
     /**

@@ -93,6 +93,10 @@
                                     @endisset
                                 @elseif ($payout['status'] === 'succeeded_manually')
                                     <span class="small font-weight-bold text-info">Paid</span>
+                                @elseif ($payout['status'] === 'failed')
+                                    <span class="small font-weight-bold text-danger">Failed</span>
+                                @elseif ($payout['status'] === 'canceled')
+                                    <span class="small font-weight-bold text-danger">Canceled</span>
                                 @else
                                     <span class="small font-weight-bold text-warning">Pending</span>
                                 @endif

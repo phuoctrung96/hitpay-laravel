@@ -93,6 +93,10 @@
 
                                         @switch ($item->status)
                                             @case ('succeeded')
+                                            @if($item->admin_fee)
+                                              <p class="text-dark small mb-0">Payment Request: {{ $item->display('payment_request_amount') }}</p>
+                                            @endif
+
                                             <p class="text-dark small mb-0">All Inclusive Fee: <span class="text-muted">{{ $item->display('all_inclusive_fee') }}{{ ($originalFee = $item->display('all_inclusive_fee_original_currency')) ? ' ('.$originalFee.')' : '' }}</span></p>
                                             <p class="text-dark small mb-0">Collected at {{ $item->closed_at->format('h:ia \o\n F d, Y (l)') }}</p>
                                             @if($item->refunds->where('is_campaign_cashback',1)->count())
@@ -171,7 +175,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         function check(trigger) {
             let current = new URL(window.location.href);
             let query = current.search;

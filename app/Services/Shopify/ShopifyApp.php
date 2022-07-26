@@ -53,6 +53,8 @@ class ShopifyApp
 
             $api->handle();
 
+            dispatch(new \App\Jobs\Business\Shopify\PaymentApp\RegisterPaymentWebhooks($businessShopifyStore));
+
             return "https://" . $shopifyUser->getNickname() . "/services/payments_partners/gateways/" . Config::get('services.shopify.client_id_v2') . "/settings";
         } catch (\Exception $exception) {
             $businessShopifyStore->delete();

@@ -26,7 +26,6 @@
 
 @push('body-stack')
     <script>
-        window.Business = @json($business);
         window.Months = @json($months);
     </script>
 @endpush

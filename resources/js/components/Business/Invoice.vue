@@ -68,7 +68,7 @@
                 <div class="form-group w-50 mr-4">
                     <label for="invoice_date" class="d-block">Invoice date</label>
                     <datepicker id="invoice_date" v-model="invoice.invoice_date" :bootstrap-styling="true" :highlighted="highlighted"
-                                input-class="bg-white is-dropdown" placeholder="Select date" :format="'yyyy-MM-dd'" class="w-100"
+                                input-class="bg-white is-dropdown" placeholder="Select date" :format="'dd/MM/yyyy'" class="w-100"
                                 :class="{
                     'border border-danger rounded' : errors.invoice_date
                 }"></datepicker>
@@ -79,7 +79,7 @@
                 <div class="form-group w-50">
                     <label for="due_date" class="d-block">Due date</label>
                     <datepicker id="due_date" v-model="invoice.due_date" :bootstrap-styling="true" :highlighted="highlighted"
-                                input-class="bg-white is-dropdown" placeholder="Select date" :format="'yyyy-MM-dd'" class="w-100"
+                                input-class="bg-white is-dropdown" placeholder="Select date" :format="'dd/MM/yyyy'" class="w-100"
                                 :disabled-dates="disableDates"
                                 :class="{
                     'border border-danger rounded' : errors.due_date
@@ -89,8 +89,8 @@
                 </div>
             </div>
             <div v-if="!invoice.customer_id">
-                <label for="search_customer">Select customer</label>
-                <input id="search_customer" class="form-control" title="" v-model="search_customer" :class="{
+                <label for="customer_id">Select customer</label>
+                <input id="customer_id" class="form-control" title="" v-model="search_customer" :class="{
                     'is-invalid' : errors.customer_id
                 }" placeholder="Enter customer email to search" @keyup="searchCustomer">
                 <div :style="outerDropDown">
@@ -417,10 +417,10 @@
                                        placeholder="Amount" @change="checkDecimal" @keypress="isNumber($event);">
                             </div>
                             <div class="form-group w-50">
-                                <datepicker id="due_date" v-model="partial_payments[index].due_date"
+                                <datepicker :id="`due_date_${index}`" v-model="partial_payments[index].due_date"
                                             :bootstrap-styling="true"
-                                            :disabled-dates="disableDates"
-                                            input-class="bg-white" placeholder="Due date" :format="'yyyy-MM-dd'"
+                                            :disabled-dates="disableDatesForPartialPayments"
+                                            input-class="bg-white" placeholder="Due date" :format="'dd/MM/yyyy'"
                                             class="w-100"
                                 ></datepicker>
                             </div>
@@ -531,7 +531,7 @@
                             </div>
                             <div class="col-12 col-sm-12 col-lg-6 mgb">
                                 <label for="phone_number">Phone Number</label>
-                                <input id="phone_number" class="form-control" title="" v-model="customer.phone_number"
+                                <input id="phone_number" type="tel" class="form-control" title="" v-model="customer.phone_number"
                                        :class="{
                         'is-invalid' : errors.phone_number
                     }" placeholder="Customer Phone Number" :disabled="is_processing">
@@ -745,6 +745,27 @@ export default {
                 to: date
             }
         },
+        disableDatesForPartialPayments() {
+            let invoiceDate = this.invoice.invoice_date;
+            let invoiceDueDate = this.invoice.due_date;
+
+            let disableDates = {
+                to: invoiceDate
+            };
+
+            if (invoiceDueDate) {
+              const parseInvoiceDueDate = new Date(invoiceDueDate);
+
+              parseInvoiceDueDate.setDate(parseInvoiceDueDate.getDate());
+
+              disableDates = {
+                to: invoiceDate,
+                from: parseInvoiceDueDate,
+              };
+            }
+
+            return disableDates;
+        }
     },
 
     mounted() {
@@ -797,7 +818,7 @@ export default {
         if (window.partialPayments) {
             this.partial_payments = window.partialPayments;
             this.partial_payments.forEach(function(part, index, arr) {
-                arr[index].due_date = arr[index].due_date ? new Date((window.Invoice.due_date).replace(/-/g, "/")) : "";
+                arr[index].due_date = arr[index].due_date ? new Date(arr[index].due_date) : "";
             });
             this.invoice.allow_partial_payments = true;
         }
@@ -816,14 +837,6 @@ export default {
     },
 
     methods: {
-        getTime(time) {
-            if(time == "")
-                return "";
-
-            let date = new Date(time);
-            return ((date.getDate() > 9) ? date.getDate() : ('0' + date.getDate())) + '.' +((date.getMonth() > 8) ? (date.getMonth() + 1) : ('0' + (date.getMonth() + 1))) + '.' + date.getFullYear();
-
-        },
         checkDecimal() {
             if (this.invoiceAmount() != '' && this.zero_decimal_list.includes(this.invoice.currency)) {
                 this.errors = {};
@@ -929,7 +942,6 @@ export default {
                 if (month.length === 1) {
                     month = '0' + month;
                 }
-
                 return date + '/' + month + '/' + time.getFullYear();
             }
 
@@ -938,9 +950,14 @@ export default {
         createCustomer() {
             this.errors = {};
 
-            axios.post(this.getDomain('business/' + Business.id + '/customer', 'dashboard'), this.customer).then(({data}) => {
-                this.invoice.customer_id = data.customer.id;
-                this.customer = data.customer;
+            axios.post(this.getDomain('v1/business/' + Business.id + '/customer', 'api'),
+              this.customer,
+              {
+                withCredentials: true,
+              }
+            ).then(({data}) => {
+                this.invoice.customer_id = data.id;
+                this.customer = data;
                 this.search_customer = '';
                 this.customers_result = [];
                 $('#createCustomerModal').modal('hide');
@@ -1040,7 +1057,7 @@ export default {
                 }
             })
                 .then(({data}) => {
-                    window.location.href = data.redirect_url;
+                   window.location.href = data.redirect_url;
                 }).catch(({response}) => {
                 if (response.status === 422) {
                     _.forEach(response.data.errors, (value, key) => {
@@ -1120,6 +1137,10 @@ export default {
 
         removeDueDate(){
             this.invoice.due_date = '';
+
+            this.partial_payments.map(function(partialPayment) {
+                partialPayment.due_date = null;
+            });
         },
 
         searchProduct(key) {

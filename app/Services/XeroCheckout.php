@@ -54,6 +54,10 @@ class XeroCheckout
                 $redirectUrl = 'https://go.xero.com/AccountsReceivable/View.aspx?InvoiceID=' . $request->input('invoice');
             }
 
+            if(!$this->isValidRedirectUrl($redirectUrl)) {
+                $redirectUrl = null;
+            }
+
 
             $response = $client->post('payment-requests', [
                 'form_params' => [
@@ -155,5 +159,10 @@ class XeroCheckout
 		// do nothing
         }
         return '';
+    }
+
+    private function isValidRedirectUrl(?string $redirectUrl): bool
+    {
+        return !empty($redirectUrl) && $redirectUrl !== 'https://in.xero.com';
     }
 }

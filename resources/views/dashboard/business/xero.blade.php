@@ -30,7 +30,6 @@
         <script>
             window.xeroAccountTypes = @json(\App\Business\Xero::XERO_ACCOUT_TYPES);
             window.xeroInvoiceGrouping = @json(\App\Business\Xero::INVOICE_GROUPING_VARIANTS);
-            window.Business = @json($business);
         </script>
     @endpush
 @endsection

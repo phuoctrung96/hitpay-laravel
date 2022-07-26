@@ -1,6 +1,6 @@
 <template>
-    <div class="row">
-        <div class="card-body border-top p-4">
+    <div class="setting-url">
+        <div class="pb-4">
             <p class="text-uppercase text-muted">Store URL</p>
             <template v-if="business.identifier">
                 <p>Your customer can reach your home page via following URLs:</p>
@@ -11,7 +11,7 @@
                 </ul>
                 <p v-if="is_identifier_succeeded" class="text-success font-weight-bold">
                     <i class="fas fa-check-circle mr-2"></i> Updated successfully!</p>
-                <a v-else class="font-weight-bold" href="#" @click.prevent="openSetIdentifierModal">Update Store URL</a>
+                <a v-else class="fw-500" href="#" @click.prevent="openSetIdentifierModal">Update Store URL</a>
             </template>
             <template v-else>
                 <p>Setup a homepage URL so that the customers can reach the business easily.</p>

@@ -24,6 +24,7 @@ trait HasPaymentProviders
             Enumerations\PaymentProvider::SHOPEE_PAY,
             Enumerations\PaymentProvider::STRIPE_MALAYSIA,
             Enumerations\PaymentProvider::STRIPE_SINGAPORE,
+            Enumerations\PaymentProvider::STRIPE_US,
             Enumerations\PaymentProvider::ZIP,
         ]);
     }

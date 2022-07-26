@@ -45,7 +45,8 @@ class Refund extends Model implements OwnableContract
 
         static::addGlobalScope('success', function (Builder $builder) : void {
             $builder->where(function (Builder $builder) : void {
-                $builder->orWhereNull('status')->orWhere('status', 'succeeded');
+                $builder->orWhereNull($builder->qualifyColumn('status'));
+                $builder->orWhere($builder->qualifyColumn('status'), 'succeeded');
             });
         });
     }

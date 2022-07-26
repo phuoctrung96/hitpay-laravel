@@ -14,7 +14,7 @@
                                 'b_bank_account' => $bankAccount->getKey(),
                             ]) }}"><i class="fa fa-pen fa-fw mr-2"></i> Edit</a>
                         </div>
-                        <h6 class="font-weight-bold">{{ $bankAccount->bank_name }}</h6>
+                        <h6 class="font-weight-bold">{{ $bankAccount->bank_name === 'Unknown' ? $bankAccount->holder_name . '***' . substr($bankAccount->number, -4) : $bankAccount->bank_name }}</h6>
                         <p class="small mb-1 text-black-50"># {{ $bankAccount->getKey() }}</p>
                         <p class="mb-0">Account Number : ***{{ substr($bankAccount->number, -4) }}</p>
                     </div>

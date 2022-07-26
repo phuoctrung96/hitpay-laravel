@@ -206,7 +206,10 @@ class BusinessController extends Controller
     public function reject(Business $business){
         $business->update(['verified_wit_my_info_sg' => 0]);
         $verification = $business->verifications()->latest()->first();
-        $verification->delete();
+
+        if ($verification) {
+            $verification->delete();
+        }
 
         $business->notify(new NotifyUpdatedStatusVerification($status = 'Rejected'));
 
@@ -214,7 +217,10 @@ class BusinessController extends Controller
     }
 
     public function verify(Business $business){
-        $business->update(['verified_wit_my_info_sg' => 1]);
+        $business->update([
+            'payment_enabled' => true,
+            'verified_wit_my_info_sg' => 1,
+        ]);
         $verification = $business->verifications()->latest()->first();
         $verification->update([
             'status' => VerificationStatus::MANUAL_VERIFIED,

@@ -1,10 +1,20 @@
 import moment from 'moment'
 
+window.$zeroDecimalCurrencies = ['bif', 'clp', 'djf', 'gnf', 'jpy', 'kmf', 'krw', 'mga', 'pyg', 'rwf', 'ugx', 'vnd', 'vuv', 'xaf', 'xof', 'xpf'];
+
 export default (Vue) => {
   Vue.filter("dateTime", val => !val? val: moment(String(val)).format('MMM. DD, YYYY, h:mm a'));
   Vue.filter("thousands", val => val.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,'))
-  Vue.filter("currency", val => Number(val).toFixed(2).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,'))
-  Vue.filter("date", val => !val? val: moment(String(val)).format('MMM. DD, YYYY'))
+  Vue.filter("currency", function(val, currencyCode) {
+      let fractionDigits = 2;
+
+      if (currencyCode && window.$zeroDecimalCurrencies.includes(currencyCode)) {
+          fractionDigits = 0;
+      }
+
+      return Number(val).toFixed(fractionDigits).toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')
+  });
+  Vue.filter("date", val => !val? val: moment(String(val)).format('MMM. DD, YYYY'));
 
   Vue.filter("date2", val => {
     if (moment(val).isSame(moment(), "day")) {

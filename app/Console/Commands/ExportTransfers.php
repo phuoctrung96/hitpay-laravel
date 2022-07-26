@@ -40,7 +40,7 @@ class ExportTransfers extends Command
      * @throws \League\Csv\CannotInsertRecord
      * @throws \Exception
      */
-    public function handle()
+    public function handle() : int
     {
         $email = $this->option('email') ?? 'aditya@hit-pay.com';
 
@@ -89,6 +89,8 @@ class ExportTransfers extends Command
             'transfers-pending',
             $pendingTransfersCsv->getContent()
         );
+
+        return 0;
     }
 
     private function insertIntoCsv(Builder $query) : Writer

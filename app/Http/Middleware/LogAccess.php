@@ -29,6 +29,8 @@ class LogAccess
         switch (true) {
 
             case Str::startsWith($request->path(), [
+                'favicon.ico',
+                'help-guide',
                 'horizon',
                 'storage',
             ]):
@@ -57,6 +59,10 @@ class LogAccess
 
                 foreach ($requestData as $key => $value) {
                     $requestDataCount++;
+
+                    if (Str::contains($key, [ 'password', 'secret', 'key', 'code' ])) {
+                        $value = '****';
+                    }
 
                     $value = is_array($value) ? json_encode($value) : $value;
 
@@ -152,20 +158,44 @@ class LogAccess
 
             $sessionId = null;
 
-            if (!$user->id) {
-                $sessionId = $user->id;
+            if ($user->id) {
+                $sessionId = "[user : {$user->id}]";
             }
 
             if (!$sessionId) {
-                $sessionId = optional($request->getSession())->getId();
+                $realSessionId = optional($request->getSession())->getId();
+
+                if ($realSessionId) {
+                    $sessionId = "[session : {$realSessionId}]";
+                }
             }
 
             if (!$sessionId) {
                 $sessionId = 'unknown';
             }
 
+            $sessionId = "[{$request->ip()}]{$sessionId}";
+
+            if ($business->id) {
+                $sessionId = "[business : {$business->id}]".DIRECTORY_SEPARATOR."{$sessionId}";
+            }
+
+            $startedAt = explode('.', $startedAt);
+
+            $identifier = str_pad($startedAt[0], 12, '0', STR_PAD_LEFT).str_pad(($startedAt[1] ?? '0'), 6, '0');
+
+            $uri = $request->getHost();
+            $identifier = "[{$identifier}][{$uri}]";
+
+            $path = $request->path();
+            $path = str_replace('/', '|', $path);
+
+            if ($path !== '|') {
+                $identifier .= "[{$path}]";
+            }
+
             $directory = 'access-logs' . DIRECTORY_SEPARATOR . Date::now()->toDateString();
-            $filename = $request->ip() . '-' . $sessionId . DIRECTORY_SEPARATOR . $startedAt . '.txt';
+            $filename = $sessionId . DIRECTORY_SEPARATOR . $identifier . '.txt';
 
             Storage::put($directory . DIRECTORY_SEPARATOR . $filename, implode("\n", $history));
         } catch (Exception $exception) {
